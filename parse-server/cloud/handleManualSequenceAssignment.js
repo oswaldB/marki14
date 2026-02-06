@@ -26,7 +26,7 @@ Parse.Cloud.define('handleManualSequenceAssignment', async (request) => {
     console.log(`Impayé trouvé: Facture ${impaye.get('nfacture')}`);
     
     // 2. Récupérer la séquence
-    const Sequence = Parse.Object.extend('sequences');
+    const Sequence = Parse.Object.extend('Sequences');
     const sequenceQuery = new Parse.Query(Sequence);
     const sequence = await sequenceQuery.get(sequenceId);
     

@@ -10,21 +10,21 @@ import { Loader2, Info, X, Plus } from '@lucide/astro';---
 
 <div 
   class="fixed inset-0 overflow-hidden z-50"
-  x-show="$data.showCreateModal"
+  x-show="showCreateModal"
   x-transition
 >
   <div class="absolute inset-0 overflow-hidden">
     <!-- Background overlay -->
     <div 
       class="absolute inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
-      @click="$data.showCreateModal = false"
+      @click="showCreateModal = false"
     ></div>
     
     <!-- Drawer content -->
     <div class="fixed inset-y-0 right-0 pl-10 max-w-full flex sm:pl-16">
       <div 
         class="relative w-screen max-w-md"
-        @click.away="$data.showCreateModal = false"
+        @click.away="showCreateModal = false"
       >
         <div class="h-full flex flex-col bg-white shadow-xl overflow-y-scroll">
           <div class="p-6">
@@ -32,7 +32,7 @@ import { Loader2, Info, X, Plus } from '@lucide/astro';---
               <h2 class="text-lg font-medium text-gray-900">Créer une nouvelle séquence</h2>
               <button 
                 class="text-gray-400 hover:text-gray-600"
-                @click="$data.showCreateModal = false"
+                @click="showCreateModal = false"
               >
                 <X class="w-6 h-6" />
               </button>
@@ -54,7 +54,7 @@ import { Loader2, Info, X, Plus } from '@lucide/astro';---
             <!-- Formulaire de création -->
             <form 
               class="space-y-4"
-              @submit.prevent="$data.createSequence()"
+              @submit.prevent="createSequence()"
             >
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">
@@ -63,7 +63,7 @@ import { Loader2, Info, X, Plus } from '@lucide/astro';---
                 <input 
                   type="text"
                   class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#007ACE] focus:border-[#007ACE]"
-                  x-model="$data.newSequenceName"
+                  x-model="newSequenceName"
                   required
                   placeholder="Ex: Relance client premium"
                 >
@@ -79,7 +79,7 @@ import { Loader2, Info, X, Plus } from '@lucide/astro';---
                 <textarea 
                   rows="3"
                   class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#007ACE] focus:border-[#007ACE]"
-                  x-model="$data.newSequenceDescription"
+                  x-model="newSequenceDescription"
                   placeholder="Ex: Séquence de relance pour les clients premium avec délais progressifs"
                 ></textarea>
               </div>
@@ -94,7 +94,7 @@ import { Loader2, Info, X, Plus } from '@lucide/astro';---
                       type="radio"
                       id="sequence-normal"
                       class="h-4 w-4 text-[#007ACE] border-gray-300 focus:ring-[#007ACE]"
-                      x-model="$data.newSequenceType"
+                      x-model="newSequenceType"
                       value="normal"
                       checked
                     >
@@ -107,7 +107,7 @@ import { Loader2, Info, X, Plus } from '@lucide/astro';---
                       type="radio"
                       id="sequence-automatique"
                       class="h-4 w-4 text-[#007ACE] border-gray-300 focus:ring-[#007ACE]"
-                      x-model="$data.newSequenceType"
+                      x-model="newSequenceType"
                       value="automatique"
                     >
                     <label for="sequence-automatique" class="ml-3 block text-sm font-medium text-gray-700">
@@ -124,20 +124,20 @@ import { Loader2, Info, X, Plus } from '@lucide/astro';---
                 <button 
                   type="button"
                   class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-                  @click="$data.showCreateModal = false"
+                  @click="showCreateModal = false"
                 >
                   Annuler
                 </button>
                 <button 
                   type="submit"
                   class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#007ACE] hover:bg-[#006BCE] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#007ACE]"
-                  :disabled="$data.isCreating"
+                  :disabled="isCreating"
                 >
-                  <span x-show="!$data.isCreating">
+                  <span x-show="!isCreating">
                     <Plus class="w-4 h-4 mr-2 inline" />
                     Créer la séquence
                   </span>
-                  <span x-show="$data.isCreating">
+                  <span x-show="isCreating">
                     <Loader2 class="w-4 h-4 mr-2 inline animate-spin" />
                     Création en cours...
                   </span>

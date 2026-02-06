@@ -1,65 +1,66 @@
 // sequenceTriggers.js - Triggers pour les séquences
 
 // Trigger après sauvegarde d'une séquence
-Parse.Cloud.afterSave('sequences', async (request) => {
-  // Vérifier si c'est une nouvelle création ou une mise à jour
-  const isNew = !request.original;
-  
-  if (isNew) {
-    console.log('Nouvelle séquence créée:', request.object.get('nom'));
-    return; // Ne pas traiter les nouvelles séquences, attendre qu'elles soient activées
-  }
-  
-  // Vérifier si le statut a changé pour devenir actif
-  const originalIsActif = request.original.get('isActif');
-  const newIsActif = request.object.get('isActif');
-  
-  console.log(`Séquence ${request.object.get('nom')} - isActif: ${originalIsActif} -> ${newIsActif}`);
-  
-  // Si la séquence vient d'être activée
-  if (!originalIsActif && newIsActif) {
-    console.log(`Séquence ${request.object.get('nom')} a été activée, lancement de populateRelanceSequence...`);
-    
-    try {
-      // Appeler la fonction populateRelanceSequence
-      const result = await Parse.Cloud.run('populateRelanceSequence', {
-        idSequence: request.object.id
-      });
-      
-      console.log(`populateRelanceSequence terminé avec succès:`);
-      console.log(`- Impayés traités: ${result.processed}`);
-      console.log(`- Relances créées: ${result.created}`);
-      console.log(`- Relances existantes conservées: ${result.updated}`);
-      
-    } catch (error) {
-      console.error(`Erreur lors de l'exécution de populateRelanceSequence pour la séquence ${request.object.id}:`, error);
-      // Ne pas bloquer la sauvegarde de la séquence, juste logger l'erreur
-    }
-  }
-  
-  // Si la séquence vient d'être désactivée
-  if (originalIsActif && !newIsActif) {
-    console.log(`Séquence ${request.object.get('nom')} a été désactivée, lancement de cleanupRelancesOnDeactivate...`);
-    
-    try {
-      // Appeler la fonction cleanupRelancesOnDeactivate
-      const result = await Parse.Cloud.run('cleanupRelancesOnDeactivate', {
-        idSequence: request.object.id
-      });
-      
-      console.log(`cleanupRelancesOnDeactivate terminé avec succès:`);
-      console.log(`- Relances non envoyées supprimées: ${result.deleted}`);
-      console.log(`- Relances envoyées conservées: ${result.kept}`);
-      
-    } catch (error) {
-      console.error(`Erreur lors de l'exécution de cleanupRelancesOnDeactivate pour la séquence ${request.object.id}:`, error);
-      // Ne pas bloquer la sauvegarde de la séquence, juste logger l'erreur
-    }
-  }
-});
+// Note: Désactivé car les fonctions Cloud sont maintenant appelées explicitement depuis le frontend
+// Parse.Cloud.afterSave('Sequences', async (request) => {
+//   // Vérifier si c'est une nouvelle création ou une mise à jour
+//   const isNew = !request.original;
+//   
+//   if (isNew) {
+//     console.log('Nouvelle séquence créée:', request.object.get('nom'));
+//     return; // Ne pas traiter les nouvelles séquences, attendre qu'elles soient activées
+//   }
+//   
+//   // Vérifier si le statut a changé pour devenir actif
+//   const originalIsActif = request.original.get('isActif');
+//   const newIsActif = request.object.get('isActif');
+//   
+//   console.log(`Séquence ${request.object.get('nom')} - isActif: ${originalIsActif} -> ${newIsActif}`);
+//   
+//   // Si la séquence vient d'être activée
+//   if (!originalIsActif && newIsActif) {
+//     console.log(`Séquence ${request.object.get('nom')} a été activée, lancement de populateRelanceSequence...`);
+//     
+//     try {
+//       // Appeler la fonction populateRelanceSequence
+//       const result = await Parse.Cloud.run('populateRelanceSequence', {
+//         idSequence: request.object.id
+//       });
+//       
+//       console.log(`populateRelanceSequence terminé avec succès:`);
+//       console.log(`- Impayés traités: ${result.processed}`);
+//       console.log(`- Relances créées: ${result.created}`);
+//       console.log(`- Relances existantes conservées: ${result.updated}`);
+//       
+//     } catch (error) {
+//       console.error(`Erreur lors de l'exécution de populateRelanceSequence pour la séquence ${request.object.id}:`, error);
+//       // Ne pas bloquer la sauvegarde de la séquence, juste logger l'erreur
+//     }
+//   }
+//   
+//   // Si la séquence vient d'être désactivée
+//   if (originalIsActif && !newIsActif) {
+//     console.log(`Séquence ${request.object.get('nom')} a été désactivée, lancement de cleanupRelancesOnDeactivate...`);
+//     
+//     try {
+//       // Appeler la fonction cleanupRelancesOnDeactivate
+//       const result = await Parse.Cloud.run('cleanupRelancesOnDeactivate', {
+//         idSequence: request.object.id
+//       });
+//       
+//       console.log(`cleanupRelancesOnDeactivate terminé avec succès:`);
+//       console.log(`- Relances non envoyées supprimées: ${result.deleted}`);
+//       console.log(`- Relances envoyées conservées: ${result.kept}`);
+//       
+//     } catch (error) {
+//       console.error(`Erreur lors de l'exécution de cleanupRelancesOnDeactivate pour la séquence ${request.object.id}:`, error);
+//       // Ne pas bloquer la sauvegarde de la séquence, juste logger l'erreur
+//     }
+//   }
+// });
 
 // Trigger avant suppression d'une séquence (optionnel - pour nettoyage)
-Parse.Cloud.beforeDelete('sequences', async (request) => {
+Parse.Cloud.beforeDelete('Sequences', async (request) => {
   console.log(`Suppression de la séquence ${request.object.get('nom')} (ID: ${request.object.id})`);
   
   // Optionnel: Nettoyer les relances associées à cette séquence

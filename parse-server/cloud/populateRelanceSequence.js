@@ -14,15 +14,23 @@ Parse.Cloud.define('populateRelanceSequence', async (request) => {
     const RelancesClass = Parse.Object.extend('Relances');
     
     // 2. Récupérer la séquence
-    const Sequence = Parse.Object.extend('sequences');
+    console.log(`Recherche de la séquence avec ID: ${idSequence}`);
+    const Sequence = Parse.Object.extend('Sequences');
     const sequenceQuery = new Parse.Query(Sequence);
-    const sequence = await sequenceQuery.get(idSequence);
     
-    if (!sequence) {
-      throw new Error(`Séquence avec l'ID ${idSequence} non trouvée`);
-    }
-    
-    console.log(`Séquence trouvée: ${sequence.get('nom')}`);
+    try {
+      const sequence = await sequenceQuery.get(idSequence);
+      
+      if (!sequence) {
+        console.error(`Séquence avec l'ID ${idSequence} non trouvée`);
+        throw new Error(`Séquence avec l'ID ${idSequence} non trouvée`);
+      }
+      
+      console.log(`Séquence trouvée: ${sequence.get('nom')} (ID: ${sequence.id})`);
+      console.log(`Statut de la séquence: ${sequence.get('isActif')}`);
+      console.log(`Type de séquence: ${sequence.get('isAuto') ? 'Automatique' : 'Manuelle'}`);
+      
+      // Continuer avec le reste du code...
     
     // 3. Récupérer tous les impayés qui ont cette séquence
     const Impaye = Parse.Object.extend('Impayes');

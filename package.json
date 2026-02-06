@@ -4,12 +4,11 @@
   "version": "1.0.0",
   "scripts": {
     "dev": "astro dev --host 0.0.0.0 --port 5000 & docker compose up",
+    "astro": "astro dev --host 0.0.0.0 --port 5000",
     "dev:adti": "cross-env SITE=ADTI APPLICATION_ID=vGtvMxWrzpgI3BFii2hlu9ET3YNT0dyIRP7nk1FX JAVASCRIPT_KEY=h6msmABR2yJ5i1mfp8okE2l6aw0NedRF9aLuyGjf SERVER_URL=https://parseapi.back4app.com astro dev --host 0.0.0.0 --port 5000",
     "build": "astro build",
     "build:adti": "cross-env SITE=ADTI APPLICATION_ID=vGtvMxWrzpgI3BFii2hlu9ET3YNT0dyIRP7nk1FX JAVASCRIPT_KEY=h6msmABR2yJ5i1mfp8okE2l6aw0NedRF9aLuyGjf SERVER_URL=https://parseapi.back4app.com astro build",
     "build:all": "npm run build:adti",
-    "preview": "astro preview",
-    "astro": "astro",
     "test:list": "node scripts/run_test.mjs --list",
     "test": "node scripts/run_test.mjs",
     "stop": "bash scripts/stop-dev.sh"

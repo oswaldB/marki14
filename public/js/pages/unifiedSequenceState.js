@@ -487,37 +487,110 @@ Consignes:
      * Confirmer le basculement de statut
      */
     async confirmToggleStatus() {
-      if (!this.sequence) return;
+      if (!this.sequence || !this.sequence.objectId) {
+        this.showNotification('Erreur', 'Séquence invalide', 'error');
+        this.isTogglingStatus = false;
+        return;
+      }
       
       this.isTogglingStatus = true;
       this.showActivationConfirmation = false;
       
+      const newStatus = !this.sequence.isActif;
+      
       try {
+        // 1. Vérifier que la séquence existe toujours dans la base de données
         const Sequences = Parse.Object.extend('Sequences');
+        const sequenceQuery = new Parse.Query(Sequences);
+        
+        try {
+          await sequenceQuery.get(this.sequence.objectId);
+        } catch (verifyError) {
+          if (verifyError.code === 101) { // Object not found
+            this.showNotification('Erreur', 'La séquence n\'existe plus dans la base de données', 'error');
+            this.isTogglingStatus = false;
+            return;
+          }
+          throw verifyError;
+        }
+        
+        // 2. Mettre à jour le statut dans la base de données
         const sequence = new Sequences();
         sequence.id = this.sequence.objectId;
-        sequence.set('isActif', !this.sequence.isActif);
+        sequence.set('isActif', newStatus);
         await sequence.save();
-        this.sequence.isActif = !this.sequence.isActif;
+        
+        // 3. Appeler explicitement la fonction Cloud Code appropriée
+        if (newStatus) {
+          // Activation: appeler populateRelanceSequence
+          await this.callCloudFunction('populateRelanceSequence', { idSequence: this.sequence.objectId });
+        } else {
+          // Désactivation: appeler cleanupRelancesOnDeactivate
+          await this.callCloudFunction('cleanupRelancesOnDeactivate', { idSequence: this.sequence.objectId });
+        }
+        
+        // 4. Mettre à jour localement
+        this.sequence.isActif = newStatus;
         
         const statusText = this.sequence.isActif ? 'activée' : 'désactivée';
-        ;
+        this.showNotification('Succès', `Séquence ${statusText} avec succès`, 'success');
       } catch (error) {
         console.error('Erreur lors du basculement du statut:', error);
         
-        // Gestion améliorée des erreurs
-        if (error.code === 500 || error.message.includes('Internal Server Error')) {
-          ;
+        // Essayer de restaurer l'état précédent en cas d'erreur
+        try {
+          const Sequences = Parse.Object.extend('Sequences');
+          const sequence = new Sequences();
+          sequence.id = this.sequence.objectId;
+          sequence.set('isActif', this.sequence.isActif); // Restaurer l'ancien statut
+          await sequence.save();
+        } catch (restoreError) {
+          console.error('Erreur lors de la restauration du statut:', restoreError);
+        }
+        
+        // Gestion spécifique des erreurs
+        if (error.code === 101) {
+          this.showNotification('Erreur', 'La séquence n\'existe plus dans la base de données', 'error');
+        } else if (error.code === 141 || error.message.includes('not found')) {
+          this.showNotification('Erreur', 'Fonction Cloud non disponible', 'error');
+        } else if (error.code === 500 || error.message.includes('Internal Server Error')) {
+          this.showNotification('Erreur', 'Erreur serveur lors du basculement du statut', 'error');
         } else if (error.message.includes('Invalid session token')) {
-          ;
+          this.showNotification('Erreur', 'Session expirée. Veuillez vous reconnecter.', 'error');
           setTimeout(() => {
-            
+            window.location.reload();
           }, 3000);
         } else {
-          ;
+          this.showNotification('Erreur', 'Impossible de basculer le statut', 'error');
         }
       } finally {
         this.isTogglingStatus = false;
+      }
+    },
+    
+    /**
+     * Appeler une fonction Cloud Code avec gestion des erreurs
+     */
+    async callCloudFunction(functionName, params = {}) {
+      try {
+        console.log(`Appel de la fonction Cloud ${functionName} avec les paramètres:`, params);
+        
+        // Vérifier si la fonction existe en essayant de l'appeler
+        const result = await Parse.Cloud.run(functionName, params);
+        console.log(`Fonction Cloud ${functionName} exécutée avec succès:`, result);
+        return result;
+      } catch (error) {
+        console.error(`Erreur lors de l'exécution de la fonction Cloud ${functionName}:`, error);
+        
+        // Gestion spécifique pour les fonctions non trouvées
+        if (error.code === 141 || error.message.includes('Object not found') || error.message.includes('not found')) {
+          console.warn(`La fonction Cloud ${functionName} n'est pas disponible sur le serveur`);
+          this.showNotification('Avertissement', `La fonction ${functionName} n'est pas disponible`, 'warning');
+          // Retourner un objet vide pour ne pas bloquer l'exécution
+          return {};
+        }
+        
+        throw error;
       }
     },
     
@@ -1080,6 +1153,35 @@ Consignes:
       }
     },
     
+    /**
+     * Utilitaires
+     */
+    
+    truncateText(text, maxLength = 240) {
+      if (!text) return '';
+      if (text.length <= maxLength) return text;
+      return text.substring(0, maxLength) + '...';
+    },
+    
+    formatDate(dateString) {
+      if (!dateString) return 'Non défini';
+      
+      try {
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return 'Date invalide';
+        
+        return date.toLocaleDateString('fr-FR', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+      } catch (error) {
+        console.error('Erreur de formatage de date:', error);
+        return 'Date invalide';
+      }
+    },
 
   }));
 });
