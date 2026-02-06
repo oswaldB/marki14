@@ -24,13 +24,13 @@ export const prerender = false;
   <!-- Gestion centralisée avec unifiedSequenceState -->
   <div x-data="unifiedSequenceState()" x-init="
     initFromUrl(); 
-    $watch('$data.sequence', () => { 
-      if ($data.sequence?.actions) { 
-        $nextTick(() => { console.log('Actions mises à jour:', $data.sequence.actions.length); }); 
+    $watch('sequence', () => { 
+      if (sequence?.actions) { 
+        $nextTick(() => { console.log('Actions mises à jour:', sequence.actions.length); }); 
       }
     }); 
     
-    console.log('Unified sequence state initialized:', $data);
+    console.log('Unified sequence state initialized');
   " @actions-updated.window="console.log('Événement actions-updated reçu')">
     <!-- État de chargement et d'erreur -->
     <div class="fixed inset-0 bg-white bg-opacity-75 flex items-center justify-center z-50" x-show="isLoading">
@@ -220,7 +220,7 @@ export const prerender = false;
             <div class="flex items-start">
               <p 
                 class="text-gray-600 flex-1"
-                x-text="sequence?.description ? $data.truncateText(sequence.description, 240) : 'Aucune description'"
+                x-text="sequence?.description ? truncateText(sequence.description, 240) : 'Aucune description'"
                 x-show="!editingDescription"
                 @click="editingDescription = true"
               ></p>

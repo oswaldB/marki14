@@ -133,7 +133,7 @@ const pageDescription = 'Gérez vos séquences de relance automatisées.';
               
               <!-- Sequence Info -->
               <div class="mb-3">
-                <p class="text-sm text-gray-600 mb-2" x-text="sequence.description ? $data.truncateText(sequence.description, 240) : 'Aucune description'"></p>
+                <p class="text-sm text-gray-600 mb-2" x-text="sequence.description ? truncateText(sequence.description, 240) : 'Aucune description'"></p>
                 
                 <div class="grid grid-cols-2 gap-2 text-sm">
                   <div>
@@ -151,7 +151,7 @@ const pageDescription = 'Gérez vos séquences de relance automatisées.';
               <div class="border-t border-gray-100 pt-3">
                 <div class="flex justify-between items-center mb-2">
                   <span class="text-sm text-gray-500">Prochaine action:</span>
-                  <span class="font-medium text-sm text-[#007ACE]" x-text="getNextAction(sequence)"></span>
+                  <span class="font-medium text-sm text-[#007ACE]">Non disponible</span>
                 </div>
                 <div class="flex justify-between items-center">
                   <span class="text-sm text-gray-500">Dernière exécution:</span>

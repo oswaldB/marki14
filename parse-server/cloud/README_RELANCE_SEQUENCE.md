@@ -116,7 +116,7 @@ La fonction supporte les placeholders dans les formats `[[champ]]` et `{{impaye.
 
 2. **Créer une séquence** avec des actions :
    ```javascript
-   const Sequence = Parse.Object.extend('sequences');
+   const Sequence = Parse.Object.extend('Sequences');
    const sequence = new Sequence();
    sequence.set('nom', 'Relance automatique');
    sequence.set('description', 'Séquence de relance pour factures impayées');

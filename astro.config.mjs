@@ -40,5 +40,8 @@ export default defineConfig({
   // Configuration pour le contenu
   content: {
     configPath: './src/content/config'
-  }
+  },
+   experimental: {
+    chromeDevtoolsWorkspace: true
+   }
 });

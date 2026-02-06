@@ -150,7 +150,7 @@ document.addEventListener('alpine:init', () => {
       this.isCreating = true;
       
       try {
-        const Sequences = Parse.Object.extend('sequences');
+        const Sequences = Parse.Object.extend('Sequences');
         const sequence = new Sequences();
         
         sequence.set('nom', this.newSequenceName);
@@ -211,7 +211,7 @@ document.addEventListener('alpine:init', () => {
       this.isDeleting = true;
       
       try {
-        const Sequences = Parse.Object.extend('sequences');
+        const Sequences = Parse.Object.extend('Sequences');
         const sequence = new Sequences();
         sequence.id = this.sequenceToDelete;
         
@@ -242,26 +242,99 @@ document.addEventListener('alpine:init', () => {
     },
     
     /**
-     * Basculer le statut d'une séquence
+     * Basculer le statut d'une séquence avec appel explicite au Cloud Code
      */
     async toggleSequenceStatus(sequence) {
-      if (!sequence) return;
+      if (!sequence || !sequence.objectId) {
+        this.showNotification('Erreur', 'Séquence invalide', 'error');
+        return;
+      }
+      
+      const newStatus = !sequence.isActif;
       
       try {
-        const Sequences = Parse.Object.extend('sequences');
+        // 1. Vérifier que la séquence existe toujours dans la base de données
+        const Sequences = Parse.Object.extend('Sequences');
+        const sequenceQuery = new Parse.Query(Sequences);
+        
+        try {
+          await sequenceQuery.get(sequence.objectId);
+        } catch (verifyError) {
+          if (verifyError.code === 101) { // Object not found
+            this.showNotification('Erreur', 'La séquence n\'existe plus dans la base de données', 'error');
+            return;
+          }
+          throw verifyError;
+        }
+        
+        // 2. Mettre à jour le statut dans la base de données
         const seq = new Sequences();
         seq.id = sequence.objectId;
-        seq.set('isActif', !sequence.isActif);
+        seq.set('isActif', newStatus);
         
         await seq.save();
         
-        // Mettre à jour localement
-        sequence.isActif = !sequence.isActif;
+        // 3. Appeler explicitement la fonction Cloud Code appropriée
+        if (newStatus) {
+          // Activation: appeler populateRelanceSequence
+          await this.callCloudFunction('populateRelanceSequence', { idSequence: sequence.objectId });
+        } else {
+          // Désactivation: appeler cleanupRelancesOnDeactivate
+          await this.callCloudFunction('cleanupRelancesOnDeactivate', { idSequence: sequence.objectId });
+        }
         
-        this.showNotification('Succès', `Séquence ${sequence.isActif ? 'activée' : 'désactivée'} avec succès`, 'success');
+        // 4. Mettre à jour localement
+        sequence.isActif = newStatus;
+        
+        this.showNotification('Succès', `Séquence ${newStatus ? 'activée' : 'désactivée'} avec succès`, 'success');
       } catch (error) {
         console.error('Erreur lors du basculement du statut:', error);
-        this.showNotification('Erreur', 'Impossible de basculer le statut', 'error');
+        
+        // Essayer de restaurer l'état précédent en cas d'erreur
+        try {
+          const Sequences = Parse.Object.extend('Sequences');
+          const seq = new Sequences();
+          seq.id = sequence.objectId;
+          seq.set('isActif', sequence.isActif); // Restaurer l'ancien statut
+          await seq.save();
+        } catch (restoreError) {
+          console.error('Erreur lors de la restauration du statut:', restoreError);
+        }
+        
+        // Gestion spécifique des erreurs
+        if (error.code === 101) {
+          this.showNotification('Erreur', 'La séquence n\'existe plus dans la base de données', 'error');
+        } else if (error.code === 141 || error.message.includes('not found')) {
+          this.showNotification('Erreur', 'Fonction Cloud non disponible', 'error');
+        } else {
+          this.showNotification('Erreur', 'Impossible de basculer le statut', 'error');
+        }
+      }
+    },
+    
+    /**
+     * Appeler une fonction Cloud Code avec gestion des erreurs
+     */
+    async callCloudFunction(functionName, params = {}) {
+      try {
+        console.log(`Appel de la fonction Cloud ${functionName} avec les paramètres:`, params);
+        
+        // Vérifier si la fonction existe en essayant de l'appeler
+        const result = await Parse.Cloud.run(functionName, params);
+        console.log(`Fonction Cloud ${functionName} exécutée avec succès:`, result);
+        return result;
+      } catch (error) {
+        console.error(`Erreur lors de l'exécution de la fonction Cloud ${functionName}:`, error);
+        
+        // Gestion spécifique pour les fonctions non trouvées
+        if (error.code === 141 || error.message.includes('Object not found') || error.message.includes('not found')) {
+          console.warn(`La fonction Cloud ${functionName} n'est pas disponible sur le serveur`);
+          this.showNotification('Avertissement', `La fonction ${functionName} n'est pas disponible`, 'warning');
+          // Retourner un objet vide pour ne pas bloquer l'exécution
+          return {};
+        }
+        
+        throw error; // Re-lancer l'erreur pour que l'appelant puisse la gérer
       }
     },
     
@@ -288,7 +361,7 @@ document.addEventListener('alpine:init', () => {
       if (!this.sequenceToDeleteId) return;
       
       try {
-        const Sequences = Parse.Object.extend('sequences');
+        const Sequences = Parse.Object.extend('Sequences');
         const seq = new Sequences();
         seq.id = this.sequenceToDeleteId;
         
@@ -347,6 +420,12 @@ document.addEventListener('alpine:init', () => {
     /**
      * Utilitaires
      */
+    
+    truncateText(text, maxLength = 240) {
+      if (!text) return '';
+      if (text.length <= maxLength) return text;
+      return text.substring(0, maxLength) + '...';
+    },
     
     formatDate(dateString) {
       if (!dateString) return 'Non défini';
