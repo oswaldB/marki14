@@ -1,0 +1,894 @@
+<!--
+  SequenceDetailPage.astro - Page unifiée de gestion des séquences (auto et manuel)
+  Basé sur les spécifications: admin/specs/sequences/specs.md
+-->
+---
+// Import du layout de base uniquement 
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SequenceActionsFlow from '../components/sequences/SequenceActionsFlow.astro';
+import AutoFiltersTableComponent from '../components/sequences/AutoFiltersTableComponent.astro';
+
+// Import des icônes Lucide
+import { AlertTriangle, Loader2, Edit, Mail, Copy, Trash2, Info, X, Save, Send, CheckCircle2, Filter, SlidersHorizontal, ToggleLeft, ToggleRight } from '@lucide/astro';
+
+// Désactiver le prerendering pour cette route dynamique
+export const prerender = false;
+---
+
+  <!-- Scripts spécifiques à la page de séquence unifiée -->
+  <script is:inline src='/js/pages/unifiedSequenceState.js'> </script>
+  <script is:inline src='/js/components/SequenceActionsFlow.js'></script>
+  <script is:inline src='/js/components/AutoFiltersTableComponent.js'></script>
+<BaseLayout title="Gestion des Séquences" withAuth={true} currentPath="/sequence-detail">
+  
+  <!-- Gestion centralisée avec unifiedSequenceState -->
+  <div x-data="unifiedSequenceState()" x-init="
+    initFromUrl(); 
+    $watch('$data.sequence', () => { 
+      if ($data.sequence?.actions) { 
+        $nextTick(() => { console.log('Actions mises à jour:', $data.sequence.actions.length); }); 
+      }
+    }); 
+    
+    console.log('Unified sequence state initialized:', $data);
+  " @actions-updated.window="console.log('Événement actions-updated reçu')">
+    <!-- État de chargement et d'erreur -->
+    <div class="fixed inset-0 bg-white bg-opacity-75 flex items-center justify-center z-50" x-show="isLoading">
+      <div class="text-center">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+        <p class="text-gray-600">Chargement en cours...</p>
+      </div>
+    </div>
+    
+    <!-- Message d'erreur si séquence introuvable -->
+    <div class="min-h-screen" x-show="!isLoading && !sequence">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="bg-white rounded-lg shadow p-8 text-center">
+          <AlertTriangle class="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <h2 class="text-xl font-bold text-gray-900 mb-2">Séquence introuvable</h2>
+          <p class="text-gray-600 mb-4">La séquence demandée n'existe pas ou a été supprimée.</p>
+          <a href="/sequences" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#007ACE] hover:bg-[#006BC2]">
+            ← Retour à la liste des séquences
+          </a>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Contenu principal - seulement si la séquence est chargée -->
+    <div x-show="sequence" class="min-h-screen">
+      <!-- En-tête -->
+      <header class="bg-white shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div class="flex justify-between items-center">
+            <div>
+              <h1 class="text-2xl font-bold text-gray-900">Détails de la séquence</h1>
+              <p class="text-sm text-gray-500">Gérez et testez vos séquences de relance</p>
+            </div>
+            <a href="/sequences" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+              ← Retour à la liste
+            </a>
+          </div>
+        </div>
+      </header>
+      
+      <!-- Contenu principal -->
+      <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <!-- Avertissement si aucun profil SMTP n'est sélectionné et chargement terminé -->
+        <div 
+          x-show="!isLoadingSmtpProfiles && smtpProfiles.length === 0"
+          class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6"
+        >
+          <div class="flex">
+            <div class="flex-shrink-0">
+              <AlertTriangle class="h-5 w-5 text-yellow-400" />
+            </div>
+            <div class="ml-3">
+              <p class="text-sm text-yellow-700">
+                Aucun profil SMTP configuré. 
+                <a href="/settings/profil-smtp" class="font-medium text-yellow-700 underline hover:text-yellow-600">
+                  Configurez un profil SMTP
+                </a> 
+                pour pouvoir envoyer des e-mails.
+              </p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Indication de chargement des profils SMTP -->
+        <div 
+          x-show="isLoadingSmtpProfiles"
+          class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6"
+        >
+          <div class="flex">
+            <div class="flex-shrink-0">
+              <Loader2 class="h-5 w-5 text-blue-400 animate-spin" />
+            </div>
+            <div class="ml-3">
+              <p class="text-sm text-blue-700">Chargement des profils SMTP en cours...</p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Section d'information de la séquence -->
+        <section class="bg-white rounded-lg shadow mb-6 p-6">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Nom de la séquence -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Nom de la séquence</label>
+              <div class="flex items-center">
+                <h2 
+                  class="text-xl font-semibold text-gray-900 mr-2"
+                  x-text="sequence?.nom || 'Séquence sans nom'"
+                  x-show="!editingSequenceName"
+                  @click="editingSequenceName = true"
+                ></h2>
+                <input 
+                  type="text"
+                  class="flex-1 border border-gray-300 rounded-md px-3 py-2 text-xl font-semibold"
+                  x-model="sequence.nom"
+                  x-show="editingSequenceName"
+                  @blur="editingSequenceName = false; saveSequenceName()"
+                  @keyup.enter="editingSequenceName = false; saveSequenceName()"
+                >
+                <button 
+                  class="ml-2 text-gray-400 hover:text-gray-600"
+                  @click="editingSequenceName = true"
+                  x-show="!editingSequenceName"
+                >
+                  <Edit class="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+            
+            <!-- Statut et toggle -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Statut</label>
+              <div class="flex items-center">
+                <span 
+                  class="px-2 py-1 rounded-full text-xs font-medium mr-2"
+                  :class="{
+                    'bg-[#007ACE] bg-opacity-20 text-[#007ACE]': sequence?.isActif,
+                    'bg-red-100 text-red-800': !sequence?.isActif
+                  }"
+                  x-text="sequence?.isActif ? 'Actif' : 'Inactif'"
+                ></span>
+                <button 
+                  class="relative inline-flex items-center h-6 rounded-full w-11 focus:outline-none"
+                  :class="{
+                    'bg-[#007ACE]': sequence?.isActif,
+                    'bg-gray-200': !sequence?.isActif
+                  }"
+                  @click="toggleSequenceStatus()"
+                  :disabled="isTogglingStatus || !sequence"
+                >
+                  <span 
+                    class="inline-block w-4 h-4 transform bg-white rounded-full transition-transform"
+                    :class="{
+                      'translate-x-6': sequence?.isActif,
+                      'translate-x-1': !sequence?.isActif
+                    }"
+                  ></span>
+                </button>
+              </div>
+            </div>
+            
+            <!-- Type de séquence avec toggle -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Type de séquence</label>
+              <div class="flex items-center">
+                <span 
+                  class="px-2 py-1 rounded-full text-xs font-medium mr-2"
+                  :class="{
+                    'bg-blue-100 text-blue-800': isAutoMode,
+                    'bg-gray-100 text-gray-800': !isAutoMode
+                  }"
+                  x-text="isAutoMode ? 'Automatique' : 'Manuel'"
+                ></span>
+                <button 
+                  class="relative inline-flex items-center h-6 rounded-full w-11 focus:outline-none ml-2"
+                  :class="{
+                    'bg-blue-600': isAutoMode,
+                    'bg-gray-200': !isAutoMode
+                  }"
+                  @click="toggleAutoMode()"
+                  :disabled="!sequence"
+                >
+                  <span 
+                    class="inline-block w-4 h-4 transform bg-white rounded-full transition-transform"
+                    :class="{
+                      'translate-x-6': isAutoMode,
+                      'translate-x-1': !isAutoMode
+                    }"
+                  ></span>
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Description -->
+          <div class="mt-6">
+            <div class="flex items-center justify-between mb-1">
+              <label class="text-sm font-medium text-gray-700">Description</label>
+              <button 
+                class="text-gray-400 hover:text-gray-600 ml-2"
+                @click="editingDescription = true"
+                x-show="!editingDescription"
+              >
+                <Edit class="w-4 h-4" />
+              </button>
+            </div>
+            <div class="flex items-start">
+              <p 
+                class="text-gray-600 flex-1"
+                x-text="sequence?.description ? $data.truncateText(sequence.description, 240) : 'Aucune description'"
+                x-show="!editingDescription"
+                @click="editingDescription = true"
+              ></p>
+              <textarea 
+                class="flex-1 border border-gray-300 rounded-md px-3 py-2 text-gray-600"
+                rows="3"
+                x-model="sequence.description"
+                x-show="editingDescription"
+                @blur="editingDescription = false; saveSequenceDescription()"
+              ></textarea>
+            </div>
+          </div>
+          
+          <!-- Actions principales -->
+          <div class="mt-6 flex flex-wrap gap-2">
+            <button 
+              class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#007ACE] hover:bg-[#006BC2] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#007ACE]"
+              @click="showTestDrawer = true"
+              :disabled="!sequence"
+            >
+              <Mail class="w-4 h-4 mr-2" />
+              Tester la séquence
+            </button>
+            
+            <button 
+              class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+              @click="duplicateSequence()"
+              :disabled="!sequence"
+            >
+              <Copy class="w-4 h-4 mr-2" />
+              Dupliquer
+            </button>
+            
+            <button 
+              class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+              @click="showDeleteConfirmation = true"
+              :disabled="!sequence"
+            >
+              <Trash2 class="w-4 h-4 mr-2" />
+              Supprimer
+            </button>
+            
+            <!-- Bouton spécifique au mode automatique -->
+            <button 
+              class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+              @click="showAutoFilterDrawer = true"
+              :disabled="!isAutoMode || !sequence"
+              x-show="isAutoMode"
+            >
+              <SlidersHorizontal class="w-4 h-4 mr-2" />
+              Configurer les filtres
+            </button>
+          </div>
+        </section>
+        
+        <!-- Contenu principal en 2 colonnes -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Colonne gauche - Flow des messages (75%) -->
+          <div class="lg:col-span-2">
+            <SequenceActionsFlow />
+            
+
+          </div>
+          
+          <!-- Colonne droite - Outils (25%) -->
+          <div class="lg:col-span-1 space-y-6">
+            <!-- Variables disponibles -->
+            <div class="bg-white rounded-lg shadow p-6">
+              <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-medium text-gray-900">Variables disponibles</h2>
+                <span 
+                  class="text-sm text-gray-500"
+                  x-text="`${filteredVariables?.length || 0} variables`"
+                ></span>
+              </div>
+              
+              <div class="mb-4">
+                <input 
+                  type="text"
+                  placeholder="Rechercher une variable..."
+                  class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  x-model="variableSearch"
+                >
+              </div>
+              
+              <div class="space-y-2 max-h-64 overflow-y-auto">
+                <template x-for="column in filteredVariables">
+                  <div class="flex items-center justify-between p-2 border border-gray-200 rounded">
+                    <code class="text-sm font-mono text-blue-600" x-text="column"></code>
+                    <button 
+                      class="text-gray-400 hover:text-gray-600"
+                      @click="copyToClipboard(column)"
+                    >
+                      <Copy class="w-4 h-4" />
+                    </button>
+                  </div>
+                </template>
+              </div>
+            </div>
+            
+            <!-- Prompt pour rédaction -->
+            <div class="bg-white rounded-lg shadow p-6">
+              <h2 class="text-lg font-medium text-gray-900 mb-4">Prompt pour rédiger des emails</h2>
+              
+              <div class="mb-4">
+                <textarea 
+                  rows="6"
+                  class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  x-model="generatedPrompt"
+                  readonly
+                ></textarea>
+              </div>
+              
+              <button 
+                class="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#007ACE] hover:bg-[#006BC2] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#007ACE]"
+                @click="copyToClipboard(generatedPrompt)"
+              >
+                <Copy class="w-4 h-4 mr-2" />
+                Copier le prompt
+              </button>
+            </div>
+            
+            <!-- Aide contextuelle -->
+            <div class="bg-white rounded-lg shadow p-6">
+              <h2 class="text-lg font-medium text-gray-900 mb-4">Aide contextuelle</h2>
+              
+              <div class="space-y-4 text-sm text-gray-600">
+                <div class="flex items-start">
+                  <Info class="w-4 h-4 text-blue-500 mr-2 mt-0.5 flex-shrink-0" />
+                  <p>Utilisez les variables entre doubles accolades <code>[[ variable ]]</code> dans vos messages.</p>
+                </div>
+                
+                <div class="flex items-start">
+                  <Info class="w-4 h-4 text-blue-500 mr-2 mt-0.5 flex-shrink-0" />
+                  <p>Les délais sont calculés à partir de la date de création de l'impayé.</p>
+                </div>
+                
+                <div class="flex items-start">
+                  <Info class="w-4 h-4 text-blue-500 mr-2 mt-0.5 flex-shrink-0" />
+                  <p>Testez toujours votre séquence avant activation pour vérifier le rendu des emails.</p>
+                </div>
+                
+                <!-- Aide spécifique au mode automatique -->
+                <div class="flex items-start" x-show="isAutoMode">
+                  <Filter class="w-4 h-4 text-purple-500 mr-2 mt-0.5 flex-shrink-0" />
+                  <p>En mode automatique, les filtres déterminent quels impayés seront inclus dans la séquence.</p>
+                </div>
+                
+                <!-- Aide spécifique au mode manuel -->
+                <div class="flex items-start" x-show="!isAutoMode">
+                  <ToggleLeft class="w-4 h-4 text-gray-500 mr-2 mt-0.5 flex-shrink-0" />
+                  <p>En mode manuel, vous pouvez ajouter des actions spécifiques pour chaque étape de relance.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+    
+    <!-- Test Drawer -->
+    <div 
+      class="fixed inset-0 overflow-hidden z-50"
+      x-show="showTestDrawer"
+      x-transition
+    >
+      <div class="absolute inset-0 overflow-hidden">
+        <!-- Background overlay -->
+        <div 
+          class="absolute inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+          @click="showTestDrawer = false"
+        ></div>
+        
+        <!-- Drawer content -->
+        <div class="fixed inset-y-0 right-0 pl-10 max-w-full flex sm:pl-16">
+          <div 
+            class="relative w-screen max-w-md"
+            @click.away="showTestDrawer = false"
+          >
+            <div class="h-full flex flex-col bg-white shadow-xl overflow-y-scroll">
+              <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                  <h2 class="text-lg font-medium text-gray-900">Tester la séquence</h2>
+                  <button 
+                    class="text-gray-400 hover:text-gray-600"
+                    @click="showTestDrawer = false"
+                  >
+                    <X class="w-6 h-6" />
+                  </button>
+                </div>
+                
+                <!-- Callout d'information -->
+                <div class="mb-6">
+                  <div class="bg-blue-50 border-l-4 border-blue-400 p-4">
+                    <div class="flex">
+                      <Info class="w-5 h-5 text-blue-400 mr-3" />
+                      <div class="text-sm text-blue-700">
+                        <p class="font-medium">Information sur le test</p>
+                        <p class="mt-1">Le test peuple tous les templates avec les données du premier impayé disponible et envoie tous les emails à l'adresse spécifiée.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Formulaire de test -->
+                <form 
+                  class="space-y-4"
+                  @submit.prevent="sendTestEmail()"
+                >
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                      Adresse email de test
+                    </label>
+                    <input 
+                      type="email"
+                      class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                      x-model="testEmail"
+                      required
+                      placeholder="exemple@domaine.com"
+                    >
+                    <p class="text-xs text-gray-500 mt-1">
+                      L'email sera envoyé à cette adresse avec les données de test.
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                      Profil SMTP
+                    </label>
+                    <select 
+                      class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                      x-model="selectedSmtpProfile"
+                      required
+                    >
+                      <option value="" disabled>Sélectionnez un profil SMTP</option>
+                      <template x-for="profile in smtpProfiles">
+                        <option :value="profile.objectId" x-text="profile.email"></option>
+                      </template>
+                    </select>
+                  </div>
+                  
+                  <!-- Aperçu des actions à envoyer -->
+                  <div class="mt-6">
+                    <h3 class="text-sm font-medium text-gray-900 mb-2">Actions à envoyer</h3>
+                    <div class="space-y-2 max-h-48 overflow-y-auto border border-gray-200 rounded-md p-2">
+                      <template x-for="action in sequence?.actions?.sort((a, b) => (a.delay || 0) - (b.delay || 0))">
+                        <div class="flex items-center justify-between p-2 border border-gray-100 rounded">
+                          <div class="flex items-center">
+                            <Mail class="w-4 h-4 text-blue-500 mr-2" />
+                            <span class="text-sm text-gray-600" x-text="`Jour ${action.delay}: ${action.subject}`"></span>
+                          </div>
+                          <span class="text-xs text-gray-400" x-text="action.senderEmail"></span>
+                        </div>
+                      </template>
+                    </div>
+                  </div>
+                  
+                  <div class="flex justify-end space-x-3 mt-6">
+                    <button 
+                      type="button"
+                      class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                      @click="showTestDrawer = false"
+                    >
+                      Annuler
+                    </button>
+                    <button 
+                      type="submit"
+                      class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                      :disabled="isSendingTest || smtpProfiles.length === 0"
+                    >
+                      <span x-show="!isSendingTest">
+                        <Send class="w-4 h-4 mr-2 inline" />
+                        <span x-text="smtpProfiles.length === 0 ? 'Aucun profil SMTP' : 'Envoyer le test'"></span>
+                      </span>
+                      <span x-show="isSendingTest">
+                        <Loader2 class="w-4 h-4 mr-2 inline animate-spin" />
+                        Envoi en cours...
+                      </span>
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Edit Drawer -->
+    <div 
+      class="fixed inset-0 overflow-hidden z-50"
+      x-show="showEditDrawer"
+      x-transition
+    >
+      <div class="absolute inset-0 overflow-hidden">
+        <!-- Background overlay -->
+        <div 
+          class="absolute inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+          @click="showEditDrawer = false"
+        ></div>
+        
+        <!-- Drawer content -->
+        <div class="fixed inset-y-0 right-0 pl-10 max-w-full flex sm:pl-16">
+          <div 
+            class="relative w-screen max-w-md"
+            @click.away="showEditDrawer = false"
+          >
+            <div class="h-full flex flex-col bg-white shadow-xl overflow-y-scroll">
+              <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                  <h2 class="text-lg font-medium text-gray-900">Éditer l'action</h2>
+                  <button 
+                    class="text-gray-400 hover:text-gray-600"
+                    @click="showEditDrawer = false"
+                  >
+                    <X class="w-6 h-6" />
+                  </button>
+                </div>
+                
+                <!-- Formulaire d'édition -->
+                <form 
+                  class="space-y-4"
+                  @submit.prevent="saveEditedAction()"
+                >
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                    <select 
+                      class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                      x-model="editingAction.type"
+                      disabled
+                    >
+                      <option value="email">Email</option>
+                      <!-- <option value="sms" disabled>SMS (bientôt disponible)</option> -->
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Délai (jours)</label>
+                    <input 
+                      type="number"
+                      min="0"
+                      class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                      x-model="editingAction.delay"
+                      required
+                    >
+                  </div>
+                  
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Sujet</label>
+                    <input 
+                      type="text"
+                      class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                      x-model="editingAction.subject"
+                      required
+                    >
+                  </div>
+                  
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Email émetteur</label>
+                    <select 
+                      class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                      x-model="editingAction.senderEmail"
+                      required
+                    >
+                      <option value="" disabled>Sélectionnez un profil SMTP</option>
+                      <template x-for="profile in smtpProfiles">
+                        <option :value="profile.email" x-text="profile.email"></option>
+                      </template>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Message</label>
+                    <textarea 
+                      rows="6"
+                      class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                      x-model="editingAction.message"
+                      required
+                    ></textarea>
+                    <p class="text-xs text-gray-500 mt-1">
+                      Utilisez les variables disponibles comme <code>[[variable]]</code>
+                    </p>
+                  </div>
+                  
+                  <!-- Aperçu des variables disponibles -->
+                  <div class="mt-6">
+                    <h3 class="text-sm font-medium text-gray-900 mb-2">Variables disponibles</h3>
+                    <div class="flex flex-wrap gap-2 max-h-24 overflow-y-auto border border-gray-200 rounded-md p-2">
+                      <template x-for="column in impayesColumns.slice(0, 10)">
+                        <button 
+                          type="button"
+                          class="px-2 py-1 text-xs bg-gray-100 rounded hover:bg-gray-200"
+                          @click="insertVariable(column)"
+                          x-text="column"
+                        ></button>
+                      </template>
+                    </div>
+                  </div>
+                  
+                  <div class="flex justify-end space-x-3 mt-6">
+                    <button 
+                      type="button"
+                      class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                      @click="showEditDrawer = false"
+                    >
+                      Annuler
+                    </button>
+                    <button 
+                      type="submit"
+                      class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                      :disabled="isSavingAction || smtpProfiles.length === 0"
+                    >
+                      <span x-show="!isSavingAction">
+                        <Save class="w-4 h-4 mr-2 inline" />
+                        <span x-text="smtpProfiles.length === 0 ? 'Aucun profil SMTP' : 'Enregistrer les modifications'"></span>
+                      </span>
+                      <span x-show="isSavingAction">
+                        <Loader2 class="w-4 h-4 mr-2 inline animate-spin" />
+                        Sauvegarde en cours...
+                      </span>
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Auto Filters Drawer -->
+    <div 
+      class="fixed inset-0 overflow-hidden z-50"
+      x-show="showAutoFilterDrawer"
+      x-transition
+    >
+      <div class="absolute inset-0 overflow-hidden">
+        <!-- Background overlay -->
+        <div 
+          class="absolute inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+          @click="showAutoFilterDrawer = false"
+        ></div>
+        
+        <!-- Drawer content -->
+        <div class="fixed inset-y-0 right-0 pl-10 max-w-full flex sm:pl-16">
+          <div 
+            class="relative w-screen max-w-2xl"
+            @click.away="showAutoFilterDrawer = false"
+          >
+            <div class="h-full flex flex-col bg-white shadow-xl overflow-y-scroll">
+              <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                  <h2 class="text-lg font-medium text-gray-900">Configuration des filtres automatiques</h2>
+                  <button 
+                    class="text-gray-400 hover:text-gray-600"
+                    @click="showAutoFilterDrawer = false"
+                  >
+                    <X class="w-6 h-6" />
+                  </button>
+                </div>
+                
+                <!-- Contenu des filtres -->
+                <AutoFiltersTableComponent 
+                  x-data="autoFiltersTableComponent()"
+                  x-init="init()"
+                />
+                
+                <div class="flex justify-end space-x-3 mt-6">
+                  <button 
+                    type="button"
+                    class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                    @click="showAutoFilterDrawer = false"
+                  >
+                    Fermer
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Drawer de confirmation de suppression -->
+    <div 
+      class="fixed inset-0 overflow-hidden z-50"
+      x-show="showDeleteConfirmation"
+      x-transition
+    >
+      <div class="absolute inset-0 overflow-hidden">
+        <!-- Background overlay -->
+        <div class="absolute inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="showDeleteConfirmation = false"></div>
+        
+        <!-- Drawer content -->
+        <div class="fixed inset-y-0 right-0 pl-10 max-w-full flex">
+          <div class="relative w-screen max-w-md" @click.away="showDeleteConfirmation = false">
+            <div class="h-full flex flex-col bg-white shadow-xl overflow-y-scroll">
+              <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                  <h2 class="text-lg font-medium text-gray-900">Supprimer la séquence</h2>
+                  <button 
+                    class="text-gray-400 hover:text-gray-600"
+                    @click="showDeleteConfirmation = false"
+                  >
+                    <X class="w-6 h-6" />
+                  </button>
+                </div>
+                
+                <div class="mb-6">
+                  <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+                    <div class="flex">
+                      <AlertTriangle class="w-5 h-5 text-yellow-400 mr-3" />
+                      <div class="text-sm text-yellow-700">
+                        <p class="font-medium">Attention</p>
+                        <p>Cette action est irréversible. Toutes les données de cette séquence seront définitivement supprimées.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="flex justify-end space-x-3">
+                  <button 
+                    class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                    @click="showDeleteConfirmation = false"
+                  >
+                    Annuler
+                  </button>
+                  <button 
+                    class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                    @click="deleteSequence()"
+                  >
+                    Supprimer définitivement
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Drawer de confirmation d'activation -->
+    <div 
+      class="fixed inset-0 overflow-hidden z-50"
+      x-show="showActivationConfirmation"
+      x-transition
+    >
+      <div class="absolute inset-0 overflow-hidden">
+        <!-- Background overlay -->
+        <div class="absolute inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="showActivationConfirmation = false"></div>
+        
+        <!-- Drawer content -->
+        <div class="fixed inset-y-0 right-0 pl-10 max-w-full flex">
+          <div class="relative w-screen max-w-md" @click.away="showActivationConfirmation = false">
+            <div class="h-full flex flex-col bg-white shadow-xl overflow-y-scroll">
+              <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                  <h2 class="text-lg font-medium text-gray-900" x-text="sequence?.isActif ? 'Désactiver la séquence' : 'Activer la séquence'"></h2>
+                  <button 
+                    class="text-gray-400 hover:text-gray-600"
+                    @click="showActivationConfirmation = false"
+                  >
+                    <X class="w-6 h-6" />
+                  </button>
+                </div>
+                
+                <div class="mb-6">
+                  <template x-if="!sequence?.isActif">
+                    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+                      <div class="flex">
+                        <AlertTriangle class="w-5 h-5 text-yellow-400 mr-3" />
+                        <div class="text-sm text-yellow-700">
+                          <p class="font-medium">L'activation va:</p>
+                          <ol class="list-decimal list-inside mt-2 space-y-1">
+                            <li>Supprimer toutes les relances non envoyées</li>
+                            <li>Recréer la séquence pour tous les impayés</li>
+                            <li>Planifier les envois selon les délais configurés</li>
+                          </ol>
+                        </div>
+                      </div>
+                    </div>
+                  </template>
+                  
+                  <template x-if="sequence?.isActif">
+                    <div class="bg-[#007ACE] bg-opacity-10 border-l-4 border-[#007ACE] p-4">
+                      <div class="flex">
+                        <Info class="w-5 h-5 text-[#007ACE] mr-3" />
+                        <div class="text-sm text-[#007ACE]">
+                          <p class="font-medium">La désactivation va:</p>
+                          <p class="mt-2">Arrêter la création de nouvelles relances pour cette séquence. Les relances déjà planifiées ne seront pas affectées.</p>
+                        </div>
+                      </div>
+                    </div>
+                  </template>
+                </div>
+                
+                <div class="flex justify-end space-x-3">
+                  <button 
+                    class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                    @click="showActivationConfirmation = false"
+                  >
+                    Annuler
+                  </button>
+                  <button 
+                    class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white"
+                    :class="{
+                      'bg-[#007ACE] hover:bg-[#006BCE] focus:ring-[#007ACE]': !sequence?.isActif,
+                      'bg-gray-600 hover:bg-gray-700 focus:ring-gray-500': sequence?.isActif
+                    }"
+                    @click="confirmToggleStatus()"
+                  >
+                    <span x-text="sequence?.isActif ? 'Confirmer la désactivation' : 'Confirmer activation'"></span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Notifications -->
+    <div 
+      class="fixed bottom-4 right-4 z-50"
+      x-show="notification.show"
+      x-transition
+    >
+      <div 
+        class="p-4 rounded-md shadow-lg"
+        :class="{
+          'bg-[#007ACE] bg-opacity-10 border border-[#007ACE] text-[#007ACE]': notification.type === 'success',
+          'bg-red-50 border border-red-400 text-red-800': notification.type === 'error',
+          'bg-[#007ACE] bg-opacity-10 border border-[#007ACE] text-[#007ACE]': notification.type === 'info',
+          'bg-yellow-50 border border-yellow-400 text-yellow-800': notification.type === 'warning'
+        }"
+      >
+        <div class="flex items-start">
+          <div class="flex-shrink-0">
+            <CheckCircle2 class="w-5 h-5" x-show="notification.type === 'success'" />
+            <AlertTriangle class="w-5 h-5" x-show="notification.type === 'error'" />
+            <Info class="w-5 h-5" x-show="notification.type === 'info'" />
+            <AlertTriangle class="w-5 h-5" x-show="notification.type === 'warning'" />
+          </div>
+          <div class="ml-3">
+            <p class="text-sm font-medium" x-text="notification.title"></p>
+            <p class="text-sm mt-1" x-text="notification.message"></p>
+          </div>
+          <div class="ml-auto pl-3">
+            <div class="-mx-1.5 -my-1.5">
+              <button 
+                class="inline-flex bg-transparent rounded-md p-1.5 text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2"
+                @click="notification.show = false"
+              >
+                <span class="sr-only">Fermer</span>
+                <X class="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Initialisation des icônes Lucide -->
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        if (window.lucide) {
+          window.lucide.createIcons();
+        }
+      });
+    </script>
+  </BaseLayout>

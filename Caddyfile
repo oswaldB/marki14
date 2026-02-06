@@ -1,0 +1,42 @@
+# Caddyfile for Marki-parse
+
+# Redirect HTTP to HTTPS
+http:// {
+   redir https://{host}{uri}
+}
+
+# Serve the Parse Dashboard
+parse-dashboard.marki-parse.localhost {
+    reverse_proxy parse-dashboard:4040
+}
+
+# Serve the Parse Server
+api.marki-parse.localhost {
+    reverse_proxy parse-server:1337
+}
+
+
+dev.parse.markidiags.com {
+    reverse_proxy parse-server:1337 {
+        header_up Host {host}
+        header_down -Access-Control-Allow-Origin
+        header_down -Access-Control-Allow-Methods
+        header_down -Access-Control-Allow-Headers
+        header_down -Access-Control-Allow-Credentials
+    }
+    header {
+        Access-Control-Allow-Origin "*"
+        Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+        Access-Control-Allow-Headers "Content-Type, Authorization"
+        Access-Control-Allow-Credentials "true"
+    }
+}
+
+dev.parse.dashboard.markidiags.com {
+    reverse_proxy 192.168.1.239:4040
+}
+
+
+dev.markidiags.com {
+    reverse_proxy 192.168.1.239:5000
+}

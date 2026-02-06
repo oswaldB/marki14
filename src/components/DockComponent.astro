@@ -1,0 +1,211 @@
+---
+// DockComponent.astro - Composant de dock mobile rétractable amélioré
+
+// Import des icônes Lucide
+import { ChevronUp, Menu } from '@lucide/astro';
+---
+
+<!-- Structure HTML du dock mobile avec Alpine.js pour la gestion d'état -->
+<div 
+  x-data="{
+    isCollapsed: true,
+    isAnimating: false,
+    
+    toggleDock() {
+      if (this.isAnimating) return;
+      
+      this.isAnimating = true;
+      this.isCollapsed = !this.isCollapsed;
+      
+      const event = new CustomEvent('dock-state-changed', {
+        detail: { collapsed: this.isCollapsed }
+      });
+      document.dispatchEvent(event);
+      
+      // Réinitialiser l'animation après le délai de transition
+      setTimeout(() => {
+        this.isAnimating = false;
+      }, 300);
+    }
+  }"
+  x-cloak
+  class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40 transition-all duration-300 ease-in-out shadow-xl mobile-dock rounded-t-[1rem]"
+  :class="{
+    'h-auto py-4': !isCollapsed,
+    'h-12': isCollapsed,
+    'opacity-100': !isCollapsed,
+    'opacity-95': isCollapsed
+  }"
+  x-init="() => {
+    // Initialiser l'état du dock depuis localStorage si disponible
+    try {
+      const savedState = localStorage.getItem('dockCollapsed');
+      if (savedState !== null) {
+        isCollapsed = JSON.parse(savedState);
+      }
+    } catch (e) {
+      console.warn('LocalStorage not available for dock state');
+    }
+  }"
+  x-effect="() => {
+    // Sauvegarder l'état dans localStorage
+    try {
+      localStorage.setItem('dockCollapsed', JSON.stringify(isCollapsed));
+    } catch (e) {
+      console.warn('Could not save dock state to localStorage');
+    }
+  }"
+>
+  <!-- Contenu du dock - visible uniquement quand non rétracté -->
+  <div 
+    x-show="!isCollapsed"
+    x-transition:enter="transition ease-out duration-300"
+    x-transition:enter-start="opacity-0 transform translate-y-4"
+    x-transition:enter-end="opacity-100 transform translate-y-0"
+    x-transition:leave="transition ease-in duration-200"
+    x-transition:leave-start="opacity-100 transform translate-y-0"
+    x-transition:leave-end="opacity-0 transform translate-y-4"
+    class="flex items-center justify-center px-4 pb-2"
+  >
+    <slot />
+  </div>
+  
+  <!-- Bouton de toggle du dock avec icône dynamique et meilleure accessibilité -->
+  <button 
+    @click="toggleDock()"
+    @keydown.enter="toggleDock()"
+    @keydown.space="toggleDock()"
+    class="absolute -top-2 right-4 bg-gradient-to-br from-gray-700 to-gray-800 text-white rounded-full w-10 h-10 flex items-center justify-center shadow-lg hover:bg-gray-800 hover:shadow-xl transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50"
+    :title="isCollapsed ? 'Ouvrir le menu' : 'Fermer le menu'"
+    :aria-label="isCollapsed ? 'Ouvrir le menu' : 'Fermer le menu'"
+    :aria-expanded="!isCollapsed"
+    :disabled="isAnimating"
+  >
+    <span x-show="isCollapsed" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 scale-90" x-transition:enter-end="opacity-100 scale-100">
+      <Menu class="text-base" />
+    </span>
+    <span x-show="!isCollapsed" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 scale-90" x-transition:enter-end="opacity-100 scale-100">
+      <ChevronUp class="text-base transition-transform duration-200" :class="{ 'rotate-180': isCollapsed }" />
+    </span>
+  </button>
+  
+  <!-- Indicateur visuel pour encourager l'interaction -->
+  <div 
+    x-show="isCollapsed"
+    class="absolute -top-1 left-1/2 transform -translate-x-1/2 w-4 h-1 bg-gray-400 rounded-full opacity-50"
+  ></div>
+</div>
+
+<!-- Script pour gérer le padding du contenu principal -->
+<script is:inline>
+  // Synchroniser l'état du dock avec le padding du contenu principal
+  if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+    // Fonction pour mettre à jour le padding
+    function updateMainPadding(collapsed) {
+      const mainContent = document.querySelector('main');
+      if (mainContent) {
+        if (collapsed) {
+          mainContent.classList.add('pb-4');
+          mainContent.classList.remove('pb-20');
+        } else {
+          mainContent.classList.remove('pb-4');
+          mainContent.classList.add('pb-20');
+        }
+      }
+    }
+
+    // Écouter les événements de changement d'état du dock
+    document.addEventListener('dock-state-changed', (e) => {
+      console.log('📢 Événement dock reçu:', e.detail.collapsed);
+      updateMainPadding(e.detail.collapsed);
+    });
+
+    // Initialiser le padding au chargement
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('🚀 Dock initialisé - padding par défaut appliqué');
+      
+      // Lire l'état initial depuis localStorage
+      try {
+        const savedState = localStorage.getItem('dockCollapsed');
+        const initialCollapsed = savedState !== null ? JSON.parse(savedState) : true;
+        updateMainPadding(initialCollapsed);
+      } catch (e) {
+        console.log('🚀 Dock initialisé - padding par défaut appliqué (dock rétracté)');
+        updateMainPadding(true);
+      }
+    });
+
+    // Vérifier que Alpine.js est chargé
+    setTimeout(() => {
+      if (typeof Alpine !== 'undefined') {
+        console.log('✅ Alpine.js est chargé et prêt');
+      } else {
+        console.warn('⚠️ Alpine.js n\'est pas encore chargé');
+      }
+    }, 1000);
+  }
+</script>
+
+<style>
+  /* Style pour le bouton du dock */
+  .dock-toggle-button {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  /* Animation pour l'indicateur */
+  @keyframes pulse {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+  }
+  
+  .dock-indicator {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  
+  /* Style pour le dock ouvert */
+  .dock-open {
+    box-shadow: 0 -10px 25px -5px rgba(0, 0, 0, 0.1), 
+                0 -10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+  
+  /* Style pour les éléments du dock mobile */
+  .dock-mobile-nav a {
+    transition: all 0.2s ease;
+  }
+  
+  .dock-mobile-nav a:hover {
+    background-color: #f1f5f9;
+    transform: translateY(-2px);
+  }
+  
+  .dock-mobile-nav a:active {
+    transform: translateY(0);
+  }
+  
+  /* Style pour le dock lui-même */
+  .mobile-dock {
+    border-top: 1px solid #e5e7eb;
+  }
+  
+  /* Style pour le contenu du dock */
+  .dock-content {
+    overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 #f1f5f9;
+  }
+  
+  .dock-content::-webkit-scrollbar {
+    height: 4px;
+  }
+  
+  .dock-content::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 2px;
+  }
+  
+  .dock-content::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 2px;
+  }
+</style>
+

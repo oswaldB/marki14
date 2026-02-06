@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test du Store des Séquences</title>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="https://www.parsecdn.com/js/parse-2.18.0.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .log {
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+        .success {
+            color: green;
+            font-weight: bold;
+        }
+        button {
+            background: #007ACE;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #006BCE;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <h1>Test du Store des Séquences</h1>
+    
+    <div x-data="sequencesState()" x-init="init()">
+        <h2>Configuration Parse</h2>
+        <div>
+            <label>App ID: </label>
+            <input type="text" id="appId" value="marki">
+            <label>JavaScript Key: </label>
+            <input type="text" id="jsKey" value="Careless7-Gore4-Guileless0-Jogger5-Clubbed9">
+            <label>Server URL: </label>
+            <input type="text" id="serverURL" value="https://dev.parse.markidiags.com">
+            <button @click="configureParse()">Configurer Parse</button>
+        </div>
+        
+        <h2>Test du Store</h2>
+        <button @click="loadSequences()" :disabled="isLoading">
+            <span x-show="!isLoading">Charger les séquences</span>
+            <span x-show="isLoading">Chargement...</span>
+        </button>
+        
+        <div x-show="isLoading" class="log">
+            Chargement en cours...
+        </div>
+        
+        <div x-show="!isLoading">
+            <h3>Résultats:</h3>
+            <div class="log">
+                <template x-for="sequence in sequences" :key="sequence.objectId">
+                    <div>
+                        <strong x-text="sequence.nom"></strong> 
+                        (ID: <span x-text="sequence.objectId"></span>)
+                    </div>
+                </template>
+                <div x-show="sequences.length === 0" class="error">
+                    Aucune séquence trouvée
+                </div>
+            </div>
+        </div>
+        
+        <h2>Logs Console</h2>
+        <div id="consoleLog" class="log"></div>
+    </div>
+
+    <script>
+        // Rediriger la console vers la div
+        const consoleLog = document.getElementById('consoleLog');
+        const originalConsoleLog = console.log;
+        const originalConsoleError = console.error;
+        
+        console.log = function(...args) {
+            originalConsoleLog.apply(console, args);
+            const message = args.map(arg => {
+                if (typeof arg === 'object') {
+                    return JSON.stringify(arg, null, 2);
+                }
+                return arg;
+            }).join(' ');
+            
+            const logEntry = document.createElement('div');
+            logEntry.textContent = message;
+            consoleLog.appendChild(logEntry);
+            consoleLog.scrollTop = consoleLog.scrollHeight;
+        };
+        
+        console.error = function(...args) {
+            originalConsoleError.apply(console, args);
+            const message = args.map(arg => {
+                if (typeof arg === 'object') {
+                    return JSON.stringify(arg, null, 2);
+                }
+                return arg;
+            }).join(' ');
+            
+            const logEntry = document.createElement('div');
+            logEntry.textContent = message;
+            logEntry.className = 'error';
+            consoleLog.appendChild(logEntry);
+            consoleLog.scrollTop = consoleLog.scrollHeight;
+        };
+        
+        // Configuration globale pour le test
+        window.parseConfig = {
+            appId: 'marki',
+            javascriptKey: 'Careless7-Gore4-Guileless0-Jogger5-Clubbed9',
+            serverURL: 'https://dev.parse.markidiags.com'
+        };
+        
+        // Initialiser Parse
+        Parse.initialize(window.parseConfig.appId, window.parseConfig.javascriptKey);
+        Parse.serverURL = window.parseConfig.serverURL;
+        
+        function configureParse() {
+            window.parseConfig = {
+                appId: document.getElementById('appId').value,
+                javascriptKey: document.getElementById('jsKey').value,
+                serverURL: document.getElementById('serverURL').value
+            };
+            
+            Parse.initialize(window.parseConfig.appId, window.parseConfig.javascriptKey);
+            Parse.serverURL = window.parseConfig.serverURL;
+            
+            console.log('Parse reconfiguré avec:', window.parseConfig);
+        }
+    </script>
+    
+    <!-- Importer le store -->
+    <script src="/js/pages/sequencesState.js"></script>
+    
+    <h2>Instructions pour les DevTools</h2>
+    <div class="log">
+        <h3>Pour vérifier avec les DevTools:</h3>
+        <ol>
+            <li>Ouvrez les DevTools (F12 ou Ctrl+Shift+I)</li>
+            <li>Allez dans l'onglet "Console"</li>
+            <li>Vérifiez les messages d'erreur</li>
+            <li>Testez les commandes suivantes:</li>
+        </ol>
+        <pre>
+// Vérifier que Parse est disponible
+console.log('Parse disponible:', typeof Parse !== 'undefined');
+
+// Vérifier la configuration
+console.log('Parse config:', {
+    appId: Parse.applicationId,
+    serverURL: Parse.serverURL
+});
+
+// Tester une requête simple
+const testQuery = new Parse.Query('Sequences');
+testQuery.limit(1);
+testQuery.find().then(results => {
+    console.log('Test query results:', results);
+}).catch(error => {
+    console.error('Test query error:', error);
+});
+        </pre>
+    </div>
+</body>
+</html>

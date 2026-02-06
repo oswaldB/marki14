@@ -1,0 +1,157 @@
+<!--
+  CreateSequenceDrawer.astro - Drawer pour la création de nouvelles séquences
+  Basé sur les spécifications: admin/specs/sequences/specs.md
+-->
+---
+// Import de l'état principal
+import sequenceState from '../../js/sequences/sequenceState.js';
+
+import { Loader2, Info, X, Plus } from '@lucide/astro';---
+
+<div 
+  class="fixed inset-0 overflow-hidden z-50"
+  x-show="$data.showCreateModal"
+  x-transition
+>
+  <div class="absolute inset-0 overflow-hidden">
+    <!-- Background overlay -->
+    <div 
+      class="absolute inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+      @click="$data.showCreateModal = false"
+    ></div>
+    
+    <!-- Drawer content -->
+    <div class="fixed inset-y-0 right-0 pl-10 max-w-full flex sm:pl-16">
+      <div 
+        class="relative w-screen max-w-md"
+        @click.away="$data.showCreateModal = false"
+      >
+        <div class="h-full flex flex-col bg-white shadow-xl overflow-y-scroll">
+          <div class="p-6">
+            <div class="flex justify-between items-center mb-4">
+              <h2 class="text-lg font-medium text-gray-900">Créer une nouvelle séquence</h2>
+              <button 
+                class="text-gray-400 hover:text-gray-600"
+                @click="$data.showCreateModal = false"
+              >
+                <X class="w-6 h-6" />
+              </button>
+            </div>
+            
+            <!-- Callout d'information -->
+            <div class="mb-6">
+              <div class="bg-[#007ACE] bg-opacity-10 border-l-4 border-[#007ACE] p-4">
+                <div class="flex">
+                  <Info class="w-5 h-5 text-[#007ACE] mr-3" />
+                  <div class="text-sm text-[#007ACE]">
+                    <p class="font-medium">Création de séquence</p>
+                    <p class="mt-1">Donnez un nom à votre séquence de relance. Vous pourrez configurer les détails et les actions après la création.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Formulaire de création -->
+            <form 
+              class="space-y-4"
+              @submit.prevent="$data.createSequence()"
+            >
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">
+                  Nom de la séquence
+                </label>
+                <input 
+                  type="text"
+                  class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#007ACE] focus:border-[#007ACE]"
+                  x-model="$data.newSequenceName"
+                  required
+                  placeholder="Ex: Relance client premium"
+                >
+                <p class="text-xs text-gray-500 mt-1">
+                  Le nom doit être unique et descriptif
+                </p>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">
+                  Description (optionnelle)
+                </label>
+                <textarea 
+                  rows="3"
+                  class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#007ACE] focus:border-[#007ACE]"
+                  x-model="$data.newSequenceDescription"
+                  placeholder="Ex: Séquence de relance pour les clients premium avec délais progressifs"
+                ></textarea>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">
+                  Type de séquence
+                </label>
+                <div class="space-y-2">
+                  <div class="flex items-center">
+                    <input 
+                      type="radio"
+                      id="sequence-normal"
+                      class="h-4 w-4 text-[#007ACE] border-gray-300 focus:ring-[#007ACE]"
+                      x-model="$data.newSequenceType"
+                      value="normal"
+                      checked
+                    >
+                    <label for="sequence-normal" class="ml-3 block text-sm font-medium text-gray-700">
+                      Séquence Normale
+                    </label>
+                  </div>
+                  <div class="flex items-center">
+                    <input 
+                      type="radio"
+                      id="sequence-automatique"
+                      class="h-4 w-4 text-[#007ACE] border-gray-300 focus:ring-[#007ACE]"
+                      x-model="$data.newSequenceType"
+                      value="automatique"
+                    >
+                    <label for="sequence-automatique" class="ml-3 block text-sm font-medium text-gray-700">
+                      Séquence Automatique
+                    </label>
+                  </div>
+                </div>
+                <p class="text-xs text-gray-500 mt-2">
+                  Les séquences automatiques permettent de filtrer et sélectionner automatiquement les impayés à relancer
+                </p>
+              </div>
+              
+              <div class="flex justify-end space-x-3 mt-6">
+                <button 
+                  type="button"
+                  class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                  @click="$data.showCreateModal = false"
+                >
+                  Annuler
+                </button>
+                <button 
+                  type="submit"
+                  class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#007ACE] hover:bg-[#006BCE] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#007ACE]"
+                  :disabled="$data.isCreating"
+                >
+                  <span x-show="!$data.isCreating">
+                    <Plus class="w-4 h-4 mr-2 inline" />
+                    Créer la séquence
+                  </span>
+                  <span x-show="$data.isCreating">
+                    <Loader2 class="w-4 h-4 mr-2 inline animate-spin" />
+                    Création en cours...
+                  </span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Initialisation des icônes Lucide
+  ;
+</script>

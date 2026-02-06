@@ -1,0 +1,247 @@
+---// src/pages/sequences.astro
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Pebble from '../components/Pebble.astro';
+import CreateSequenceDrawer from '../components/sequences/CreateSequenceDrawer.astro';
+
+
+import { Trash2, X, Plus, FileText, Eye, Power, RefreshCw, BanknoteX } from '@lucide/astro';// Page metadata
+const pageTitle = 'Séquences de Relance';
+const pageDescription = 'Gérez vos séquences de relance automatisées.';
+---
+
+<!-- Alpine.js State and Functions -->
+<script is:inline src='/js/pages/sequencesState.js'></script>
+
+<!-- Base Layout with Parse initialization -->
+<BaseLayout title={pageTitle}>
+  <!-- Pebbles Background - Following Styleguide -->
+  <div class="fixed inset-0 overflow-hidden -z-10">
+    <div class="absolute inset-0 bg-gradient-to-br from-gray-50 to-white"></div>
+    <!-- Animated Pebbles - Using Pebble component -->
+    <div class="absolute inset-0">
+      <!-- Pebble 1 - Primary -->
+      <Pebble 
+        size="large"
+        color="primary"
+        opacity="low"
+        animation="float-1"
+        position="absolute top-20 left-20"
+        title="Pebble Principal - Couleur Primary #007ACE"
+      />
+      
+      <!-- Pebble 2 - Secondary -->
+      <Pebble 
+        size="xlarge"
+        color="secondary"
+        opacity="medium"
+        animation="float-2"
+        position="absolute top-1/2 right-1/4"
+        title="Pebble Secondaire - Couleur Secondary #00BDCF"
+      />
+      
+      <!-- Pebble 3 - Success -->
+      <Pebble 
+        size="large"
+        color="success"
+        opacity="low"
+        animation="float-3"
+        position="absolute bottom-20 left-1/3"
+        title="Pebble Succès - Couleur Success #00CF9B"
+      />
+    </div>
+  </div>
+  
+  <!-- Main content container -->
+  <div class="container mx-auto px-4 py-6 relative z-10" id="sequencesPage"
+       x-data="sequencesState()"
+       x-init="init()">
+    <!-- Page Header -->
+    <header class="mb-8">
+      <h1 class="text-3xl font-bold text-gray-900 mb-2">{pageTitle}</h1>
+      <p class="text-gray-600 mb-6">{pageDescription}</p>
+      
+      <!-- Action buttons -->
+      <div class="flex flex-wrap gap-2 mb-8">
+        <button 
+          class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#007ACE] hover:bg-[#006BCE] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#007ACE]"
+          @click="showCreateModal = true"
+          data-testid="create-sequence"
+        >
+          <Plus class="inline mr-2" />
+          Créer une nouvelle séquence
+        </button>
+        
+        <button 
+          class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+          @click="syncSequences()"
+          data-testid="sync-sequences"
+        >
+          <RefreshCw class="inline mr-2 w-4 h-4" />
+          Synchroniser les séquences
+        </button>
+      </div>
+    </header>
+    
+    <!-- Main Content Area -->
+    <main class="min-h-screen">
+      <!-- Loading state -->
+      <div x-show="isLoading" class="text-center py-8">
+        <div class="w-12 h-12 border-4 border-[#007ACE] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+        <p class="text-gray-600">Chargement des séquences...</p>
+      </div>
+      
+      <!-- Empty state -->
+      <div x-show="!isLoading && sequences.length === 0" class="bg-white border border-gray-200 rounded-lg p-6 shadow-sm text-center">
+        <h3 class="text-lg font-medium text-gray-900 mb-2">Aucune séquence trouvée</h3>
+        <p class="text-gray-600 mb-4">Aucune séquence de relance n'a été créée.</p>
+        <button 
+          @click="showCreateModal = true"
+          class="px-4 py-2 bg-[#007ACE] text-white rounded-md hover:bg-[#006BCE] transition-colors"
+        >
+          <Plus class="inline mr-2" />
+          Créer la première séquence
+        </button>
+      </div>
+      
+      <!-- Sequences Grid -->
+      <div x-show="!isLoading && sequences.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <template x-for="sequence in sequences" :key="sequence.objectId">
+          <div class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+            <div class="p-4">
+              <!-- Sequence Header -->
+              <div class="flex justify-between items-start mb-3">
+                <div class="flex items-center space-x-2">
+                  <span 
+                    class="px-2 py-1 text-xs rounded-full font-medium"
+                    :class="sequence.isAuto ? 'bg-purple-100 text-purple-700' : 'bg-[#007ACE] bg-opacity-20 text-[#007ACE]'"
+                    x-text="sequence.nom"
+                  ></span>
+                  <span x-show="sequence.isAuto" class="text-purple-600">
+                    <FileText class="w-4 h-4" />
+                  </span>
+                  <span 
+                    class="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-600"
+                    x-text="sequence.isAuto ? 'Auto' : 'Normale'"
+                  ></span>
+                </div>
+                <span 
+                  class="text-xs px-2 py-1 rounded-full"
+                  :class="sequence.isActif ? 'bg-[#007ACE] bg-opacity-20 text-[#007ACE]' : 'bg-red-100 text-red-700'"
+                  x-text="sequence.isActif ? 'Actif' : 'Inactif'"
+                ></span>
+              </div>
+              
+              <!-- Sequence Info -->
+              <div class="mb-3">
+                <p class="text-sm text-gray-600 mb-2" x-text="sequence.description ? $data.truncateText(sequence.description, 240) : 'Aucune description'"></p>
+                
+                <div class="grid grid-cols-2 gap-2 text-sm">
+                  <div>
+                    <p class="text-gray-500">Actions:</p>
+                    <p class="font-medium text-gray-900" x-text="sequence.actions ? sequence.actions.length : 0"></p>
+                  </div>
+                  <div>
+                    <p class="text-gray-500">Créé le:</p>
+                    <p class="font-medium text-gray-900" x-text="formatDate(sequence.createdAt)"></p>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Sequence Actions -->
+              <div class="border-t border-gray-100 pt-3">
+                <div class="flex justify-between items-center mb-2">
+                  <span class="text-sm text-gray-500">Prochaine action:</span>
+                  <span class="font-medium text-sm text-[#007ACE]" x-text="getNextAction(sequence)"></span>
+                </div>
+                <div class="flex justify-between items-center">
+                  <span class="text-sm text-gray-500">Dernière exécution:</span>
+                  <span class="font-medium text-sm" x-text="sequence.lastRun ? formatDate(sequence.lastRun) : 'Jamais'"></span>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Sequence Footer with Actions -->
+            <div class="border-t border-gray-100 px-4 py-3 bg-gray-50">
+              <div class="flex justify-end space-x-2">
+                <button 
+                  @click="navigateToSequenceDetail(sequence.objectId)"
+                  class="px-3 py-1 bg-[#007ACE] text-white rounded-md hover:bg-[#006BCE] text-sm transition-colors flex items-center space-x-1"
+                  title="Voir les détails"
+                >
+                  <Eye class="w-4 h-4" />
+                  <span>Voir</span>
+                </button>
+                <button 
+                  @click="toggleSequenceStatus(sequence)"
+                  class="px-3 py-1 text-sm transition-colors flex items-center space-x-1"
+                  :class="sequence.isActif ? 'text-red-600 hover:text-red-800' : 'text-[#007ACE] hover:text-[#006BCE]'"
+                  title="Activer/Désactiver"
+                >
+                  <Power class="w-4 h-4" />
+                  <span x-text="sequence.isActif ? 'Désactiver' : 'Activer'"></span>
+                </button>
+                <button 
+                  @click="confirmDeleteSequence(sequence)"
+                  class="px-3 py-1 text-red-600 hover:text-red-800 text-sm transition-colors flex items-center space-x-1"
+                  title="Supprimer la séquence"
+                >
+                  <Trash2 class="w-4 h-4" />
+                  <span>Supprimer</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </template>
+      </div>
+        <!-- Delete Confirmation Dialog -->
+        <div 
+          x-show="showSequenceDeleteConfirmation"
+          x-transition
+          class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center"
+        >
+          <div class="bg-white rounded-lg shadow-xl p-6 max-w-sm w-full mx-4">
+            <div class="flex justify-between items-start mb-4">
+              <h3 class="text-lg font-semibold text-gray-900">Supprimer la séquence</h3>
+              <button 
+                @click="cancelDeleteSequence()"
+                class="text-gray-400 hover:text-gray-600"
+              >
+                <X class="w-5 h-5" />
+              </button>
+            </div>
+            <p class="text-gray-600 mb-6">
+              Êtes-vous sûr de vouloir supprimer cette séquence ? Cette action est irréversible.
+            </p>
+            <div class="flex justify-end space-x-3">
+              <button 
+                @click="cancelDeleteSequence()"
+                class="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
+              >
+                Annuler
+              </button>
+              <button 
+                @click="deleteSequence()"
+                class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors flex items-center space-x-2"
+              >
+                <Trash2 class="w-4 h-4" />
+                <span>Supprimer</span>
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Create Sequence Drawer -->
+  <CreateSequenceDrawer />
+    </main>
+  </div>
+
+
+</BaseLayout>
+
+<!-- Page-specific styles -->
+<style>
+  /* Transition effects */
+  [x-transition] {
+    transition: all 0.3s ease;
+  }
+</style>

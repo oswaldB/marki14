@@ -1,0 +1,112 @@
+---
+export const prerender = true;
+
+interface Props {
+  title: string;
+  withAuth?: boolean;
+  currentPath?: string;
+  hideSidebar?: boolean;}
+
+const { title, withAuth = false, currentPath = '', hideSidebar = false } = Astro.props;
+
+// Debug: Log the props to ensure they're being passed correctly
+console.log('BaseLayout props:', { title, withAuth, currentPath, hideSidebar });
+
+import SideMenu from '../components/SideMenu.astro';
+import DockComponent from '../components/DockComponent.astro';
+import Notifications from '../components/Notifications.astro';
+---
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{title} — Marki</title>
+  <style is:global>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    [x-cloak] { display: none !important; }
+  </style>
+  <script is:inline src="https://unpkg.com/parse@5.3.0/dist/parse.min.js"></script>
+  <script is:inline define:vars={{appId: import.meta.env.PUBLIC_APPLICATION_ID, jsKey: import.meta.env.PUBLIC_JAVASCRIPT_KEY, serverUrl: import.meta.env.PUBLIC_SERVER_URL}}>
+    // Initialiser Parse SDK immédiatement
+    Parse.initialize(appId, jsKey);
+    Parse.serverURL = serverUrl;
+    console.log('✅ Parse SDK initialisé avec:', serverUrl);
+  </script>
+</head>
+<body class="bg-gray-50">
+  <!-- Script d'authentification conditionnel -->
+  <script is:inline define:vars={{withAuth: withAuth}}>
+    // Code d'authentification - uniquement côté client
+    if (typeof window !== 'undefined') {
+      // S'assurer que withAuth est défini et est un booléen
+      const authEnabled = Boolean(withAuth);
+      console.log('Authentification:', authEnabled ? 'activée' : 'désactivée');
+      
+      if (authEnabled) {
+        window.addEventListener('DOMContentLoaded', async () => {
+          // Attendre que Parse SDK soit complètement initialisé
+          await new Promise(resolve => {
+            if (typeof Parse !== 'undefined' && Parse.serverURL) {
+              resolve();
+            } else {
+              const checkParse = setInterval(() => {
+                if (typeof Parse !== 'undefined' && Parse.serverURL) {
+                  clearInterval(checkParse);
+                  resolve();
+                }
+              }, 50);
+            }
+          });
+
+          const sessionToken = sessionStorage.getItem('parseSessionToken') || localStorage.getItem('parseSessionToken');
+
+          if (sessionToken) {
+            try {
+              // Restaurer la session avec le token
+              const user = await Parse.User.become(sessionToken);
+              // Re-sauvegarder le token après restauration réussie
+              sessionStorage.setItem('parseSessionToken', user.getSessionToken());
+              console.log('✅ Session restaurée dans BaseLayout');
+            } catch (error) {
+              console.error('❌ Token invalide:', error);
+              sessionStorage.removeItem('parseSessionToken');
+              const currentPath = window.location.pathname;
+              window.location.href = '/login?redirect=' + encodeURIComponent(currentPath);
+            }
+          } else {
+            // Pas de token, redirection vers login
+            const currentPath = window.location.pathname;
+            window.location.href = '/login?redirect=' + encodeURIComponent(currentPath);
+          }
+        });
+      }
+    }
+  </script>
+  <!-- Layout principal avec sidebar -->
+  <div class="flex min-h-screen h-screen">
+    <!-- Sidebar - conditionnellement affichée -->
+    {hideSidebar ? null : (
+      <aside class="w-80 bg-white border-r border-gray-200 hidden md:block flex-shrink-0 h-screen relative">
+        <SideMenu currentPath={currentPath} />
+      </aside>
+    )}
+    
+    <!-- Contenu principal -->
+    <main class={"flex-1 flex flex-col " + (hideSidebar ? " w-full" : "") + " overflow-y-auto pb-3 md:pb-0"}>
+      <slot />
+    </main>
+  </div>
+  
+  <!-- Dock mobile - toujours affiché mais visible uniquement sur mobile -->
+  <DockComponent>
+    <SideMenu currentPath={currentPath} />
+  </DockComponent>
+  
+  <!-- Composant de notifications -->
+  <Notifications />
+  
+  <!-- Script du store de notifications -->
+  <script src="/js/stores/notificationStore.js" defer></script>
+</html>

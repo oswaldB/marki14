@@ -1,0 +1,784 @@
+---// src/pages/settings/profil-smtp.astro
+// Page pour la gestion des profils SMTP - création et test des configurations SMTP
+
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+import { X, Save, Plus, ArrowLeft, RefreshCw, Play } from '@lucide/astro';---
+
+<!-- Script Alpine.js pour la gestion des profils SMTP - doit être avant BaseLayout -->
+<script is:inline>
+  document.addEventListener('alpine:init', () => {
+    // Composant principal pour la gestion des profils SMTP
+    Alpine.data('smtpSettings', () => ({
+      profiles: [],
+      isLoading: false,
+      isDrawerOpen: false,
+      currentProfileId: null,
+      formData: {
+        profileName: '',
+        smtpHost: '',
+        smtpPort: '',
+        smtpSecurity: '',
+        smtpUsername: '',
+        smtpPassword: '',
+        fromEmail: '',
+        fromName: '',
+        htmlSignature: ''
+      },
+      isTesting: false,
+      
+      init() {
+        console.log('SMTP Settings component initialized');
+        this.refreshSmtpProfiles();
+      },
+      
+      async refreshSmtpProfiles() {
+        this.isLoading = true;
+        try {
+          const query = new Parse.Query('SMTPProfile');
+          query.equalTo('isArchived', false);
+          query.ascending('name');
+          
+          const results = await query.find();
+          
+          this.profiles = results.map(profile => ({
+            id: profile.id,
+            name: profile.get('name'),
+            host: profile.get('host'),
+            port: profile.get('port'),
+            security: profile.get('useSSL') ? 'ssl' : profile.get('useTLS') ? 'tls' : 'none',
+            fromEmail: profile.get('email'),
+            fromName: profile.get('fromName') || '',
+            htmlSignature: profile.get('htmlSignature') || '',
+            isActive: profile.get('isActive') || false
+          }));
+          
+          this.updateActiveProfileCount();
+          
+        } catch (error) {
+          console.error('Erreur lors du chargement des profils SMTP:', error);
+          alert('Erreur: ' + (error.message || 'Échec du chargement des profils SMTP'));
+        } finally {
+          this.isLoading = false;
+        }
+      },
+      
+      updateActiveProfileCount() {
+        const count = this.profiles.filter(p => p.isActive).length;
+        document.getElementById('activeProfileCount').textContent = count;
+      },
+      
+      async setActiveProfile(profileId) {
+        try {
+          const query = new Parse.Query('SMTPProfile');
+          const allProfiles = await query.find();
+          
+          await Parse.Object.saveAll(allProfiles.map(p => {
+            p.set('isActive', false);
+            return p;
+          }));
+          
+          const profileToActivate = allProfiles.find(p => p.id === profileId);
+          if (profileToActivate) {
+            profileToActivate.set('isActive', true);
+            await profileToActivate.save();
+          }
+          
+          await this.refreshSmtpProfiles();
+          
+        } catch (error) {
+          console.error('Erreur lors de l\'activation du profil:', error);
+          alert('Erreur: ' + (error.message || 'Échec de l\'activation du profil'));
+        }
+      },
+      
+      async testProfileConnection(profileId) {
+        try {
+          const query = new Parse.Query('SMTPProfile');
+          const profile = await query.get(profileId);
+          
+          const profileData = {
+            host: profile.get('host'),
+            port: profile.get('port'),
+            username: profile.get('username'),
+            password: profile.get('password'),
+            email: profile.get('email'),
+            useSSL: profile.get('useSSL')
+          };
+          
+          const result = await Parse.Cloud.run('sendTestEmail', {
+            recipient: profile.get('email'),
+            smtpProfile: profileData
+          });
+          
+          alert('Test réussi: ' + result.message);
+          
+        } catch (error) {
+          console.error('Erreur lors du test du profil:', error);
+          alert('Erreur: ' + (error.message || 'Échec du test du profil'));
+        }
+      },
+      
+      async editProfile(profileId) {
+        try {
+          const query = new Parse.Query('SMTPProfile');
+          const profile = await query.get(profileId);
+          
+          this.currentProfileId = profileId;
+          this.formData = {
+            profileName: profile.get('name'),
+            smtpHost: profile.get('host'),
+            smtpPort: profile.get('port'),
+            smtpSecurity: profile.get('useSSL') ? 'ssl' : profile.get('useTLS') ? 'tls' : 'none',
+            smtpUsername: profile.get('username'),
+            smtpPassword: profile.get('password'),
+            fromEmail: profile.get('email'),
+            fromName: profile.get('fromName') || '',
+            htmlSignature: profile.get('htmlSignature') || ''
+          };
+          this.isDrawerOpen = true;
+          
+        } catch (error) {
+          console.error('Erreur lors de la récupération du profil:', error);
+          alert('Erreur: ' + (error.message || 'Échec de la récupération du profil'));
+        }
+      },
+      
+      async deleteProfile(profileId) {
+        if (confirm('Êtes-vous sûr de vouloir supprimer ce profil SMTP?')) {
+          try {
+            const query = new Parse.Query('SMTPProfile');
+            const profile = await query.get(profileId);
+            
+            profile.set('isArchived', true);
+            profile.set('isActive', false);
+            await profile.save();
+            
+            await this.refreshSmtpProfiles();
+            
+          } catch (error) {
+            console.error('Erreur lors de la suppression du profil:', error);
+            alert('Erreur: ' + (error.message || 'Échec de la suppression du profil'));
+          }
+        }
+      },
+      
+      openDrawer(profileId = null) {
+        this.currentProfileId = profileId;
+        if (!profileId) {
+          this.resetForm();
+        }
+        this.isDrawerOpen = true;
+      },
+      
+      closeDrawer() {
+        this.isDrawerOpen = false;
+        this.currentProfileId = null;
+        this.resetForm();
+      },
+      
+      resetForm() {
+        this.formData = {
+          profileName: '',
+          smtpHost: '',
+          smtpPort: '',
+          smtpSecurity: '',
+          smtpUsername: '',
+          smtpPassword: '',
+          fromEmail: '',
+          fromName: '',
+          htmlSignature: ''
+        };
+      },
+      
+      async testSmtpConnection() {
+        if (!this.validateForm()) return;
+        
+        this.isTesting = true;
+        this.isLoading = true;
+        
+        try {
+          const result = await Parse.Cloud.run('sendTestEmail', {
+            recipient: this.formData.fromEmail,
+            smtpProfile: {
+              host: this.formData.smtpHost,
+              port: this.formData.smtpPort,
+              username: this.formData.smtpUsername,
+              password: this.formData.smtpPassword,
+              email: this.formData.fromEmail,
+              useSSL: this.formData.smtpSecurity === 'ssl'
+            }
+          });
+          
+          alert('Test réussi: ' + result.message);
+          
+        } catch (error) {
+          console.error('Erreur lors du test SMTP:', error);
+          alert('Erreur: ' + (error.message || 'Échec du test SMTP'));
+        } finally {
+          this.isTesting = false;
+          this.isLoading = false;
+        }
+      },
+      
+      async saveSmtpProfile() {
+        if (!this.validateForm()) return;
+        
+        this.isLoading = true;
+        
+        try {
+          const SMTPProfile = Parse.Object.extend('SMTPProfile');
+          let profile;
+          
+          if (this.currentProfileId) {
+            // Mise à jour d'un profil existant
+            const query = new Parse.Query('SMTPProfile');
+            profile = await query.get(this.currentProfileId);
+          } else {
+            // Création d'un nouveau profil
+            profile = new SMTPProfile();
+          }
+          
+          profile.set('name', this.formData.profileName);
+          profile.set('host', this.formData.smtpHost);
+          profile.set('port', this.formData.smtpPort);
+          profile.set('username', this.formData.smtpUsername);
+          profile.set('password', this.formData.smtpPassword);
+          profile.set('email', this.formData.fromEmail);
+          profile.set('fromName', this.formData.fromName || '');
+          profile.set('htmlSignature', this.formData.htmlSignature || '');
+          profile.set('useSSL', this.formData.smtpSecurity === 'ssl');
+          profile.set('useTLS', this.formData.smtpSecurity === 'tls');
+          profile.set('isActive', false);
+          profile.set('isArchived', false);
+          
+          await profile.save();
+          
+          await this.refreshSmtpProfiles();
+          this.closeDrawer();
+          alert('Profil SMTP enregistré avec succès!');
+          
+        } catch (error) {
+          console.error('Erreur lors de l\'enregistrement du profil SMTP:', error);
+          alert('Erreur: ' + (error.message || 'Échec de l\'enregistrement du profil SMTP'));
+        } finally {
+          this.isLoading = false;
+        }
+      },
+      
+      validateForm() {
+        if (!this.formData.profileName || !this.formData.smtpHost || !this.formData.smtpPort || 
+            !this.formData.smtpSecurity || !this.formData.smtpUsername || 
+            !this.formData.smtpPassword || !this.formData.fromEmail) {
+          alert('Veuillez remplir tous les champs obligatoires.');
+          return false;
+        }
+        
+        if (!/^[^@]+@[^@]+\.[^@]+$/.test(this.formData.fromEmail)) {
+          alert('Veuillez entrer une adresse e-mail valide.');
+          return false;
+        }
+        
+        return true;
+      }
+    }));
+  });
+</script>
+
+<BaseLayout title="Profil SMTP" currentPath="/settings/profil-smtp">
+  <div class="p-4 md:p-6 lg:p-8">
+    <!-- En-tête de la page -->
+    <div class="mb-8">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h1 class="text-2xl md:text-3xl font-bold text-gray-800 mb-2">Profil SMTP</h1>
+          <p class="text-gray-600">Configurez et testez vos profils SMTP pour l'envoi d'e-mails</p>
+        </div>
+        <a 
+          href="/settings/"
+          class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors duration-200 text-sm font-medium"
+        >
+          <ArrowLeft class=" w-4 h-4 mr-2" />
+          Retour aux paramètres
+        </a>
+      </div>
+    </div>
+
+    <!-- Section pour la liste des profils SMTP existants -->
+    <div class="bg-white border border-gray-200 rounded-lg shadow-sm mb-8" x-data="smtpSettings()" x-init="init()">
+      <div class="p-6">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-xl font-semibold text-gray-800">Profils SMTP existants</h2>
+          <div class="flex items-center gap-4">
+            <span class="text-sm text-gray-600">
+              <span id="activeProfileCount">0</span> profil(s) actif(s)
+            </span>
+            <button 
+              @click="refreshSmtpProfiles()"
+              class="inline-flex items-center px-3 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors duration-200 text-sm font-medium"
+            >
+              <RefreshCw class=" w-4 h-4 mr-2" />
+              Rafraîchir
+            </button>
+            <button 
+              @click="openDrawer()"
+              class="inline-flex items-center px-4 py-2 bg-marki-600 text-white rounded-md hover:bg-marki-700 transition-colors duration-200 text-sm font-medium"
+            >
+              <Plus class=" w-4 h-4 mr-2" />
+              Ajouter un profil
+            </button>
+          </div>
+        </div>
+
+        <!-- Tableau des profils SMTP -->
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nom</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hôte</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Port</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sécurité</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Expéditeur</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="smtpProfilesTableBody" class="bg-white divide-y divide-gray-200 mobile-table">
+              <!-- Template Alpine.js pour les profils -->
+              <template x-for="profile in profiles" :key="profile.id">
+                <tr class="hover:bg-gray-50">
+                  <!-- Nom du profil -->
+                  <td class="px-4 py-4" data-label="Nom">
+                    <div class="flex items-center">
+                      <div class="w-2 h-2 rounded-full mr-2" 
+                           :class="profile.isActive ? 'bg-green-500' : 'bg-gray-300'"></div>
+                      <span x-text="profile.name"></span>
+                    </div>
+                  </td>
+                  <!-- Hôte -->
+                  <td class="px-4 py-4" data-label="Hôte" x-text="profile.host"></td>
+                  <!-- Port -->
+                  <td class="px-4 py-4" data-label="Port" x-text="profile.port"></td>
+                  <!-- Sécurité -->
+                  <td class="px-4 py-4" data-label="Sécurité">
+                    <span 
+                      class="px-2 py-1 rounded-full text-xs" 
+                      :class="{
+                        'bg-green-100 text-green-800': profile.security === 'ssl',
+                        'bg-blue-100 text-blue-800': profile.security === 'tls',
+                        'bg-gray-100 text-gray-800': profile.security === 'none'
+                      }" 
+                      x-text="profile.security.toUpperCase()"
+                    ></span>
+                  </td>
+                  <!-- Email -->
+                  <td class="px-4 py-4" data-label="Expéditeur" x-text="profile.fromEmail"></td>
+                  <!-- Statut -->
+                  <td class="px-4 py-4" data-label="Statut">
+                    <span 
+                      class="px-2 py-1 rounded-full text-xs" 
+                      :class="profile.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'" 
+                      x-text="profile.isActive ? 'Actif' : 'Inactif'"
+                    ></span>
+                  </td>
+                  <!-- Actions -->
+                  <td class="px-4 py-4" data-label="Actions">
+                    <div class="flex gap-2 action-buttons">
+                      <button 
+                        @click="setActiveProfile(profile.id)" 
+                        class="px-3 py-1 text-xs rounded-md" 
+                        :class="profile.isActive ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : 'bg-marki-100 text-marki-700 hover:bg-marki-200'" 
+                        :disabled="profile.isActive" 
+                        x-text="profile.isActive ? 'Actif' : 'Activer'"
+                      ></button>
+                      <button 
+                        @click="testProfileConnection(profile.id)" 
+                        class="px-3 py-1 text-xs rounded-md bg-blue-100 text-blue-700 hover:bg-blue-200"
+                      >Tester</button>
+                      <button 
+                        @click="editProfile(profile.id)" 
+                        class="px-3 py-1 text-xs rounded-md bg-yellow-100 text-yellow-700 hover:bg-yellow-200"
+                      >Modifier</button>
+                      <button 
+                        @click="deleteProfile(profile.id)" 
+                        class="px-3 py-1 text-xs rounded-md bg-red-100 text-red-700 hover:bg-red-200"
+                      >Supprimer</button>
+                    </div>
+                  </td>
+                </tr>
+              </template>
+              <!-- Message lorsque aucun profil -->
+              <tr x-show="profiles.length === 0">
+                <td colspan="7" class="px-4 py-8 text-center text-gray-500">
+                  Aucun profil SMTP trouvé. Ajoutez votre premier profil.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Drawer pour la création/modification de profil SMTP -->
+  <div 
+    x-data="smtpSettings()" 
+    x-show="isDrawerOpen" 
+    x-transition:enter="transition ease-out duration-300" 
+    x-transition:enter-start="opacity-0" 
+    x-transition:enter-end="opacity-100" 
+    x-transition:leave="transition ease-in duration-200" 
+    x-transition:leave-start="opacity-100" 
+    x-transition:leave-end="opacity-0" 
+    class="fixed inset-0 z-50 overflow-hidden bg-black bg-opacity-50 flex items-center justify-end md:justify-end"
+    @click.away="closeDrawer()"
+  >
+    <div 
+      class="bg-white h-full w-full md:w-1/2 lg:w-2/5 shadow-xl overflow-y-auto" 
+      @click.stop
+    >
+      <div class="p-6">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-xl font-semibold text-gray-800" x-text="currentProfileId ? 'Modifier le profil' : 'Créer un nouveau profil'"></h2>
+          <button @click="closeDrawer()" class="text-gray-400 hover:text-gray-600">
+            <X class=" w-6 h-6" />
+          </button>
+        </div>
+
+        <form id="smtpForm" class="space-y-6" @submit.prevent="saveSmtpProfile">
+          <div class="grid grid-cols-1 gap-6">
+            <!-- Nom du profil -->
+            <div>
+              <label for="profileName" class="block text-sm font-medium text-gray-700 mb-2">
+                Nom du profil <span class="text-red-500">*</span>
+              </label>
+              <input 
+                type="text" 
+                id="profileName" 
+                name="profileName" 
+                required 
+                x-model="formData.profileName" 
+                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-marki-500 focus:border-marki-500" 
+                placeholder="Ex: Gmail, Outlook, SendGrid"
+              >
+            </div>
+
+            <!-- Hôte SMTP -->
+            <div>
+              <label for="smtpHost" class="block text-sm font-medium text-gray-700 mb-2">
+                Hôte SMTP <span class="text-red-500">*</span>
+              </label>
+              <input 
+                type="text" 
+                id="smtpHost" 
+                name="smtpHost" 
+                required 
+                x-model="formData.smtpHost" 
+                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-marki-500 focus:border-marki-500" 
+                placeholder="Ex: smtp.gmail.com"
+              >
+            </div>
+
+            <!-- Port SMTP -->
+            <div>
+              <label for="smtpPort" class="block text-sm font-medium text-gray-700 mb-2">
+                Port SMTP <span class="text-red-500">*</span>
+              </label>
+              <input 
+                type="number" 
+                id="smtpPort" 
+                name="smtpPort" 
+                required 
+                x-model="formData.smtpPort" 
+                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-marki-500 focus:border-marki-500" 
+                placeholder="Ex: 587" 
+                min="1" 
+                max="65535"
+              >
+            </div>
+
+            <!-- Sécurité -->
+            <div>
+              <label for="smtpSecurity" class="block text-sm font-medium text-gray-700 mb-2">
+                Sécurité <span class="text-red-500">*</span>
+              </label>
+              <select 
+                id="smtpSecurity" 
+                name="smtpSecurity" 
+                required 
+                x-model="formData.smtpSecurity" 
+                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-marki-500 focus:border-marki-500"
+              >
+                <option value="">Sélectionnez un type de sécurité</option>
+                <option value="none">Aucune</option>
+                <option value="tls">TLS</option>
+                <option value="ssl">SSL</option>
+              </select>
+            </div>
+
+            <!-- Nom d'utilisateur -->
+            <div>
+              <label for="smtpUsername" class="block text-sm font-medium text-gray-700 mb-2">
+                Nom d'utilisateur <span class="text-red-500">*</span>
+              </label>
+              <input 
+                type="text" 
+                id="smtpUsername" 
+                name="smtpUsername" 
+                required 
+                x-model="formData.smtpUsername" 
+                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-marki-500 focus:border-marki-500" 
+                placeholder="Votre nom d'utilisateur ou adresse e-mail"
+              >
+            </div>
+
+            <!-- Mot de passe -->
+            <div>
+              <label for="smtpPassword" class="block text-sm font-medium text-gray-700 mb-2">
+                Mot de passe <span class="text-red-500">*</span>
+              </label>
+              <input 
+                type="password" 
+                id="smtpPassword" 
+                name="smtpPassword" 
+                required 
+                x-model="formData.smtpPassword" 
+                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-marki-500 focus:border-marki-500" 
+                placeholder="Votre mot de passe"
+              >
+            </div>
+
+            <!-- E-mail de l'expéditeur -->
+            <div class="md:col-span-2">
+              <label for="fromEmail" class="block text-sm font-medium text-gray-700 mb-2">
+                E-mail de l'expéditeur <span class="text-red-500">*</span>
+              </label>
+              <input 
+                type="email" 
+                id="fromEmail" 
+                name="fromEmail" 
+                required 
+                x-model="formData.fromEmail" 
+                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-marki-500 focus:border-marki-500" 
+                placeholder="Ex: contact@votre-entreprise.com"
+              >
+            </div>
+
+            <!-- Nom de l'expéditeur -->
+            <div class="md:col-span-2">
+              <label for="fromName" class="block text-sm font-medium text-gray-700 mb-2">
+                Nom de l'expéditeur
+              </label>
+              <input 
+                type="text" 
+                id="fromName" 
+                name="fromName" 
+                x-model="formData.fromName" 
+                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-marki-500 focus:border-marki-500" 
+                placeholder="Ex: Votre Entreprise"
+              >
+            </div>
+
+            <!-- Signature HTML -->
+            <div class="md:col-span-2">
+              <label for="htmlSignature" class="block text-sm font-medium text-gray-700 mb-2">
+                Signature HTML
+              </label>
+              <textarea
+                id="htmlSignature"
+                name="htmlSignature"
+                rows="4"
+                x-model="formData.htmlSignature"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-marki-500 focus:border-marki-500"
+                placeholder="Signature HTML pour les e-mails"
+              ></textarea>
+            </div>
+          </div>
+
+          <!-- Boutons d'action -->
+          <div class="drawer-actions mt-8">
+            <button 
+              type="button" 
+              @click="testSmtpConnection()" 
+              :disabled="isLoading || isTesting" 
+              class="flex-1 inline-flex items-center justify-center px-6 py-3 bg-marki-600 text-white rounded-md hover:bg-marki-700 transition-colors duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <span x-show="!isTesting">
+                <Play class=" w-4 h-4 mr-2" />
+                Tester la connexion
+              </span>
+              <span x-show="isTesting" class="flex items-center">
+                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Test en cours...
+              </span>
+            </button>
+            
+            <button 
+              type="submit" 
+              :disabled="isLoading" 
+              class="flex-1 inline-flex items-center justify-center px-6 py-3 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Save class=" w-4 h-4 mr-2" />
+              Enregistrer le profil
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Script pour initialiser les icônes Lucide -->
+  <script is:inline>
+    if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+      document.addEventListener('DOMContentLoaded', () => {
+        if (typeof lucide !== 'undefined') {
+          ;
+        }
+      });
+    }
+  </script>
+
+  <style>
+    /* Styles spécifiques à la page des profils SMTP */
+    .smtp-form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+    }
+    
+    /* Style pour les badges de sécurité */
+    .security-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.25rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+    
+    /* Style pour les boutons d'action */
+    .action-button {
+      transition: all 0.2s ease-in-out;
+    }
+    
+    .action-button:hover {
+      transform: translateY(-1px);
+    }
+    
+    /* Style pour le tableau */
+    .smtp-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+    }
+    
+    .smtp-table th {
+      position: sticky;
+      top: 0;
+      background-color: #f9fafb;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .smtp-form-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      /* Tableau responsive pour mobile */
+      .mobile-table {
+        display: block;
+      }
+      
+      .mobile-table thead {
+        display: none;
+      }
+      
+      .mobile-table tbody,
+      .mobile-table tr,
+      .mobile-table td {
+        display: block;
+        width: 100%;
+      }
+      
+      .mobile-table tr {
+        margin-bottom: 1rem;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.5rem;
+        padding: 0.75rem;
+      }
+      
+      .mobile-table td {
+        padding: 0.5rem 0;
+        border: none;
+        border-bottom: 1px solid #e5e7eb;
+      }
+      
+      .mobile-table td:last-child {
+        border-bottom: none;
+      }
+      
+      .mobile-table td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        margin-right: 0.5rem;
+        display: inline-block;
+        width: 120px;
+      }
+      
+      /* Boutons empilés verticalement sur mobile */
+      .mobile-stack {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      
+      .mobile-stack button {
+        width: 100%;
+      }
+      
+      /* Drawer en plein écran sur mobile */
+      .drawer-overlay {
+        background-color: rgba(0, 0, 0, 0.7);
+      }
+      
+      /* Taille des boutons d'action */
+      .action-buttons {
+        flex-wrap: wrap;
+        gap: 0.25rem;
+      }
+      
+      .action-buttons button {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+      }
+    }
+    
+    /* Améliorations pour les tablettes */
+    @media (min-width: 769px) and (max-width: 1024px) {
+      .drawer-width {
+        width: 60%;
+      }
+      
+      /* Réduire le padding pour gagner de la place */
+      .tablet-padding {
+        padding: 1rem;
+      }
+    }
+    
+    /* Style pour les boutons du drawer */
+    .drawer-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    
+    @media (min-width: 640px) {
+      .drawer-actions {
+        flex-direction: row;
+      }
+    }
+  </style>
+</BaseLayout>
