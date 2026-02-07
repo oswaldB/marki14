@@ -1,19 +1,260 @@
----// src/pages/sequences.astro
+---// src/pages/sequences2.astro
+// Version simplifiée avec tout le code intégré (state + drawer)
+
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Pebble from '../components/Pebble.astro';
-import CreateSequenceDrawer from '../components/sequences/CreateSequenceDrawer.astro';
+import { Trash2, X, Plus, FileText, Eye, Power, RefreshCw, BanknoteX, Loader2, Info } from '@lucide/astro';
 
-
-import { Trash2, X, Plus, FileText, Eye, Power, RefreshCw, BanknoteX } from '@lucide/astro';// Page metadata
+// Page metadata
 const pageTitle = 'Séquences de Relance';
 const pageDescription = 'Gérez vos séquences de relance automatisées.';
 ---
 
-<!-- Alpine.js State and Functions -->
-<script is:inline src='/js/pages/sequencesState.js'></script>
+<!-- Alpine.js State and Functions - TOUT INTÉGRÉ -->
+<script is:inline>
+document.addEventListener('alpine:init', () => {
+  Alpine.data('sequencesState', () => ({
+    
+    // État initial
+    sequences: [],              // Liste des séquences
+    isLoading: true,           // État de chargement
+    showCreateModal: false,    // Affichage du modal de création
+    showSequenceDeleteConfirmation: false, // Confirmation de suppression
+    sequenceToDelete: null,    // Séquence à supprimer
+    
+    // État pour la création de séquence
+    newSequenceName: '',        // Nom de la nouvelle séquence
+    newSequenceDescription: '', // Description de la nouvelle séquence
+    newSequenceType: 'normal',  // Type de la nouvelle séquence (normal/automatique)
+    isCreating: false,         // État de création en cours
+    
+    // Initialisation
+    async init() {
+      try {
+        console.log('Initialisation de la page séquences...');
+        this.isLoading = true;
+        
+        // Attendre que Parse soit disponible
+        let parseRetryCount = 0;
+        const maxParseRetries = 5;
+        
+        while (!window.Parse && parseRetryCount < maxParseRetries) {
+          console.warn('⚠️ Parse n\'est pas encore disponible...');
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          parseRetryCount++;
+        }
+        
+        if (!window.Parse) {
+          console.error('❌ Parse n\'est pas disponible');
+          this.isLoading = false;
+          return;
+        }
+        
+        await this.fetchSequences();
+        console.log('✅ Initialisation terminée');
+        this.isLoading = false;
+        
+      } catch (error) {
+        console.error('❌ Erreur lors de l\'initialisation:', error);
+        this.isLoading = false;
+      }
+    },
+    
+    // Récupérer les séquences depuis Parse
+    async fetchSequences() {
+      try {
+        this.isLoading = true;
+        
+        const Sequences = Parse.Object.extend('Sequences');
+        const query = new Parse.Query(Sequences);
+        
+        // Trier par nom
+        query.ascending('nom');
+        query.limit(99999);
+        
+        const results = await query.find();
+        
+        this.sequences = results.map(item => {
+          const json = item.toJSON();
+          return {
+            objectId: json.objectId,
+            nom: json.nom || 'Séquence sans nom',
+            description: json.description || '',
+            isActif: json.isActif || false,
+            isAuto: json.isAuto || false,
+            actions: json.actions || [],
+            createdAt: json.createdAt,
+            updatedAt: json.updatedAt,
+            lastRun: json.lastRun
+          };
+        });
+        
+        console.log('Séquences chargées:', this.sequences);
+        
+      } catch (error) {
+        console.error('❌ Erreur lors de la récupération des séquences:', error);
+        this.sequences = [];
+      } finally {
+        this.isLoading = false;
+      }
+    },
+    
+    // Synchroniser les séquences (rafraîchissement simple)
+    async syncSequences() {
+      try {
+        this.isLoading = true;
+        console.log('Rafraîchissement des séquences...');
+        await this.fetchSequences();
+        console.log('Rafraîchissement terminé');
+      } catch (error) {
+        console.error('❌ Erreur lors du rafraîchissement:', error);
+        this.isLoading = false;
+      }
+    },
+    
+    // Naviguer vers les détails d'une séquence
+    navigateToSequenceDetail(sequenceId) {
+      window.location.href = `/sequence-detail?sequenceId=${sequenceId}`;
+    },
+    
+    // Basculer l'état actif/inactif d'une séquence
+    async toggleSequenceStatus(sequence) {
+      try {
+        const Sequences = Parse.Object.extend('Sequences');
+        const sequenceToUpdate = new Sequences();
+        sequenceToUpdate.id = sequence.objectId;
+        
+        sequenceToUpdate.set('isActif', !sequence.isActif);
+        await sequenceToUpdate.save();
+        
+        // Mettre à jour localement
+        sequence.isActif = !sequence.isActif;
+        console.log('Statut de la séquence mis à jour:', sequence.nom, sequence.isActif);
+        
+      } catch (error) {
+        console.error('❌ Erreur lors de la mise à jour du statut:', error);
+      }
+    },
+    
+    // Confirmer la suppression d'une séquence
+    confirmDeleteSequence(sequence) {
+      this.sequenceToDelete = sequence;
+      this.showSequenceDeleteConfirmation = true;
+    },
+    
+    // Annuler la suppression
+    cancelDeleteSequence() {
+      this.sequenceToDelete = null;
+      this.showSequenceDeleteConfirmation = false;
+    },
+    
+    // Supprimer une séquence
+    async deleteSequence() {
+      if (!this.sequenceToDelete) return;
+      
+      try {
+        const Sequences = Parse.Object.extend('Sequences');
+        const sequenceToDelete = new Sequences();
+        sequenceToDelete.id = this.sequenceToDelete.objectId;
+        
+        await sequenceToDelete.destroy();
+        
+        // Retirer de la liste locale
+        this.sequences = this.sequences.filter(
+          seq => seq.objectId !== this.sequenceToDelete.objectId
+        );
+        
+        console.log('Séquence supprimée:', this.sequenceToDelete.nom);
+        this.cancelDeleteSequence();
+        
+      } catch (error) {
+        console.error('❌ Erreur lors de la suppression de la séquence:', error);
+        this.cancelDeleteSequence();
+      }
+    },
+    
+    // Créer une nouvelle séquence
+    async createSequence() {
+      if (this.isCreating) return;
+      
+      try {
+        this.isCreating = true;
+        console.log('Création d\'une nouvelle séquence...');
+        
+        const Sequences = Parse.Object.extend('Sequences');
+        const newSequence = new Sequences();
+        
+        newSequence.set('nom', this.newSequenceName);
+        newSequence.set('description', this.newSequenceDescription);
+        newSequence.set('isAuto', this.newSequenceType === 'automatique');
+        newSequence.set('isActif', true);
+        newSequence.set('actions', []);
+        
+        await newSequence.save();
+        
+        console.log('Séquence créée avec succès:', this.newSequenceName);
+        
+        // Réinitialiser le formulaire
+        this.newSequenceName = '';
+        this.newSequenceDescription = '';
+        this.newSequenceType = 'normal';
+        this.showCreateModal = false;
+        
+        // Rafraîchir la liste
+        await this.fetchSequences();
+        
+      } catch (error) {
+        console.error('❌ Erreur lors de la création de la séquence:', error);
+      } finally {
+        this.isCreating = false;
+      }
+    },
+    
+    // Formater une date
+    formatDate(date) {
+      if (!date) return 'Jamais';
+      
+      let dateObj;
+      
+      if (typeof date === 'string') {
+        dateObj = new Date(date);
+      } else if (typeof date === 'number') {
+        dateObj = new Date(date);
+      } else if (date instanceof Date) {
+        dateObj = date;
+      } else {
+        if (date.__type === 'Date' && date.iso) {
+          dateObj = new Date(date.iso);
+        } else {
+          console.warn('⚠️ Format de date non reconnu:', date);
+          return 'Date inconnue';
+        }
+      }
+      
+      if (isNaN(dateObj.getTime())) {
+        console.warn('⚠️ Date invalide:', date);
+        return 'Date inconnue';
+      }
+      
+      return dateObj.toLocaleDateString('fr-FR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+    },
+    
+    // Tronquer du texte
+    truncateText(text, maxLength) {
+      if (!text) return '';
+      if (text.length <= maxLength) return text;
+      return text.substring(0, maxLength) + '...';
+    }
+  }));
+});
+</script>
 
 <!-- Base Layout with Parse initialization -->
-<BaseLayout title={pageTitle}>
+<BaseLayout title={pageTitle} withAuth={true} currentPath="/sequences">
   <!-- Pebbles Background - Following Styleguide -->
   <div class="fixed inset-0 overflow-hidden -z-10">
     <div class="absolute inset-0 bg-gradient-to-br from-gray-50 to-white"></div>
@@ -193,49 +434,191 @@ const pageDescription = 'Gérez vos séquences de relance automatisées.';
           </div>
         </template>
       </div>
-        <!-- Delete Confirmation Dialog -->
-        <div 
-          x-show="showSequenceDeleteConfirmation"
-          x-transition
-          class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center"
-        >
-          <div class="bg-white rounded-lg shadow-xl p-6 max-w-sm w-full mx-4">
-            <div class="flex justify-between items-start mb-4">
-              <h3 class="text-lg font-semibold text-gray-900">Supprimer la séquence</h3>
-              <button 
-                @click="cancelDeleteSequence()"
-                class="text-gray-400 hover:text-gray-600"
-              >
-                <X class="w-5 h-5" />
-              </button>
-            </div>
-            <p class="text-gray-600 mb-6">
-              Êtes-vous sûr de vouloir supprimer cette séquence ? Cette action est irréversible.
-            </p>
-            <div class="flex justify-end space-x-3">
-              <button 
-                @click="cancelDeleteSequence()"
-                class="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
-              >
-                Annuler
-              </button>
-              <button 
-                @click="deleteSequence()"
-                class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors flex items-center space-x-2"
-              >
-                <Trash2 class="w-4 h-4" />
-                <span>Supprimer</span>
-              </button>
+      
+      <!-- Create Sequence Drawer - INTÉGRÉ DIRECTEMENT -->
+      <div 
+        class="fixed inset-0 overflow-hidden z-50"
+        x-show="showCreateModal"
+        x-transition
+      >
+        <div class="absolute inset-0 overflow-hidden">
+          <!-- Background overlay -->
+          <div 
+            class="absolute inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+            @click="showCreateModal = false"
+          ></div>
+          
+          <!-- Drawer content -->
+          <div class="fixed inset-y-0 right-0 pl-10 max-w-full flex sm:pl-16">
+            <div 
+              class="relative w-screen max-w-md"
+              @click.away="showCreateModal = false"
+            >
+              <div class="h-full flex flex-col bg-white shadow-xl overflow-y-scroll">
+                <div class="p-6">
+                  <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-medium text-gray-900">Créer une nouvelle séquence</h2>
+                    <button 
+                      class="text-gray-400 hover:text-gray-600"
+                      @click="showCreateModal = false"
+                    >
+                      <X class="w-6 h-6" />
+                    </button>
+                  </div>
+                  
+                  <!-- Callout d'information -->
+                  <div class="mb-6">
+                    <div class="bg-[#007ACE] bg-opacity-10 border-l-4 border-[#007ACE] p-4">
+                      <div class="flex">
+                        <Info class="w-5 h-5 text-[#007ACE] mr-3" />
+                        <div class="text-sm text-[#007ACE]">
+                          <p class="font-medium">Création de séquence</p>
+                          <p class="mt-1">Donnez un nom à votre séquence de relance. Vous pourrez configurer les détails et les actions après la création.</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Formulaire de création -->
+                  <form 
+                    class="space-y-4"
+                    @submit.prevent="createSequence()"
+                  >
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Nom de la séquence
+                      </label>
+                      <input 
+                        type="text"
+                        class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#007ACE] focus:border-[#007ACE]"
+                        x-model="newSequenceName"
+                        required
+                        placeholder="Ex: Relance client premium"
+                      >
+                      <p class="text-xs text-gray-500 mt-1">
+                        Le nom doit être unique et descriptif
+                      </p>
+                    </div>
+                    
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Description (optionnelle)
+                      </label>
+                      <textarea 
+                        rows="3"
+                        class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#007ACE] focus:border-[#007ACE]"
+                        x-model="newSequenceDescription"
+                        placeholder="Ex: Séquence de relance pour les clients premium avec délais progressifs"
+                      ></textarea>
+                    </div>
+                    
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Type de séquence
+                      </label>
+                      <div class="space-y-2">
+                        <div class="flex items-center">
+                          <input 
+                            type="radio"
+                            id="sequence-normal"
+                            class="h-4 w-4 text-[#007ACE] border-gray-300 focus:ring-[#007ACE]"
+                            x-model="newSequenceType"
+                            value="normal"
+                            checked
+                          >
+                          <label for="sequence-normal" class="ml-3 block text-sm font-medium text-gray-700">
+                            Séquence Normale
+                          </label>
+                        </div>
+                        <div class="flex items-center">
+                          <input 
+                            type="radio"
+                            id="sequence-automatique"
+                            class="h-4 w-4 text-[#007ACE] border-gray-300 focus:ring-[#007ACE]"
+                            x-model="newSequenceType"
+                            value="automatique"
+                          >
+                          <label for="sequence-automatique" class="ml-3 block text-sm font-medium text-gray-700">
+                            Séquence Automatique
+                          </label>
+                        </div>
+                      </div>
+                      <p class="text-xs text-gray-500 mt-2">
+                        Les séquences automatiques permettent de filtrer et sélectionner automatiquement les impayés à relancer
+                      </p>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3 mt-6">
+                      <button 
+                        type="button"
+                        class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                        @click="showCreateModal = false"
+                      >
+                        Annuler
+                      </button>
+                      <button 
+                        type="submit"
+                        class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#007ACE] hover:bg-[#006BCE] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#007ACE]"
+                        :disabled="isCreating"
+                      >
+                        <span x-show="!isCreating">
+                          <Plus class="w-4 h-4 mr-2 inline" />
+                          Créer la séquence
+                        </span>
+                        <span x-show="isCreating">
+                          <Loader2 class="w-4 h-4 mr-2 inline animate-spin" />
+                          Création en cours...
+                        </span>
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-        
-        <!-- Create Sequence Drawer -->
-  <CreateSequenceDrawer />
+      </div>
+      
+      <!-- Delete Confirmation Dialog -->
+      <div 
+        x-show="showSequenceDeleteConfirmation"
+        x-transition
+        class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center"
+      >
+        <div class="bg-white rounded-lg shadow-xl p-6 max-w-sm w-full mx-4">
+          <div class="flex justify-between items-start mb-4">
+            <h3 class="text-lg font-semibold text-gray-900">Supprimer la séquence</h3>
+            <button 
+              @click="cancelDeleteSequence()"
+              class="text-gray-400 hover:text-gray-600"
+            >
+              <X class="w-5 h-5" />
+            </button>
+          </div>
+          <p class="text-gray-600 mb-6">
+            Êtes-vous sûr de vouloir supprimer cette séquence ? Cette action est irréversible.
+          </p>
+          <div class="flex justify-end space-x-3">
+            <button 
+              @click="cancelDeleteSequence()"
+              class="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
+            >
+              Annuler
+            </button>
+            <button 
+              @click="deleteSequence()"
+              class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors flex items-center space-x-2"
+            >
+              <Trash2 class="w-4 h-4" />
+              <span>Supprimer</span>
+            </button>
+          </div>
+        </div>
+      </div>
+      
     </main>
   </div>
-
-
+  
 </BaseLayout>
 
 <!-- Page-specific styles -->

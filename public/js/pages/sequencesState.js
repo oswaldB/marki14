@@ -1,170 +1,239 @@
 /**
- * sequencesState.js - Gestion de l'état principal pour la page de liste des séquences
- * Basé sur les spécifications: admin/specs/sequences/specs.md
+ * État Alpine.js pour la page des séquences
+ * Gestion des séquences de relance
  */
-
-
 
 document.addEventListener('alpine:init', () => {
   Alpine.data('sequencesState', () => ({
+    
     // État initial
-    sequences: [],
-    isLoading: false,
-    isCreating: false,
-    isDeleting: false,
-    searchQuery: '',
-    currentPage: 1,
-    itemsPerPage: 10,
+    sequences: [],              // Liste des séquences
+    isLoading: true,           // État de chargement
+    showCreateModal: false,    // Affichage du modal de création
+    showSequenceDeleteConfirmation: false, // Confirmation de suppression
+    sequenceToDelete: null,    // Séquence à supprimer
     
-    // États d'interface
-    showCreateModal: false,
-    showDeleteConfirmation: false,
-    sequenceToDelete: null,
-    showSequenceDeleteConfirmation: false,
-    sequenceToDeleteId: null,
+    // État pour la création de séquence
+    newSequenceName: '',        // Nom de la nouvelle séquence
+    newSequenceDescription: '', // Description de la nouvelle séquence
+    newSequenceType: 'normal',  // Type de la nouvelle séquence (normal/automatique)
+    isCreating: false,         // État de création en cours
     
-    // Données pour la nouvelle séquence
-    newSequenceName: '',
-    newSequenceDescription: '',
-    newSequenceType: 'normal', // 'normal' ou 'automatique'
-    
-    // Notifications
-    notification: {
-      show: false,
-      type: 'info', // success, error, warning, info
-      title: '',
-      message: ''
-    },
-    
-    /**
-     * Initialisation et chargement des données
-     */
-    
+    // Initialisation
     async init() {
-      this.isLoading = true;
-      
       try {
-        // Vérifier que Parse est disponible
-        if (typeof Parse === 'undefined') {
-          console.error('Parse SDK non chargé');
-          this.showNotification('Erreur', 'Parse SDK non disponible', 'error');
+        console.log('Initialisation de la page séquences...');
+        this.isLoading = true;
+        
+        const initTimeout = setTimeout(() => {
+          console.error('❌ Timeout de l\'initialisation atteint');
+          this.isLoading = false;
+          clearTimeout(initTimeout);
+        }, 30000);
+        
+        // Attendre que Parse soit disponible
+        let parseRetryCount = 0;
+        const maxParseRetries = 5;
+        
+        while (!window.Parse && parseRetryCount < maxParseRetries) {
+          console.warn('⚠️ Parse n\'est pas encore disponible...');
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          parseRetryCount++;
+        }
+        
+        if (!window.Parse) {
+          console.error('❌ Parse n\'est pas disponible');
+          this.isLoading = false;
+          clearTimeout(initTimeout);
           return;
         }
         
-        // Initialiser Parse si nécessaire
-        if (window.parseConfig && !Parse.applicationId) {
-          Parse.initialize(window.parseConfig.appId, window.parseConfig.javascriptKey);
-          Parse.serverURL = window.parseConfig.serverURL;
-        }
+        await this.fetchSequences();
         
-        // Vérifier que Parse est bien initialisé
-        if (!Parse.applicationId) {
-          console.error('Parse non initialisé - configuration manquante');
-          this.showNotification('Erreur', 'Parse non initialisé', 'error');
-          return;
-        }
-        
-        console.log('Parse initialisé avec:', {
-          appId: Parse.applicationId,
-          serverURL: Parse.serverURL
-        });
-        
-        // Charger les séquences
-        await this.loadSequences();
-      } catch (error) {
-        console.error('Erreur lors de l\'initialisation:', error);
-        this.showNotification('Erreur', 'Impossible de charger les données initiales', 'error');
-      } finally {
+        console.log('✅ Initialisation terminée');
         this.isLoading = false;
+        clearTimeout(initTimeout);
+        
+      } catch (error) {
+        console.error('❌ Erreur lors de l\'initialisation:', error);
+        this.isLoading = false;
+        clearTimeout(initTimeout);
       }
     },
     
-    /**
-     * Chargement des séquences
-     */
-    async loadSequences() {
-      this.isLoading = true;
-      
+    // Récupérer les séquences depuis Parse
+    async fetchSequences() {
       try {
-        // Vérifier que Parse est disponible
-        if (typeof Parse === 'undefined' || !Parse.applicationId) {
-          console.error('Parse non initialisé');
-          this.showNotification('Erreur', 'Parse non initialisé', 'error');
-          return;
-        }
+        this.isLoading = true;
         
-        console.log('Chargement des séquences depuis Parse...');
+        const Sequences = Parse.Object.extend('Sequences');
+        const query = new Parse.Query(Sequences);
         
-        const query = new Parse.Query('Sequences');
-        
-        // Tri par nom
+        // Trier par nom
         query.ascending('nom');
-        
-        // Recherche si nécessaire
-        if (this.searchQuery) {
-          const searchLower = this.searchQuery.toLowerCase();
-          query.contains('nom', searchLower);
-        }
+        query.limit(99999);
         
         const results = await query.find();
         
-        console.log(`Trouvé ${results.length} séquences`);
+        this.sequences = results.map(item => {
+          const json = item.toJSON();
+          return {
+            objectId: json.objectId,
+            nom: json.nom || 'Séquence sans nom',
+            description: json.description || '',
+            isActif: json.isActif || false,
+            isAuto: json.isAuto || false,
+            actions: json.actions || [],
+            createdAt: json.createdAt,
+            updatedAt: json.updatedAt,
+            lastRun: json.lastRun
+          };
+        });
         
-        this.sequences = results.map(seq => ({
-          objectId: seq.id,
-          ...seq.toJSON()
-        }));
+        console.log('Séquences chargées:', this.sequences);
         
       } catch (error) {
-        console.error('Erreur lors du chargement des séquences:', error);
-        this.showNotification('Erreur', 'Impossible de charger les séquences', 'error');
+        console.error('❌ Erreur lors de la récupération des séquences:', error);
+        this.sequences = [];
       } finally {
         this.isLoading = false;
       }
     },
     
-    /**
-     * Recherche de séquences
-     */
-    async searchSequences() {
-      this.currentPage = 1;
-      await this.loadSequences();
-    },
-    
-    /**
-     * Ouverture du drawer de création
-     */
-    openCreateDrawer() {
-      this.showCreateModal = true;
-    },
-    
-    /**
-     * Création d'une nouvelle séquence
-     */
-    async createSequence() {
-      if (!this.newSequenceName) {
-        this.showNotification('Erreur', 'Le nom de la séquence est obligatoire', 'error');
-        return;
+    // Synchroniser les séquences (rafraîchissement simple)
+    async syncSequences() {
+      try {
+        this.isLoading = true;
+        console.log('Rafraîchissement des séquences...');
+        
+        // Rafraîchissement simple - recharger les données depuis Parse
+        await this.fetchSequences();
+        
+        console.log('Rafraîchissement terminé');
+        
+      } catch (error) {
+        console.error('❌ Erreur lors du rafraîchissement:', error);
+        this.isLoading = false;
       }
-      
-      this.isCreating = true;
+    },
+    
+    // Naviguer vers les détails d'une séquence
+    navigateToSequenceDetail(sequenceId) {
+      window.location.href = `/sequence-detail?sequenceId=${sequenceId}`;
+    },
+    
+    // Basculer l'état actif/inactif d'une séquence
+    async toggleSequenceStatus(sequence) {
+      try {
+        const Sequences = Parse.Object.extend('Sequences');
+        const sequenceToUpdate = new Sequences();
+        sequenceToUpdate.id = sequence.objectId;
+        
+        sequenceToUpdate.set('isActif', !sequence.isActif);
+        
+        await sequenceToUpdate.save();
+        
+        // Mettre à jour localement
+        sequence.isActif = !sequence.isActif;
+        
+        console.log('Statut de la séquence mis à jour:', sequence.nom, sequence.isActif);
+        
+      } catch (error) {
+        console.error('❌ Erreur lors de la mise à jour du statut:', error);
+      }
+    },
+    
+    // Confirmer la suppression d'une séquence
+    confirmDeleteSequence(sequence) {
+      this.sequenceToDelete = sequence;
+      this.showSequenceDeleteConfirmation = true;
+    },
+    
+    // Annuler la suppression
+    cancelDeleteSequence() {
+      this.sequenceToDelete = null;
+      this.showSequenceDeleteConfirmation = false;
+    },
+    
+    // Supprimer une séquence
+    async deleteSequence() {
+      if (!this.sequenceToDelete) return;
       
       try {
         const Sequences = Parse.Object.extend('Sequences');
-        const sequence = new Sequences();
+        const sequenceToDelete = new Sequences();
+        sequenceToDelete.id = this.sequenceToDelete.objectId;
         
-        sequence.set('nom', this.newSequenceName);
-        sequence.set('description', this.newSequenceDescription || '');
-        sequence.set('isActif', false);
-        sequence.set('actions', []);
-        sequence.set('isAuto', this.newSequenceType === 'automatique');
+        await sequenceToDelete.destroy();
         
-        // Si c'est une séquence automatique, initialiser les filtres automatiques
-        if (this.newSequenceType === 'automatique') {
-          sequence.set('requete_auto', { include: {}, exclude: {} });
+        // Retirer de la liste locale
+        this.sequences = this.sequences.filter(
+          seq => seq.objectId !== this.sequenceToDelete.objectId
+        );
+        
+        console.log('Séquence supprimée:', this.sequenceToDelete.nom);
+        
+        this.cancelDeleteSequence();
+        
+      } catch (error) {
+        console.error('❌ Erreur lors de la suppression de la séquence:', error);
+        this.cancelDeleteSequence();
+      }
+    },
+    
+    // Formater une date
+    formatDate(date) {
+      if (!date) return 'Jamais';
+      
+      let dateObj;
+      
+      if (typeof date === 'string') {
+        dateObj = new Date(date);
+      } else if (typeof date === 'number') {
+        dateObj = new Date(date);
+      } else if (date instanceof Date) {
+        dateObj = date;
+      } else {
+        if (date.__type === 'Date' && date.iso) {
+          dateObj = new Date(date.iso);
+        } else {
+          console.warn('⚠️ Format de date non reconnu:', date);
+          return 'Date inconnue';
         }
+      }
+      
+      if (isNaN(dateObj.getTime())) {
+        console.warn('⚠️ Date invalide:', date);
+        return 'Date inconnue';
+      }
+      
+      return dateObj.toLocaleDateString('fr-FR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+    },
+    
+    // Créer une nouvelle séquence
+    async createSequence() {
+      if (this.isCreating) return;
+      
+      try {
+        this.isCreating = true;
+        console.log('Création d\'une nouvelle séquence...');
         
-        const newSequence = await sequence.save();
+        const Sequences = Parse.Object.extend('Sequences');
+        const newSequence = new Sequences();
+        
+        newSequence.set('nom', this.newSequenceName);
+        newSequence.set('description', this.newSequenceDescription);
+        newSequence.set('isAuto', this.newSequenceType === 'automatique');
+        newSequence.set('isActif', true);
+        newSequence.set('actions', []);
+        
+        await newSequence.save();
+        
+        console.log('Séquence créée avec succès:', this.newSequenceName);
         
         // Réinitialiser le formulaire
         this.newSequenceName = '';
@@ -172,293 +241,21 @@ document.addEventListener('alpine:init', () => {
         this.newSequenceType = 'normal';
         this.showCreateModal = false;
         
-        // Recharger les séquences
-        await this.loadSequences();
-        
-        this.showNotification('Succès', 'Séquence créée avec succès', 'success');
-        
-        // Rediriger vers la page de détail appropriée en fonction du type
-        const redirectPath = this.newSequenceType === 'automatique' 
-          ? `/sequence-automatique?id=${newSequence.id}`
-          : `/sequence?id=${newSequence.id}`;
-        
-        setTimeout(() => {
-          window.location.href = redirectPath;
-        }, 1000);
+        // Rafraîchir la liste
+        await this.fetchSequences();
         
       } catch (error) {
-        console.error('Erreur lors de la création de la séquence:', error);
-        this.showNotification('Erreur', 'Impossible de créer la séquence', 'error');
+        console.error('❌ Erreur lors de la création de la séquence:', error);
       } finally {
         this.isCreating = false;
       }
     },
     
-    /**
-     * Préparation de la suppression d'une séquence
-     */
-    prepareDeleteSequence(sequenceId) {
-      this.sequenceToDelete = sequenceId;
-      this.showDeleteConfirmation = true;
-    },
-    
-    /**
-     * Suppression d'une séquence
-     */
-    async deleteSequence() {
-      if (!this.sequenceToDelete) return;
-      
-      this.isDeleting = true;
-      
-      try {
-        const Sequences = Parse.Object.extend('Sequences');
-        const sequence = new Sequences();
-        sequence.id = this.sequenceToDelete;
-        
-        await sequence.destroy();
-        
-        this.showDeleteConfirmation = false;
-        this.sequenceToDelete = null;
-        
-        // Recharger les séquences
-        await this.loadSequences();
-        
-        this.showNotification('Succès', 'Séquence supprimée avec succès', 'success');
-        
-      } catch (error) {
-        console.error('Erreur lors de la suppression de la séquence:', error);
-        this.showNotification('Erreur', 'Impossible de supprimer la séquence', 'error');
-      } finally {
-        this.isDeleting = false;
-      }
-    },
-    
-    /**
-     * Navigation vers les détails d'une séquence
-     */
-    navigateToSequenceDetail(sequenceId) {
-      // All sequences now go to the unified sequence-detail page
-      window.location.href = `/sequence-detail?id=${sequenceId}`;
-    },
-    
-    /**
-     * Basculer le statut d'une séquence avec appel explicite au Cloud Code
-     */
-    async toggleSequenceStatus(sequence) {
-      if (!sequence || !sequence.objectId) {
-        this.showNotification('Erreur', 'Séquence invalide', 'error');
-        return;
-      }
-      
-      const newStatus = !sequence.isActif;
-      
-      try {
-        // 1. Vérifier que la séquence existe toujours dans la base de données
-        const Sequences = Parse.Object.extend('Sequences');
-        const sequenceQuery = new Parse.Query(Sequences);
-        
-        try {
-          await sequenceQuery.get(sequence.objectId);
-        } catch (verifyError) {
-          if (verifyError.code === 101) { // Object not found
-            this.showNotification('Erreur', 'La séquence n\'existe plus dans la base de données', 'error');
-            return;
-          }
-          throw verifyError;
-        }
-        
-        // 2. Mettre à jour le statut dans la base de données
-        const seq = new Sequences();
-        seq.id = sequence.objectId;
-        seq.set('isActif', newStatus);
-        
-        await seq.save();
-        
-        // 3. Appeler explicitement la fonction Cloud Code appropriée
-        if (newStatus) {
-          // Activation: appeler populateRelanceSequence
-          await this.callCloudFunction('populateRelanceSequence', { idSequence: sequence.objectId });
-        } else {
-          // Désactivation: appeler cleanupRelancesOnDeactivate
-          await this.callCloudFunction('cleanupRelancesOnDeactivate', { idSequence: sequence.objectId });
-        }
-        
-        // 4. Mettre à jour localement
-        sequence.isActif = newStatus;
-        
-        this.showNotification('Succès', `Séquence ${newStatus ? 'activée' : 'désactivée'} avec succès`, 'success');
-      } catch (error) {
-        console.error('Erreur lors du basculement du statut:', error);
-        
-        // Essayer de restaurer l'état précédent en cas d'erreur
-        try {
-          const Sequences = Parse.Object.extend('Sequences');
-          const seq = new Sequences();
-          seq.id = sequence.objectId;
-          seq.set('isActif', sequence.isActif); // Restaurer l'ancien statut
-          await seq.save();
-        } catch (restoreError) {
-          console.error('Erreur lors de la restauration du statut:', restoreError);
-        }
-        
-        // Gestion spécifique des erreurs
-        if (error.code === 101) {
-          this.showNotification('Erreur', 'La séquence n\'existe plus dans la base de données', 'error');
-        } else if (error.code === 141 || error.message.includes('not found')) {
-          this.showNotification('Erreur', 'Fonction Cloud non disponible', 'error');
-        } else {
-          this.showNotification('Erreur', 'Impossible de basculer le statut', 'error');
-        }
-      }
-    },
-    
-    /**
-     * Appeler une fonction Cloud Code avec gestion des erreurs
-     */
-    async callCloudFunction(functionName, params = {}) {
-      try {
-        console.log(`Appel de la fonction Cloud ${functionName} avec les paramètres:`, params);
-        
-        // Vérifier si la fonction existe en essayant de l'appeler
-        const result = await Parse.Cloud.run(functionName, params);
-        console.log(`Fonction Cloud ${functionName} exécutée avec succès:`, result);
-        return result;
-      } catch (error) {
-        console.error(`Erreur lors de l'exécution de la fonction Cloud ${functionName}:`, error);
-        
-        // Gestion spécifique pour les fonctions non trouvées
-        if (error.code === 141 || error.message.includes('Object not found') || error.message.includes('not found')) {
-          console.warn(`La fonction Cloud ${functionName} n'est pas disponible sur le serveur`);
-          this.showNotification('Avertissement', `La fonction ${functionName} n'est pas disponible`, 'warning');
-          // Retourner un objet vide pour ne pas bloquer l'exécution
-          return {};
-        }
-        
-        throw error; // Re-lancer l'erreur pour que l'appelant puisse la gérer
-      }
-    },
-    
-    /**
-     * Confirmer la suppression d'une séquence
-     */
-    confirmDeleteSequence(sequence) {
-      this.sequenceToDeleteId = sequence.objectId;
-      this.showSequenceDeleteConfirmation = true;
-    },
-    
-    /**
-     * Annuler la suppression d'une séquence
-     */
-    cancelDeleteSequence() {
-      this.sequenceToDeleteId = null;
-      this.showSequenceDeleteConfirmation = false;
-    },
-    
-    /**
-     * Supprimer une séquence
-     */
-    async deleteSequence() {
-      if (!this.sequenceToDeleteId) return;
-      
-      try {
-        const Sequences = Parse.Object.extend('Sequences');
-        const seq = new Sequences();
-        seq.id = this.sequenceToDeleteId;
-        
-        // D'abord, vérifier si des impayés sont associés à cette séquence
-        const Impayes = Parse.Object.extend('Impayes');
-        const query = new Parse.Query(Impayes);
-        query.equalTo('sequence', seq);
-        const impayesCount = await query.count();
-        
-        if (impayesCount > 0) {
-          this.showNotification('Attention', `Cette séquence est associée à ${impayesCount} impayé(s). Veuillez d'abord réassigner ces impayés à une autre séquence.`, 'warning');
-          this.cancelDeleteSequence();
-          return;
-        }
-        
-        // Supprimer la séquence
-        await seq.destroy();
-        
-        // Rafraîchir la liste
-        await this.loadSequences();
-        
-        this.showNotification('Succès', 'Séquence supprimée avec succès', 'success');
-        this.cancelDeleteSequence();
-      } catch (error) {
-        console.error('Erreur lors de la suppression de la séquence:', error);
-        this.showNotification('Erreur', 'Impossible de supprimer la séquence', 'error');
-        this.cancelDeleteSequence();
-      }
-    },
-    
-    /**
-     * Changement de page
-     */
-    changePage(page) {
-      this.currentPage = page;
-    },
-    
-    /**
-     * Calcul des séquences paginées
-     */
-    get paginatedSequences() {
-      const start = (this.currentPage - 1) * this.itemsPerPage;
-      const end = start + this.itemsPerPage;
-      return this.sequences.slice(start, end);
-    },
-    
-    /**
-     * Calcul du nombre total de pages
-     */
-    get totalPages() {
-      return Math.ceil(this.sequences.length / this.itemsPerPage);
-    },
-    
-
-    
-    /**
-     * Utilitaires
-     */
-    
-    truncateText(text, maxLength = 240) {
+    // Tronquer du texte
+    truncateText(text, maxLength) {
       if (!text) return '';
       if (text.length <= maxLength) return text;
       return text.substring(0, maxLength) + '...';
-    },
-    
-    formatDate(dateString) {
-      if (!dateString) return 'Non défini';
-      
-      try {
-        const date = new Date(dateString);
-        if (isNaN(date.getTime())) return 'Date invalide';
-        
-        return date.toLocaleDateString('fr-FR', {
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit'
-        });
-      } catch (error) {
-        console.error('Erreur de formatage de date:', error);
-        return 'Date invalide';
-      }
-    },
-    
-    showNotification(title, message, type = 'info') {
-      this.notification = {
-        show: true,
-        type,
-        title,
-        message
-      };
-      
-      // Masquer automatiquement après 5 secondes
-      setTimeout(() => {
-        this.notification.show = false;
-      }, 5000);
     }
   }));
 });
