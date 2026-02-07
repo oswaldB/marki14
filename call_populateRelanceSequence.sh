@@ -2,10 +2,10 @@
 # call_populateRelanceSequence.sh - Script shell pour appeler l'API Parse
 # Appelle la fonction populateRelanceSequence avec l'ID de séquence uIu3bFRuix
 
-echo "============================================"
+echo "************************************************************************"
 echo "Appel de populateRelanceSequence"
 echo "Pour la séquence uIu3bFRuix"
-echo "============================================"
+echo "************************************************************************"
 echo ""
 
 # Configuration
@@ -76,6 +76,6 @@ else
 fi
 
 echo ""
-echo "============================================"
+echo "************************************************************************"
 echo "Appel terminé!"
-echo "============================================"
+echo "************************************************************************"

@@ -30,6 +30,9 @@ export const prerender = false;
       }
     }); 
     
+    // Exposer l'état au store Alpine pour que les composants enfants puissent y accéder
+    $store.unifiedSequenceState = $data;
+    
     console.log('Unified sequence state initialized');
   " @actions-updated.window="console.log('Événement actions-updated reçu')">
     <!-- État de chargement et d'erreur -->
@@ -126,7 +129,7 @@ export const prerender = false;
                   type="text"
                   class="flex-1 border border-gray-300 rounded-md px-3 py-2 text-xl font-semibold"
                   x-model="sequence.nom"
-                  x-show="editingSequenceName"
+                  x-show="editingSequenceName && sequence"
                   @blur="editingSequenceName = false; saveSequenceName()"
                   @keyup.enter="editingSequenceName = false; saveSequenceName()"
                 >
@@ -228,7 +231,7 @@ export const prerender = false;
                 class="flex-1 border border-gray-300 rounded-md px-3 py-2 text-gray-600"
                 rows="3"
                 x-model="sequence.description"
-                x-show="editingDescription"
+                x-show="editingDescription && sequence"
                 @blur="editingDescription = false; saveSequenceDescription()"
               ></textarea>
             </div>
@@ -397,7 +400,7 @@ export const prerender = false;
         <!-- Drawer content -->
         <div class="fixed inset-y-0 right-0 pl-10 max-w-full flex sm:pl-16">
           <div 
-            class="relative w-screen max-w-md"
+            class="relative w-screen max-w-2xl"
             @click.away="showTestDrawer = false"
           >
             <div class="h-full flex flex-col bg-white shadow-xl overflow-y-scroll">
@@ -472,7 +475,7 @@ export const prerender = false;
                             <Mail class="w-4 h-4 text-blue-500 mr-2" />
                             <span class="text-sm text-gray-600" x-text="`Jour ${action.delay}: ${action.subject}`"></span>
                           </div>
-                          <span class="text-xs text-gray-400" x-text="action.senderEmail"></span>
+                          <span class="text-xs text-gray-400" x-text="getSmtpProfileEmail(action.smtpProfile?.objectId)"></span>
                         </div>
                       </template>
                     </div>
@@ -525,7 +528,7 @@ export const prerender = false;
         <!-- Drawer content -->
         <div class="fixed inset-y-0 right-0 pl-10 max-w-full flex sm:pl-16">
           <div 
-            class="relative w-screen max-w-md"
+            class="relative w-screen max-w-2xl"
             @click.away="showEditDrawer = false"
           >
             <div class="h-full flex flex-col bg-white shadow-xl overflow-y-scroll">
@@ -579,17 +582,27 @@ export const prerender = false;
                   </div>
                   
                   <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Email émetteur</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Profil SMTP</label>
                     <select 
                       class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                      x-model="editingAction.senderEmail"
+                      x-model="editingAction.smtpProfile.objectId"
                       required
                     >
                       <option value="" disabled>Sélectionnez un profil SMTP</option>
                       <template x-for="profile in smtpProfiles">
-                        <option :value="profile.email" x-text="profile.email"></option>
+                        <option :value="profile.objectId" x-text="profile.email"></option>
                       </template>
                     </select>
+                  </div>
+                  
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">CC (optionnel)</label>
+                    <input 
+                      type="text"
+                      class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                      x-model="editingAction.cc"
+                      placeholder="email1@example.com, email2@example.com"
+                    >
                   </div>
                   
                   <div>

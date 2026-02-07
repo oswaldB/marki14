@@ -35,9 +35,17 @@ Parse.Cloud.define('populateRelanceSequence', async (request) => {
     // Vérifier que la classe Sequences existe
     try {
       const sequenceCount = await sequenceQuery.count();
-      console.log(`La classe Sequences existe et contient ${sequenceCount} séquences`);
+      console.log(`[Étape 3/8] Vérification de la classe Sequences`);
+      console.log(`- La classe Sequences existe et contient ${sequenceCount} séquences`);
+      if (sequenceCount === 0) {
+        console.log(`- Aucune séquence n'est actuellement enregistrée dans la base de données`);
+      } else {
+        console.log(`- Préparation à la récupération de la séquence spécifique avec ID: ${idSequence}`);
+      }
     } catch (classError) {
-      console.error(`Erreur lors de l'accès à la classe Sequences:`, classError);
+      console.error(`[ERREUR] Erreur lors de l'accès à la classe Sequences:`, classError);
+      console.error(`- Détails: ${classError.message}`);
+      console.error(`- Code: ${classError.code}`);
       throw new Error(`La classe Sequences n'est pas accessible: ${classError.message}`);
     }
     
@@ -79,12 +87,41 @@ Parse.Cloud.define('populateRelanceSequence', async (request) => {
       console.log(`Type de séquence: ${sequence.get('isAuto') ? 'Automatique' : 'Manuelle'}`);
       
       // 3. Récupérer tous les impayés qui ont cette séquence
+      console.log(`[Étape 3/8] Récupération des impayés associés à la séquence`);
+      console.log(`- Recherche des impayés avec la séquence ID: ${sequence.id}`);
+      console.log(`- Nom de la séquence: ${sequence.get('nom')}`);
+      
       const Impaye = Parse.Object.extend('Impayes');
       const impayeQuery = new Parse.Query(Impaye);
-      impayeQuery.equalTo('sequence', sequence);
+      
+      // Utiliser un objet Pointer explicite pour la séquence
+      const sequencePointer = {
+        __type: "Pointer",
+        className: "Sequence",
+        objectId: sequence.id
+      };
+      
+      console.log(`- Construction de la requête avec Pointer:`, JSON.stringify(sequencePointer, null, 2));
+      impayeQuery.equalTo('sequence', sequencePointer);
+      
+      console.log(`- Exécution de la requête pour les impayés...`);
+      
       impayes = await impayeQuery.find();
-    
-    console.log(`Nombre d'impayés trouvés pour cette séquence: ${impayes.length}`);
+      
+      console.log(`[Résultat] Nombre d'impayés trouvés pour cette séquence: ${impayes.length}`);
+      
+      if (impayes.length === 0) {
+        console.log(`- Aucun impayé n'est associé à cette séquence`);
+      } else {
+        console.log(`- Liste des numéros de facture des impayés trouvés: ${impayes.map(i => i.get('nfacture')).join(', ')}`);
+        
+        // Statistiques supplémentaires sur les impayés
+        const totalAmount = impayes.reduce((sum, impaye) => sum + (parseFloat(impaye.get('resteapayer')) || 0), 0);
+        console.log(`- Montant total restant à payer: ${totalAmount.toFixed(2)} EUR`);
+        
+        const uniquePayeurs = new Set(impayes.map(i => i.get('payeur_nom')));
+        console.log(`- Nombre de payeurs uniques: ${uniquePayeurs.size}`);
+      }
     
     // 4. Récupérer les actions de la séquence
     actions = sequence.get('actions') || [];
@@ -95,6 +132,13 @@ Parse.Cloud.define('populateRelanceSequence', async (request) => {
     }
     
     console.log(`Nombre d'actions dans la séquence: ${actions.length}`);
+    console.log('[DEBUG] Structure de la première action:', JSON.stringify(actions[0], null, 2));
+    
+    // Vérifier les noms des champs dans les actions
+    if (actions[0]) {
+      const firstActionKeys = Object.keys(actions[0]);
+      console.log('[DEBUG] Champs disponibles dans les actions:', firstActionKeys);
+    }
     
     // 5. Traiter chaque impayé
     
@@ -124,53 +168,185 @@ Parse.Cloud.define('populateRelanceSequence', async (request) => {
       const remainingRelances = existingRelances.filter(r => r.get('is_sent'));
       
       if (remainingRelances.length === 0) {
-        console.log('Création de nouvelles relances...');
+        console.log(`Création de nouvelles relances pour ${actions.length} actions...`);
         
-        // Prendre la première action de la séquence
-        const firstAction = actions[0];
+        // Créer une relance pour chaque action de la séquence
+        for (let i = 0; i < actions.length; i++) {
+          const action = actions[i];
+          
+          if (!action) {
+            console.log(`Action ${i+1} invalide, passage à l'action suivante`);
+            continue;
+          }
+          
+          // Remplacer les valeurs [[ ]] dans les messages
+          // Essayer différents noms de champs possibles
+          const emailSubject = replacePlaceholders(
+            action.emailSubject || action.subject || action.objet || action.title || '', 
+            impaye
+          );
+          const emailBody = replacePlaceholders(
+            action.emailBody || action.body || action.message || action.contenu || '', 
+            impaye
+          );
+          // Utiliser l'email du payeur par défaut, ou le champ spécifique de l'action si présent
+          const emailTo = replacePlaceholders(
+            action.emailTo || action.to || action.destinataire || action.destinataires || '', 
+            impaye
+          ) || impaye.get('payeur_email') || '';
+          const emailCc = replacePlaceholders(
+            action.emailCc || action.cc || action.copie || action.copies || '', 
+            impaye
+          );
+          
+          // Vérifier si l'action est valide (au moins un sujet et un corps)
+          if (!emailSubject && !emailBody) {
+            console.log(`[AVERTISSEMENT] Action ${i+1} ignorée: sujet et corps vides`);
+            continue;
+          }
+          
+          // Vérifier si le payeur a un email valide
+          const payeurEmail = impaye.get('payeur_email');
+          if (!emailTo && !payeurEmail) {
+            console.log(`[AVERTISSEMENT] Action ${i+1} ignorée: le payeur n'a pas d'email (payeur_email: ${payeurEmail})`);
+            continue;
+          }
+          
+          // Si emailTo est vide mais que le payeur a un email, utiliser celui-ci
+          const finalEmailTo = emailTo || payeurEmail;
+          
+          console.log(`Création de relance ${i+1}/${actions.length} avec sujet: "${emailSubject}"`);
+          console.log(`[INFO] Destinataire: ${finalEmailTo}, Copie: ${emailCc}`);
+          
+          // Calculer la date d'envoi en fonction du délai
+          const sendDate = calculateSendDate(action.delay || action.delai || 0);
+          
+          // Créer une nouvelle relance
+          const newRelance = new RelancesClass();
+          
+          // Utiliser smtpProfile au lieu de senderEmail
+          if (action.smtpProfile && action.smtpProfile.objectId) {
+            const SMTPProfile = Parse.Object.extend('SMTPProfile');
+            const smtpProfilePointer = Parse.Object.fromJSON({
+              __type: 'Pointer',
+              className: 'SMTPProfile',
+              objectId: action.smtpProfile.objectId
+            });
+            newRelance.set('smtpProfile', smtpProfilePointer);
+          } else if (sequence.get('smtpProfile')) {
+            // Utiliser le profil SMTP de la séquence si disponible
+            newRelance.set('smtpProfile', sequence.get('smtpProfile'));
+          }
+          
+          newRelance.set('email_subject', emailSubject);
+          newRelance.set('email_body', emailBody);
+          newRelance.set('email_to', finalEmailTo);
+          newRelance.set('email_cc', emailCc);
+          newRelance.set('send_date', sendDate);
+          newRelance.set('is_sent', false);
+          newRelance.set('impaye', impaye);
+          newRelance.set('sequence', sequence);
+          newRelance.set('action_index', i); // Ajouter l'index de l'action pour référence
+          newRelance.set('action_type', action.type || 'email'); // Type d'action
+          
+          await newRelance.save();
+          createdCount++;
+          console.log(`Relance ${i+1}/${actions.length} créée avec succès (ID: ${newRelance.id})`);
+        }
+      } else {
+        // Trouver l'action_index maximum parmi les relances déjà envoyées
+        const maxActionIndex = Math.max(...remainingRelances.map(r => r.get('action_index')));
+        console.log(`Dernière relance envoyée pour l'action_index: ${maxActionIndex}`);
         
-        if (!firstAction) {
-          console.log('Aucune action valide trouvée');
-          continue;
+        // Créer des relances pour les actions suivantes
+        const actionsToCreate = actions.slice(maxActionIndex + 1);
+        
+        if (actionsToCreate.length > 0) {
+          console.log(`Création de nouvelles relances pour ${actionsToCreate.length} actions suivantes...`);
+          
+          for (let i = 0; i < actionsToCreate.length; i++) {
+            const action = actionsToCreate[i];
+            const absoluteIndex = maxActionIndex + 1 + i;
+            
+            if (!action) {
+              console.log(`Action ${absoluteIndex+1} invalide, passage à l'action suivante`);
+              continue;
+            }
+            
+            // Remplacer les valeurs [[ ]] dans les messages
+            const emailSubject = replacePlaceholders(
+              action.emailSubject || action.subject || action.objet || action.title || '', 
+              impaye
+            );
+            const emailBody = replacePlaceholders(
+              action.emailBody || action.body || action.message || action.contenu || '', 
+              impaye
+            );
+            const emailTo = replacePlaceholders(
+              action.emailTo || action.to || action.destinataire || action.destinataires || '', 
+              impaye
+            ) || impaye.get('payeur_email') || '';
+            const emailCc = replacePlaceholders(
+              action.emailCc || action.cc || action.copie || action.copies || '', 
+              impaye
+            );
+            
+            // Vérifier si l'action est valide
+            if (!emailSubject && !emailBody) {
+              console.log(`[AVERTISSEMENT] Action ${absoluteIndex+1} ignorée: sujet et corps vides`);
+              continue;
+            }
+            
+            const payeurEmail = impaye.get('payeur_email');
+            if (!emailTo && !payeurEmail) {
+              console.log(`[AVERTISSEMENT] Action ${absoluteIndex+1} ignorée: le payeur n'a pas d'email (payeur_email: ${payeurEmail})`);
+              continue;
+            }
+            
+            const finalEmailTo = emailTo || payeurEmail;
+            
+            console.log(`Création de relance ${absoluteIndex+1}/${actions.length} avec sujet: "${emailSubject}"`);
+            console.log(`[INFO] Destinataire: ${finalEmailTo}, Copie: ${emailCc}`);
+            
+            // Calculer la date d'envoi en fonction du délai
+            const sendDate = calculateSendDate(action.delay || action.delai || 0);
+            
+            // Créer une nouvelle relance
+            const newRelance = new RelancesClass();
+            
+            // Utiliser smtpProfile au lieu de senderEmail
+            if (action.smtpProfile && action.smtpProfile.objectId) {
+              const SMTPProfile = Parse.Object.extend('SMTPProfile');
+              const smtpProfilePointer = Parse.Object.fromJSON({
+                __type: 'Pointer',
+                className: 'SMTPProfile',
+                objectId: action.smtpProfile.objectId
+              });
+              newRelance.set('smtpProfile', smtpProfilePointer);
+            } else if (sequence.get('smtpProfile')) {
+              // Utiliser le profil SMTP de la séquence si disponible
+              newRelance.set('smtpProfile', sequence.get('smtpProfile'));
+            }
+            
+            newRelance.set('email_subject', emailSubject);
+            newRelance.set('email_body', emailBody);
+            newRelance.set('email_to', finalEmailTo);
+            newRelance.set('email_cc', emailCc);
+            newRelance.set('send_date', sendDate);
+            newRelance.set('is_sent', false);
+            newRelance.set('impaye', impaye);
+            newRelance.set('sequence', sequence);
+            newRelance.set('action_index', absoluteIndex); // Utiliser l'index absolu
+            newRelance.set('action_type', action.type || 'email');
+            
+            await newRelance.save();
+            createdCount++;
+            console.log(`Relance ${absoluteIndex+1}/${actions.length} créée avec succès (ID: ${newRelance.id})`);
+          }
+        } else {
+          console.log(`Toutes les actions ont déjà été traitées (dernière action_index: ${maxActionIndex})`);
         }
         
-        // Remplacer les valeurs [[ ]] dans les messages
-        const emailSubject = replacePlaceholders(firstAction.emailSubject || '', impaye);
-        const emailBody = replacePlaceholders(firstAction.emailBody || '', impaye);
-        const emailTo = replacePlaceholders(firstAction.emailTo || '', impaye);
-        const emailCc = replacePlaceholders(firstAction.emailCc || '', impaye);
-        
-        console.log(`Création de relance avec sujet: ${emailSubject}`);
-        
-        // Créer une nouvelle relance
-        const newRelance = new RelancesClass();
-        newRelance.set('email_sender', firstAction.senderEmail || sequence.get('senderEmail') || '');
-        newRelance.set('email_subject', emailSubject);
-        newRelance.set('email_body', emailBody);
-        newRelance.set('email_to', emailTo);
-        newRelance.set('email_cc', emailCc);
-        newRelance.set('send_date', new Date());
-        newRelance.set('is_sent', false);
-        newRelance.set('impaye', impaye);
-        newRelance.set('sequence', sequence);
-        
-        // Si une classe Relance existe, créer aussi un pointer vers elle
-        // Note: La classe Relance doit être créée manuellement avant utilisation
-        const Relance = Parse.Object.extend('Relance');
-        const relanceObj = new Relance();
-        relanceObj.set('type', firstAction.type || 'email');
-        relanceObj.set('message', emailBody);
-        relanceObj.set('date', new Date());
-        relanceObj.set('isSent', false);
-        
-        const savedRelance = await relanceObj.save();
-        newRelance.set('relance', savedRelance);
-        
-        await newRelance.save();
-        createdCount++;
-        console.log(`Relance créée avec succès (ID: ${newRelance.id})`);
-      } else {
-        console.log(`Relances existantes conservées (${remainingRelances.length} relances déjà envoyées)`);
         updatedCount++;
       }
       
@@ -201,37 +377,44 @@ Parse.Cloud.define('populateRelanceSequence', async (request) => {
   }
 });
 
-// Fonction pour remplacer les placeholders [[champ]] dans les messages
+// Fonction pour remplacer les placeholders [[nomColonne]] dans les messages
 function replacePlaceholders(template, impaye) {
   if (!template || typeof template !== 'string') {
     return template;
   }
   
-  // Remplacer les placeholders courants
-  let result = template
-    .replace(/\{\{\s*impaye\.nfacture\s*\}\}/gi, impaye.get('nfacture') || '')
-    .replace(/\{\{\s*impaye\.datepiece\s*\}\}/gi, formatDate(impaye.get('datepiece')))
-    .replace(/\{\{\s*impaye\.totalttcnet\s*\}\}/gi, formatCurrency(impaye.get('totalttcnet')))
-    .replace(/\{\{\s*impaye\.resteapayer\s*\}\}/gi, formatCurrency(impaye.get('resteapayer')))
-    .replace(/\{\{\s*impaye\.payeur_nom\s*\}\}/gi, impaye.get('payeur_nom') || '')
-    .replace(/\{\{\s*impaye\.payeur_email\s*\}\}/gi, impaye.get('payeur_email') || '')
-    .replace(/\{\{\s*impaye\.payeur_telephone\s*\}\}/gi, impaye.get('payeur_telephone') || '')
-    .replace(/\{\{\s*impaye\.proprietaire_nom\s*\}\}/gi, impaye.get('proprietaire_nom') || '')
-    .replace(/\{\{\s*impaye\.proprietaire_email\s*\}\}/gi, impaye.get('proprietaire_email') || '')
-    .replace(/\{\{\s*impaye\.proprietaire_telephone\s*\}\}/gi, impaye.get('proprietaire_telephone') || '');
+  let result = template;
   
-  // Remplacer aussi le format [[champ]] comme mentionné dans la todo
-  result = result
-    .replace(/\[\[\s*nfacture\s*\]\]/gi, impaye.get('nfacture') || '')
-    .replace(/\[\[\s*datepiece\s*\]\]/gi, formatDate(impaye.get('datepiece')))
-    .replace(/\[\[\s*totalttcnet\s*\]\]/gi, formatCurrency(impaye.get('totalttcnet')))
-    .replace(/\[\[\s*resteapayer\s*\]\]/gi, formatCurrency(impaye.get('resteapayer')))
-    .replace(/\[\[\s*payeur_nom\s*\]\]/gi, impaye.get('payeur_nom') || '')
-    .replace(/\[\[\s*payeur_email\s*\]\]/gi, impaye.get('payeur_email') || '')
-    .replace(/\[\[\s*payeur_telephone\s*\]\]/gi, impaye.get('payeur_telephone') || '')
-    .replace(/\[\[\s*proprietaire_nom\s*\]\]/gi, impaye.get('proprietaire_nom') || '')
-    .replace(/\[\[\s*proprietaire_email\s*\]\]/gi, impaye.get('proprietaire_email') || '')
-    .replace(/\[\[\s*proprietaire_telephone\s*\]\]/gi, impaye.get('proprietaire_telephone') || '');
+  // Utiliser une expression régulière pour trouver tous les placeholders [[nomColonne]]
+  // et les remplacer par la valeur correspondante de l'impayé
+  result = result.replaceAll(/\{\{\s*([^\}\}]+)\s*\}\}/g, (match, fieldName) => {
+    // Extraire le nom du champ entre les doubles accolades {{fieldName}}
+    const value = impaye.get(fieldName.trim()) || '';
+    
+    // Appliquer le formatage approprié pour certains champs
+    if (fieldName.trim() === 'datepiece' && value) {
+      return formatDate(value);
+    } else if ((fieldName.trim() === 'totalttcnet' || fieldName.trim() === 'resteapayer') && value) {
+      return formatCurrency(value);
+    }
+    
+    return value;
+  });
+  
+  // Remplacer aussi les placeholders entre doubles crochets [[nomColonne]]
+  result = result.replaceAll(/\[\[\s*([^\]\]]+)\s*\]\]/g, (match, fieldName) => {
+    // Extraire le nom du champ entre les doubles crochets [[fieldName]]
+    const value = impaye.get(fieldName.trim()) || '';
+    
+    // Appliquer le formatage approprié pour certains champs
+    if (fieldName.trim() === 'datepiece' && value) {
+      return formatDate(value);
+    } else if ((fieldName.trim() === 'totalttcnet' || fieldName.trim() === 'resteapayer') && value) {
+      return formatCurrency(value);
+    }
+    
+    return value;
+  });
   
   return result;
 }
@@ -265,4 +448,29 @@ function formatCurrency(value) {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   });
+}
+
+// Fonction pour calculer la date d'envoi en fonction du délai
+function calculateSendDate(delay) {
+  const now = new Date();
+  
+  // Si le délai est un nombre, l'interpréter comme des jours
+  if (typeof delay === 'number') {
+    const sendDate = new Date(now);
+    sendDate.setDate(now.getDate() + delay);
+    return sendDate;
+  }
+  
+  // Si le délai est une chaîne, essayer de le parser
+  if (typeof delay === 'string') {
+    const delayValue = parseInt(delay, 10);
+    if (!isNaN(delayValue)) {
+      const sendDate = new Date(now);
+      sendDate.setDate(now.getDate() + delayValue);
+      return sendDate;
+    }
+  }
+  
+  // Par défaut, retourner la date actuelle
+  return now;
 }

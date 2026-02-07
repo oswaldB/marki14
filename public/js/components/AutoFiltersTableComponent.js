@@ -505,6 +505,8 @@ document.addEventListener('alpine:init', () => {
 
     // Obtenir le nombre de filtres actifs (uniquement ceux avec des valeurs significatives)
     get activeFiltersCount() {
+      if (!this.columnFilters) return 0;
+      
       let count = 0;
       for (const [column, filter] of Object.entries(this.columnFilters)) {
         if (this.isFilterActive(filter)) {
@@ -535,6 +537,13 @@ document.addEventListener('alpine:init', () => {
     // Obtenir uniquement les filtres actifs
     get activeFilters() {
       const active = {};
+      
+      // Vérification défensive au cas où columnFilters n'est pas initialisé
+      if (!this.columnFilters) {
+        console.warn('columnFilters non initialisé dans activeFilters');
+        return active;
+      }
+      
       for (const [column, filter] of Object.entries(this.columnFilters)) {
         if (this.isFilterActive(filter)) {
           active[column] = filter;

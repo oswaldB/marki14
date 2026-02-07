@@ -31,9 +31,9 @@ log('Server URL : ' + (process.env.PUBLIC_SERVER_URL || 'https://dev.parse.marki
 
 Parse.Cloud.define('syncImpayes', async (request) => {
 
-  log('========================================');
+  log('******************************************************=======');
   log('Début de la synchronisation des impayés...');
-  log('========================================');
+  log('******************************************************=======');
   log('Configuration de la base PostgreSQL :');
   log('Host : ' + process.env.DB_HOST);
   log('Port : ' + process.env.DB_PORT);
@@ -41,9 +41,9 @@ Parse.Cloud.define('syncImpayes', async (request) => {
   log('Database : ' + process.env.DB_NAME);
 
   // Connexion à PostgreSQL
-  log('\n========================================');
+  log('\n******************************************************=======');
   log('Connexion à la base PostgreSQL...');
-  log('========================================');
+  log('******************************************************=======');
   log('Paramètres de connexion :');
   log('- Host: ' + process.env.DB_HOST);
   log('- Port: ' + process.env.DB_PORT);
@@ -93,9 +93,9 @@ Parse.Cloud.define('syncImpayes', async (request) => {
   }
 
   try {
-    log('\n========================================');
+    log('\n******************************************************=======');
     log('Exécution de la requête PostgreSQL...');
-    log('========================================');
+    log('******************************************************=======');
     log('La requête peut prendre quelques secondes...');
     log('Veuillez patienter...');
 
@@ -368,9 +368,9 @@ ORDER BY p."datepiece" DESC
     // Vérifier si externalData contient des données valides
     if (externalData.length === 0) {
       log('\nAucune donnée externe à synchroniser. Arrêt du script.');
-      log('========================================');
+      log('******************************************************=======');
       log('Fin du script de synchronisation.');
-      log('========================================');
+      log('******************************************************=======');
       return { success: true, message: 'Aucune donnée à synchroniser', inserted: 0, updated: 0, skipped: 0 };
     }
 
@@ -629,9 +629,9 @@ ORDER BY p."datepiece" DESC
       }
     }
 
-    log('\n========================================');
+    log('\n******************************************************=======');
     log('Synchronisation terminée avec succès !');
-    log('========================================');
+    log('******************************************************=======');
     log(`Nombre de nouvelles entrées ajoutées : ${insertedCount}`);
     log(`Nombre d'entrées mises à jour : ${updatedCount}`);
     log(`Nombre d'entrées inchangées : ${skippedCount}`);
@@ -646,9 +646,9 @@ ORDER BY p."datepiece" DESC
       total: externalData.length
     };
   } catch (err) {
-    log('\n========================================');
+    log('\n******************************************************=======');
     log('Erreur lors de la synchronisation :');
-    log('========================================');
+    log('******************************************************=======');
     log('Message d\'erreur : ' + err.message);
     log('Détails de l\'erreur : ' + JSON.stringify(err.response ? err.response.data : err));
     log('Stack trace : ' + err.stack);
@@ -664,8 +664,8 @@ ORDER BY p."datepiece" DESC
     log('\nFermeture de la connexion à PostgreSQL...');
     await pgPool.end();
     log('Connexion à PostgreSQL fermée avec succès.');
-    log('========================================');
+    log('******************************************************=======');
     log('Fin du script de synchronisation.');
-    log('========================================');
+    log('******************************************************=======');
   }
 });

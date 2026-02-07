@@ -30,9 +30,6 @@ require('./testSftpConnection');
 // Importer la fonction pour peupler les relances d'une séquence
 require('./populateRelanceSequence');
 
-// Importer la fonction pour créer les classes Relance et Relances
-require('./createRelanceClasses');
-
 // Importer les triggers pour les séquences
 require('./sequenceTriggers');
 
