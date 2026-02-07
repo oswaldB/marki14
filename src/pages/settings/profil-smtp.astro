@@ -3,290 +3,13 @@
 
 import BaseLayout from '../../layouts/BaseLayout.astro';
 
-import { X, Save, Plus, ArrowLeft, RefreshCw, Play } from '@lucide/astro';---
-
-<!-- Script Alpine.js pour la gestion des profils SMTP - doit être avant BaseLayout -->
-<script is:inline>
-  document.addEventListener('alpine:init', () => {
-    // Composant principal pour la gestion des profils SMTP
-    Alpine.data('smtpSettings', () => ({
-      profiles: [],
-      isLoading: false,
-      isDrawerOpen: false,
-      currentProfileId: null,
-      formData: {
-        profileName: '',
-        smtpHost: '',
-        smtpPort: '',
-        smtpSecurity: '',
-        smtpUsername: '',
-        smtpPassword: '',
-        fromEmail: '',
-        fromName: '',
-        htmlSignature: ''
-      },
-      isTesting: false,
-      
-      init() {
-        console.log('SMTP Settings component initialized');
-        this.refreshSmtpProfiles();
-      },
-      
-      async refreshSmtpProfiles() {
-        this.isLoading = true;
-        try {
-          const query = new Parse.Query('SMTPProfile');
-          query.equalTo('isArchived', false);
-          query.ascending('name');
-          
-          const results = await query.find();
-          
-          this.profiles = results.map(profile => ({
-            id: profile.id,
-            name: profile.get('name'),
-            host: profile.get('host'),
-            port: profile.get('port'),
-            security: profile.get('useSSL') ? 'ssl' : profile.get('useTLS') ? 'tls' : 'none',
-            fromEmail: profile.get('email'),
-            fromName: profile.get('fromName') || '',
-            htmlSignature: profile.get('htmlSignature') || '',
-            isActive: profile.get('isActive') || false
-          }));
-          
-          this.updateActiveProfileCount();
-          
-        } catch (error) {
-          console.error('Erreur lors du chargement des profils SMTP:', error);
-          alert('Erreur: ' + (error.message || 'Échec du chargement des profils SMTP'));
-        } finally {
-          this.isLoading = false;
-        }
-      },
-      
-      updateActiveProfileCount() {
-        const count = this.profiles.filter(p => p.isActive).length;
-        document.getElementById('activeProfileCount').textContent = count;
-      },
-      
-      async setActiveProfile(profileId) {
-        try {
-          const query = new Parse.Query('SMTPProfile');
-          const allProfiles = await query.find();
-          
-          await Parse.Object.saveAll(allProfiles.map(p => {
-            p.set('isActive', false);
-            return p;
-          }));
-          
-          const profileToActivate = allProfiles.find(p => p.id === profileId);
-          if (profileToActivate) {
-            profileToActivate.set('isActive', true);
-            await profileToActivate.save();
-          }
-          
-          await this.refreshSmtpProfiles();
-          
-        } catch (error) {
-          console.error('Erreur lors de l\'activation du profil:', error);
-          alert('Erreur: ' + (error.message || 'Échec de l\'activation du profil'));
-        }
-      },
-      
-      async testProfileConnection(profileId) {
-        try {
-          const query = new Parse.Query('SMTPProfile');
-          const profile = await query.get(profileId);
-          
-          const profileData = {
-            host: profile.get('host'),
-            port: profile.get('port'),
-            username: profile.get('username'),
-            password: profile.get('password'),
-            email: profile.get('email'),
-            useSSL: profile.get('useSSL')
-          };
-          
-          const result = await Parse.Cloud.run('sendTestEmail', {
-            recipient: profile.get('email'),
-            smtpProfile: profileData
-          });
-          
-          alert('Test réussi: ' + result.message);
-          
-        } catch (error) {
-          console.error('Erreur lors du test du profil:', error);
-          alert('Erreur: ' + (error.message || 'Échec du test du profil'));
-        }
-      },
-      
-      async editProfile(profileId) {
-        try {
-          const query = new Parse.Query('SMTPProfile');
-          const profile = await query.get(profileId);
-          
-          this.currentProfileId = profileId;
-          this.formData = {
-            profileName: profile.get('name'),
-            smtpHost: profile.get('host'),
-            smtpPort: profile.get('port'),
-            smtpSecurity: profile.get('useSSL') ? 'ssl' : profile.get('useTLS') ? 'tls' : 'none',
-            smtpUsername: profile.get('username'),
-            smtpPassword: profile.get('password'),
-            fromEmail: profile.get('email'),
-            fromName: profile.get('fromName') || '',
-            htmlSignature: profile.get('htmlSignature') || ''
-          };
-          this.isDrawerOpen = true;
-          
-        } catch (error) {
-          console.error('Erreur lors de la récupération du profil:', error);
-          alert('Erreur: ' + (error.message || 'Échec de la récupération du profil'));
-        }
-      },
-      
-      async deleteProfile(profileId) {
-        if (confirm('Êtes-vous sûr de vouloir supprimer ce profil SMTP?')) {
-          try {
-            const query = new Parse.Query('SMTPProfile');
-            const profile = await query.get(profileId);
-            
-            profile.set('isArchived', true);
-            profile.set('isActive', false);
-            await profile.save();
-            
-            await this.refreshSmtpProfiles();
-            
-          } catch (error) {
-            console.error('Erreur lors de la suppression du profil:', error);
-            alert('Erreur: ' + (error.message || 'Échec de la suppression du profil'));
-          }
-        }
-      },
-      
-      openDrawer(profileId = null) {
-        this.currentProfileId = profileId;
-        if (!profileId) {
-          this.resetForm();
-        }
-        this.isDrawerOpen = true;
-      },
-      
-      closeDrawer() {
-        this.isDrawerOpen = false;
-        this.currentProfileId = null;
-        this.resetForm();
-      },
-      
-      resetForm() {
-        this.formData = {
-          profileName: '',
-          smtpHost: '',
-          smtpPort: '',
-          smtpSecurity: '',
-          smtpUsername: '',
-          smtpPassword: '',
-          fromEmail: '',
-          fromName: '',
-          htmlSignature: ''
-        };
-      },
-      
-      async testSmtpConnection() {
-        if (!this.validateForm()) return;
-        
-        this.isTesting = true;
-        this.isLoading = true;
-        
-        try {
-          const result = await Parse.Cloud.run('sendTestEmail', {
-            recipient: this.formData.fromEmail,
-            smtpProfile: {
-              host: this.formData.smtpHost,
-              port: this.formData.smtpPort,
-              username: this.formData.smtpUsername,
-              password: this.formData.smtpPassword,
-              email: this.formData.fromEmail,
-              useSSL: this.formData.smtpSecurity === 'ssl'
-            }
-          });
-          
-          alert('Test réussi: ' + result.message);
-          
-        } catch (error) {
-          console.error('Erreur lors du test SMTP:', error);
-          alert('Erreur: ' + (error.message || 'Échec du test SMTP'));
-        } finally {
-          this.isTesting = false;
-          this.isLoading = false;
-        }
-      },
-      
-      async saveSmtpProfile() {
-        if (!this.validateForm()) return;
-        
-        this.isLoading = true;
-        
-        try {
-          const SMTPProfile = Parse.Object.extend('SMTPProfile');
-          let profile;
-          
-          if (this.currentProfileId) {
-            // Mise à jour d'un profil existant
-            const query = new Parse.Query('SMTPProfile');
-            profile = await query.get(this.currentProfileId);
-          } else {
-            // Création d'un nouveau profil
-            profile = new SMTPProfile();
-          }
-          
-          profile.set('name', this.formData.profileName);
-          profile.set('host', this.formData.smtpHost);
-          profile.set('port', this.formData.smtpPort);
-          profile.set('username', this.formData.smtpUsername);
-          profile.set('password', this.formData.smtpPassword);
-          profile.set('email', this.formData.fromEmail);
-          profile.set('fromName', this.formData.fromName || '');
-          profile.set('htmlSignature', this.formData.htmlSignature || '');
-          profile.set('useSSL', this.formData.smtpSecurity === 'ssl');
-          profile.set('useTLS', this.formData.smtpSecurity === 'tls');
-          profile.set('isActive', false);
-          profile.set('isArchived', false);
-          
-          await profile.save();
-          
-          await this.refreshSmtpProfiles();
-          this.closeDrawer();
-          alert('Profil SMTP enregistré avec succès!');
-          
-        } catch (error) {
-          console.error('Erreur lors de l\'enregistrement du profil SMTP:', error);
-          alert('Erreur: ' + (error.message || 'Échec de l\'enregistrement du profil SMTP'));
-        } finally {
-          this.isLoading = false;
-        }
-      },
-      
-      validateForm() {
-        if (!this.formData.profileName || !this.formData.smtpHost || !this.formData.smtpPort || 
-            !this.formData.smtpSecurity || !this.formData.smtpUsername || 
-            !this.formData.smtpPassword || !this.formData.fromEmail) {
-          alert('Veuillez remplir tous les champs obligatoires.');
-          return false;
-        }
-        
-        if (!/^[^@]+@[^@]+\.[^@]+$/.test(this.formData.fromEmail)) {
-          alert('Veuillez entrer une adresse e-mail valide.');
-          return false;
-        }
-        
-        return true;
-      }
-    }));
-  });
-</script>
+import { X, Save, Plus, ArrowLeft, RefreshCw, Play } from '@lucide/astro';
+---
 
 <BaseLayout title="Profil SMTP" currentPath="/settings/profil-smtp">
-  <div class="p-4 md:p-6 lg:p-8">
+   
+  
+  <div class="p-4 md:p-6 lg:p-8" x-data="smtpSettingsPage" x-init="init()">
     <!-- En-tête de la page -->
     <div class="mb-8">
       <div class="flex items-center justify-between mb-4">
@@ -305,7 +28,7 @@ import { X, Save, Plus, ArrowLeft, RefreshCw, Play } from '@lucide/astro';---
     </div>
 
     <!-- Section pour la liste des profils SMTP existants -->
-    <div class="bg-white border border-gray-200 rounded-lg shadow-sm mb-8" x-data="smtpSettings()" x-init="init()">
+    <div class="bg-white border border-gray-200 rounded-lg shadow-sm mb-8">
       <div class="p-6">
         <div class="flex items-center justify-between mb-6">
           <h2 class="text-xl font-semibold text-gray-800">Profils SMTP existants</h2>
@@ -419,18 +142,9 @@ import { X, Save, Plus, ArrowLeft, RefreshCw, Play } from '@lucide/astro';---
         </div>
       </div>
     </div>
-  </div>
-
-  <!-- Drawer pour la création/modification de profil SMTP -->
+      <!-- Drawer pour la création/modification de profil SMTP -->
   <div 
-    x-data="smtpSettings()" 
     x-show="isDrawerOpen" 
-    x-transition:enter="transition ease-out duration-300" 
-    x-transition:enter-start="opacity-0" 
-    x-transition:enter-end="opacity-100" 
-    x-transition:leave="transition ease-in duration-200" 
-    x-transition:leave-start="opacity-100" 
-    x-transition:leave-end="opacity-0" 
     class="fixed inset-0 z-50 overflow-hidden bg-black bg-opacity-50 flex items-center justify-end md:justify-end"
     @click.away="closeDrawer()"
   >
@@ -446,7 +160,7 @@ import { X, Save, Plus, ArrowLeft, RefreshCw, Play } from '@lucide/astro';---
           </button>
         </div>
 
-        <form id="smtpForm" class="space-y-6" @submit.prevent="saveSmtpProfile">
+        <form id="smtpForm" class="space-y-6" @submit.prevent="saveSmtpProfile()">
           <div class="grid grid-cols-1 gap-6">
             <!-- Nom du profil -->
             <div>
@@ -630,17 +344,14 @@ import { X, Save, Plus, ArrowLeft, RefreshCw, Play } from '@lucide/astro';---
       </div>
     </div>
   </div>
+  </div>
+<div>
 
-  <!-- Script pour initialiser les icônes Lucide -->
-  <script is:inline>
-    if (typeof window !== 'undefined' && typeof document !== 'undefined') {
-      document.addEventListener('DOMContentLoaded', () => {
-        if (typeof lucide !== 'undefined') {
-          ;
-        }
-      });
-    }
-  </script>
+
+
+
+  <!-- Load the SMTP Profile State from external file -->
+  <script src="/js/pages/settings/smtpProfileState.js" defer></script>
 
   <style>
     /* Styles spécifiques à la page des profils SMTP */

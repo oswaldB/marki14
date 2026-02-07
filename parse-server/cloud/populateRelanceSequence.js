@@ -7,7 +7,21 @@ Parse.Cloud.define('populateRelanceSequence', async (request) => {
     throw new Error('Le paramètre idSequence est requis');
   }
   
+  // Valider le format de l'ID de séquence
+  if (typeof idSequence !== 'string' || idSequence.length < 10) {
+    console.error(`Format d'ID de séquence invalide: ${idSequence} (type: ${typeof idSequence})`);
+    throw new Error(`Format d'ID de séquence invalide: ${idSequence}`);
+  }
+  
   console.log(`Début du traitement pour la séquence ${idSequence}`);
+  
+  // Déclarer les variables de comptage avant le bloc try
+  let processedCount = 0;
+  let createdCount = 0;
+  let updatedCount = 0;
+  let sequence = null;
+  let impayes = [];
+  let actions = [];
   
   try {
     // 1. Utiliser la classe Relances (supposée exister)
@@ -18,30 +32,62 @@ Parse.Cloud.define('populateRelanceSequence', async (request) => {
     const Sequence = Parse.Object.extend('Sequences');
     const sequenceQuery = new Parse.Query(Sequence);
     
+    // Vérifier que la classe Sequences existe
     try {
-      const sequence = await sequenceQuery.get(idSequence);
+      const sequenceCount = await sequenceQuery.count();
+      console.log(`La classe Sequences existe et contient ${sequenceCount} séquences`);
+    } catch (classError) {
+      console.error(`Erreur lors de l'accès à la classe Sequences:`, classError);
+      throw new Error(`La classe Sequences n'est pas accessible: ${classError.message}`);
+    }
+    
+    try {
+      console.log(`Tentative de récupération de la séquence avec ID: ${idSequence}`);
       
-      if (!sequence) {
-        console.error(`Séquence avec l'ID ${idSequence} non trouvée`);
-        throw new Error(`Séquence avec l'ID ${idSequence} non trouvée`);
+      // Essayer d'abord avec l'ID directement
+      try {
+        sequence = await sequenceQuery.get(idSequence);
+        
+        if (!sequence) {
+          console.error(`Séquence avec l'ID ${idSequence} non trouvée`);
+          // Vérifier si la séquence existe dans la base de données
+          const allSequences = await sequenceQuery.find();
+          console.log(`Nombre total de séquences dans la base: ${allSequences.length}`);
+          console.log(`IDs des séquences disponibles: ${allSequences.map(s => s.id).join(', ')}`);
+          throw new Error(`Séquence avec l'ID ${idSequence} non trouvée`);
+        }
+      } catch (getError) {
+        console.error(`Erreur lors de la récupération directe: ${getError.message}`);
+        
+        // Essayer de trouver la séquence par son objectId
+        console.log(`Tentative de recherche par objectId...`);
+        const sequenceQueryByObjectId = new Parse.Query(Sequence);
+        sequenceQueryByObjectId.equalTo('objectId', idSequence);
+        const sequencesByObjectId = await sequenceQueryByObjectId.find();
+        
+        if (sequencesByObjectId.length > 0) {
+          console.log(`Séquence trouvée par objectId: ${sequencesByObjectId[0].id}`);
+          sequence = sequencesByObjectId[0];
+        } else {
+          console.error(`Aucune séquence trouvée avec l'ID ou objectId: ${idSequence}`);
+          throw getError;
+        }
       }
       
       console.log(`Séquence trouvée: ${sequence.get('nom')} (ID: ${sequence.id})`);
       console.log(`Statut de la séquence: ${sequence.get('isActif')}`);
       console.log(`Type de séquence: ${sequence.get('isAuto') ? 'Automatique' : 'Manuelle'}`);
       
-      // Continuer avec le reste du code...
-    
-    // 3. Récupérer tous les impayés qui ont cette séquence
-    const Impaye = Parse.Object.extend('Impayes');
-    const impayeQuery = new Parse.Query(Impaye);
-    impayeQuery.equalTo('sequence', sequence);
-    const impayes = await impayeQuery.find();
+      // 3. Récupérer tous les impayés qui ont cette séquence
+      const Impaye = Parse.Object.extend('Impayes');
+      const impayeQuery = new Parse.Query(Impaye);
+      impayeQuery.equalTo('sequence', sequence);
+      impayes = await impayeQuery.find();
     
     console.log(`Nombre d'impayés trouvés pour cette séquence: ${impayes.length}`);
     
     // 4. Récupérer les actions de la séquence
-    const actions = sequence.get('actions') || [];
+    actions = sequence.get('actions') || [];
     
     if (actions.length === 0) {
       console.log('Aucune action trouvée dans la séquence');
@@ -51,9 +97,6 @@ Parse.Cloud.define('populateRelanceSequence', async (request) => {
     console.log(`Nombre d'actions dans la séquence: ${actions.length}`);
     
     // 5. Traiter chaque impayé
-    let processedCount = 0;
-    let createdCount = 0;
-    let updatedCount = 0;
     
     for (const impaye of impayes) {
       console.log(`\nTraitement de l'impayé ${impaye.get('nfacture')} (ID: ${impaye.id})`);
@@ -133,6 +176,11 @@ Parse.Cloud.define('populateRelanceSequence', async (request) => {
       
       processedCount++;
     }
+    
+  } catch (sequenceError) {
+    console.error('Erreur lors du traitement de la séquence:', sequenceError);
+    throw sequenceError;
+  }
     
     console.log(`\nTraitement terminé:`);
     console.log(`- Impayés traités: ${processedCount}`);

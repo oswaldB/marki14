@@ -1,6 +1,6 @@
 ---
 // src/components/sequences/SequenceManagementDrawer.astro
-import { X, FileText, Minus, Settings } from '@lucide/astro';
+import { X, FileText, Minus, Settings, Zap, ZapOff } from '@lucide/astro';
 ---
 <script is:inline>
   document.addEventListener('alpine:init', () => {
@@ -27,10 +27,21 @@ import { X, FileText, Minus, Settings } from '@lucide/astro';
       async loadSequences() {
         this.isLoadingSequences = true;
         try {
-          // Logique pour charger les séquences depuis l'API
-          // Cette partie devra être adaptée à votre API
-          const response = await fetch('/api/sequences');
-          this.sequences = await response.json();
+          // Utilisation directe de Parse.js pour charger les séquences
+          const Sequence = Parse.Object.extend('Sequences');
+          const query = new Parse.Query(Sequence);
+          query.equalTo('isArchived', false);
+          query.ascending('nom');
+          
+          const results = await query.find();
+          
+          this.sequences = results.map(sequence => ({
+            id: sequence.id,
+            nom: sequence.get('nom'),
+            is_automatic: sequence.get('isAutomatic') || false,
+            is_active: sequence.get('isActive') || false,
+            createdAt: sequence.createdAt ? sequence.createdAt.toISOString() : null
+          }));
         } catch (error) {
           console.error('Erreur lors du chargement des séquences:', error);
         } finally {
@@ -42,19 +53,26 @@ import { X, FileText, Minus, Settings } from '@lucide/astro';
         if (!name || name.trim() === '') return;
         
         try {
-          // Logique pour créer une séquence
-          const response = await fetch('/api/sequences', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              name: name,
-              is_automatic: isAutomatic,
-            }),
+          // Utilisation directe de Parse.js pour créer une séquence
+          const Sequence = Parse.Object.extend('Sequences');
+          const newSequence = new Sequence();
+          
+          newSequence.set('nom', name);
+          newSequence.set('isAutomatic', isAutomatic);
+          newSequence.set('isActive', true); // Nouvelle séquence active par défaut
+          newSequence.set('isArchived', false);
+          
+          const savedSequence = await newSequence.save();
+          
+          // Ajouter la nouvelle séquence à la liste
+          this.sequences.push({
+            id: savedSequence.id,
+            nom: savedSequence.get('nom'),
+            is_automatic: savedSequence.get('isAutomatic') || false,
+            is_active: savedSequence.get('isActive') || false,
+            createdAt: savedSequence.createdAt ? savedSequence.createdAt.toISOString() : null
           });
-          const newSequence = await response.json();
-          this.sequences.push(newSequence);
+          
           this.newSequenceName = '';
           this.newSequenceIsAutomatic = false;
         } catch (error) {
@@ -67,23 +85,39 @@ import { X, FileText, Minus, Settings } from '@lucide/astro';
         
         this.addingSequenceId = sequenceId;
         try {
-          // Logique pour assigner une séquence à une facture
-          await fetch(`/api/invoices/${invoiceId}/sequence`, {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              sequence_id: sequenceId,
-            }),
-          });
+          // Utilisation directe de Parse.js pour assigner une séquence à une facture
+          const Invoice = Parse.Object.extend('Impayes'); 
+          const invoice = await new Parse.Query(Invoice).get(invoiceId);
+          
+          if (sequenceId) {
+            // Assign the sequence
+            invoice.set('sequence', {
+              __type: 'Pointer',
+              className: 'Sequence',
+              objectId: sequenceId
+            });
+            
+            // Also update the sequence name and automatic flag for convenience
+            const sequence = this.sequences.find(s => s.id === sequenceId);
+            if (sequence) {
+              invoice.set('sequenceName', sequence.nom);
+              invoice.set('sequenceIsAutomatic', sequence.is_automatic);
+            }
+          } else {
+            // Remove the sequence
+            invoice.unset('sequence');
+            invoice.unset('sequenceName');
+            invoice.unset('sequenceIsAutomatic');
+          }
+          
+          await invoice.save();
           
           // Mettre à jour la facture sélectionnée
           if (this.selectedImpaye) {
             this.selectedImpaye.sequence_id = sequenceId;
             const sequence = this.sequences.find(s => s.id === sequenceId);
             if (sequence) {
-              this.selectedImpaye.sequence_name = sequence.name;
+              this.selectedImpaye.sequence_name =sequence.nom;
               this.selectedImpaye.sequence_is_automatic = sequence.is_automatic;
             } else {
               this.selectedImpaye.sequence_name = null;
@@ -202,7 +236,7 @@ import { X, FileText, Minus, Settings } from '@lucide/astro';
           <div class="space-y-2">
             <p class="text-sm font-medium text-gray-900">Séquences existantes:</p>
             
-            <template x-for="sequence in $store.sequenceManagement.sequences" :key="sequence.id">
+            <template x-for="sequence in $store.sequenceManagement.sequences" >
               <div 
                 class="bg-white border border-gray-200 rounded-md p-3 hover:bg-gray-50 transition-colors"
               >
@@ -211,10 +245,18 @@ import { X, FileText, Minus, Settings } from '@lucide/astro';
                     <span 
                       class="px-2 py-1 text-xs rounded-full"
                       :class="sequence.is_automatic ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'"
-                      x-text="sequence.name"
+                      x-text="sequence.nom"
                     ></span>
                     <span x-show="sequence.is_automatic" class="text-purple-600">
                       <FileText class="w-4 h-4" />
+                    </span>
+                    <!-- Indicateur d'état actif/inactif avec icônes Lucide -->
+
+                    <span 
+                      :title="sequence.is_active ? 'Séquence active' : 'Séquence inactive'"
+                    >
+                      <Zap x-show="sequence.is_active" class="w-4 h-4 text-green-500" />
+                      <ZapOff x-show="!sequence.is_active" class="w-4 h-4 text-gray-400" />
                     </span>
                   </div>
                   <div class="flex items-center space-x-2">

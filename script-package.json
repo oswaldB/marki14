@@ -1,0 +1,16 @@
+{
+  "name": "populate-relance-script",
+  "version": "1.0.0",
+  "description": "Script pour appeler la fonction populateRelanceSequence",
+  "main": "call_populateRelanceSequence.js",
+  "scripts": {
+    "start": "node call_populateRelanceSequence.js",
+    "install": "npm install parse dotenv"
+  },
+  "dependencies": {
+    "parse": "^8.0.3",
+    "dotenv": "^16.3.1"
+  },
+  "author": "Oswald Bernard",
+  "license": "MIT"
+}
