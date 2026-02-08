@@ -218,20 +218,32 @@ import { Plus, X } from '@lucide/astro';
           this.addLog('📋 Début de la génération des colonnes des impayés...');
           
           try {
-            const response = await Parse.Cloud.run('getImpayesColumns');
+            // Utiliser directement le Parse SDK pour récupérer un impayé et obtenir ses colonnes
+            const Impaye = Parse.Object.extend('Impayes');
+            const query = new Parse.Query(Impaye);
+            query.limit(1); // On a juste besoin d'un seul impayé pour obtenir la structure
             
-            if (response.success) {
+            const results = await query.find();
+            
+            if (results.length > 0) {
+              const impaye = results[0];
+              const attributes = impaye.attributes;
+              
+              // Liste des champs système à exclure
+              const systemFields = ['objectId', 'createdAt', 'updatedAt', 'ACL', 'sequence'];
+              
+              // Extraire les noms des colonnes
+              const columns = Object.keys(attributes)
+                .filter(fieldName => !systemFields.includes(fieldName));
+              
               this.schemaGeneration.impayesColumnsResult = {
-                columns: response.columns,
-                count: response.count
+                columns: columns,
+                count: columns.length
               };
               this.addLog(`✅ Colonnes des impayés générées avec succès !`, 'success');
-              this.addLog(`   Nombre de colonnes: ${response.count}`);
+              this.addLog(`   Nombre de colonnes: ${columns.length}`);
             } else {
-              this.addLog(`❌ Erreur lors de la génération des colonnes: ${response.message}`, 'error');
-              if (response.error) {
-                this.addLog(`   Détails: ${response.error}`, 'error');
-              }
+              this.addLog(`❌ Aucun impayé trouvé pour générer les colonnes`, 'error');
             }
           } catch (error) {
             this.addLog(`❌ Erreur lors de la génération des colonnes: ${error.message}`, 'error');

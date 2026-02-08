@@ -1,0 +1,2442 @@
+<!--
+  SequenceDetails2.astro - Version centralisée sans composants
+  Tout le code est dans un seul fichier
+-->
+---
+// Import du layout de base uniquement 
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+// Import des icônes Lucide
+import { AlertTriangle, Loader2, Edit, Mail, Copy, Trash2, Info, X, Save, Send, CheckCircle2, Filter, SlidersHorizontal, ToggleLeft, ToggleRight, Mail as MailIcon, Edit as EditIcon, Trash2 as Trash2Icon, Minus, Plus, Inbox, Search, Sparkles, MailPlus } from '@lucide/astro';
+
+// Désactiver le prerendering pour cette route dynamique
+export const prerender = false;
+---
+
+<BaseLayout title="Gestion des Séquences" withAuth={true} currentPath="/sequence-details2">
+  
+  <!-- Script centralisé avec tout le code Alpine.js -->
+  <script is:inline>
+    document.addEventListener('alpine:init', () => {
+      Alpine.data('sequenceDetails2State', () => ({
+        // UTILITAIRES
+        // ============================================
+        
+        copyToClipboard(text) {
+=======
+        // ============================================
+        // UTILITAIRES
+        // ============================================
+        
+        copyToClipboard(text) {
+        
+        // ============================================
+        // DRAWERS POUR CRÉATION AVEC IA
+        // ============================================
+        
+        // Drawer pour créer une séquence complète avec IA
+        // Drawer pour créer un email unique avec IAGESTION DES TESTS
+        // ============================================
+        
+        async sendTestEmail() {
+=======
+        // ============================================
+        // GESTION DES TESTS
+        // ============================================
+        
+        async sendTestEmail() {
+        
+        // ============================================
+        // GESTION DE LA CRÉATION AVEC IA
+        // ============================================
+        
+        // Créer une séquence complète avec IA
+        async createFullSequenceWithAI() {
+          try {
+            this.isGeneratingWithAI = true;
+            
+            // Appeler la fonction cloud pour générer la séquence
+            const result = await Parse.Cloud.run('generateFullSequenceWithAI', {
+              sequenceId: this.sequenceId,
+              target: this.iaSequenceTarget,
+              multipleImpayes: this.iaSequenceMultipleImpayes,
+              startTone: this.iaSequenceStartTone,
+              endTone: this.iaSequenceEndTone,
+              huissierThreshold: this.iaSequenceHuissierThreshold
+            });
+            
+            if (result.success) {
+              this.showNotification('Succès', 'Séquence générée avec succès par IA', 'success');
+              this.showCreateFullSequenceDrawer = false;
+              
+              // Recharger la séquence pour voir les nouvelles actions
+              await this.loadSequence();
+              
+              // Réinitialiser le formulaire
+              this.resetAISequenceForm();
+            } else {
+              this.showNotification('Erreur', result.message || 'Impossible de générer la séquence', 'error');
+            }
+            
+          } catch (error) {
+            console.error('Erreur lors de la génération de la séquence:', error);
+            this.showNotification('Erreur', 'Impossible de générer la séquence: ' + error.message, 'error');
+          } finally {
+            this.isGeneratingWithAI = false;
+          }
+        },
+        
+        // Créer un seul email avec IA
+        async createSingleEmailWithAI() {
+          try {
+            this.isGeneratingWithAI = true;
+            
+            // Appeler la fonction cloud pour générer l'email
+            const result = await Parse.Cloud.run('generateSingleEmailWithAI', {
+              sequenceId: this.sequenceId,
+              target: this.iaEmailTarget,
+              tone: this.iaEmailTone,
+              delay: this.iaEmailDelay
+            });
+            
+            if (result.success) {
+              this.showNotification('Succès', 'Email généré avec succès par IA', 'success');
+              this.showCreateSingleEmailDrawer = false;
+              
+              // Recharger la séquence pour voir la nouvelle action
+              await this.loadSequence();
+              
+              // Réinitialiser le formulaire
+              this.resetAIEmailForm();
+            } else {
+              this.showNotification('Erreur', result.message || 'Impossible de générer l\'email', 'error');
+            }
+            
+          } catch (error) {
+            console.error('Erreur lors de la génération de l\'email:', error);
+            this.showNotification('Erreur', 'Impossible de générer l\'email: ' + error.message, 'error');
+          } finally {
+            this.isGeneratingWithAI = false;
+          }
+        },
+        
+        // Réinitialiser les formulaires IA
+        resetAISequenceForm() {
+          this.iaSequenceTarget = '';
+          this.iaSequenceMultipleImpayes = false;
+          this.iaSequenceStartTone = 'professionnel';
+          this.iaSequenceEndTone = 'ferme';
+          this.iaSequenceHuissierThreshold = 3;
+        },
+        
+        resetAIEmailForm() {
+          this.iaEmailTarget = '';
+          this.iaEmailTone = 'professionnel';
+          this.iaEmailDelay = 0;
+        },
+        
+        // ============================================
+        // GESTION DES TESTS
+        // ============================================
+        
+        async sendTestEmail() {============================================
+        // ÉTAT INITIAL
+        // ============================================
+        
+        // État principal
+        sequence: {
+          nom: 'Chargement...',
+          description: '',
+          isAuto: false,
+          isActif: false,
+          actions: [],
+          requete_auto: { include: {}, exclude: {} }
+        },
+        sequenceId: null,
+        isLoading: false,
+        isTogglingStatus: false,
+        editingSequenceName: false,
+        editingDescription: false,
+        
+        // États pour les actions
+        isSavingAction: false,
+        showEditDrawer: false,
+        editingAction: null,
+        editingActionIndex: null,
+        newActionType: 'email',
+        newActionDelay: 1,
+        newActionSubject: '',
+        newActionSender: '',
+        newActionCC: '',
+        newActionMessage: '',
+        newActionIsMultipleImpayes: false,
+        newActionMultipleSubject: '',
+        newActionMultipleMessage: '',
+        editingActionType: 'email',
+        editingActionDelay: 1,
+        editingActionSubject: '',
+        editingActionSender: '',
+        editingActionCC: '',
+        editingActionMessage: '',
+        editingActionIsMultipleImpayes: false,
+        editingActionMultipleSubject: '',
+        editingActionMultipleMessage: '',
+        
+        // États pour la création avec IA
+        showCreateFullSequenceDrawer: false,
+        showCreateSingleEmailDrawer: false,
+        
+        // Données pour la séquence complète IA
+        iaSequenceTarget: '',
+        iaSequenceMultipleImpayes: false,
+        iaSequenceStartTone: 'professionnel',
+        iaSequenceEndTone: 'ferme',
+        iaSequenceHuissierThreshold: 3,
+        
+        // Données pour l'email unique IA
+        iaEmailTarget: '',
+        iaEmailTone: 'professionnel',
+        iaEmailDelay: 0,
+        
+        isGeneratingWithAI: false,
+        
+        // États pour les filtres automatiques
+        showAutoFilterDrawer: false,
+        autoFilters: {
+          include: {},
+          exclude: {}
+        },
+        isSavingFilters: false,
+        isTestingFilters: false,
+        showFilterResults: false,
+        filterTestResults: null,
+        isSaving: false,
+        
+        // États pour le test
+        showTestDrawer: false,
+        testEmail: '',
+        selectedSmtpProfile: '',
+        isSendingTest: false,
+        selectedImpaye: null,
+        impayesList: [],
+        impayesFilter: '',
+        isLoadingImpayes: false,
+        
+        // États pour la suppression
+        showDeleteConfirmation: false,
+        showActivationConfirmation: false,
+        
+        // Variables disponibles
+        impayesColumns: [],
+        variableSearch: '',
+        smtpProfiles: [],
+        isLoadingSmtpProfiles: false,
+        
+        // Valeurs distinctes pour les colonnes
+        distinctValues: {},
+        isLoadingDistinctValues: false,
+        
+        // État de notification
+        notification: {
+          show: false,
+          type: 'info',
+          title: '',
+          message: ''
+        },
+        
+        // États pour les filtres de tableau
+        showAutoFilterTable: false,
+        activeFilterColumn: null,
+        columnFilters: {},
+        globalSearchTerm: '',
+        visibleColumns: [],
+        filteredInvoices: [],
+        allInvoices: [],
+        isLoadingMore: false,
+        forceErase: false,
+        
+        // ============================================
+        // PROPRIÉTÉS CALCULÉES
+        // ============================================
+        
+        // Filtres pour les variables
+        get filteredVariables() {
+          if (!this.variableSearch) return this.impayesColumns;
+          
+          const searchLower = this.variableSearch.toLowerCase();
+          return this.impayesColumns.filter(col => 
+            col.toLowerCase().includes(searchLower)
+          );
+        },
+        
+        // Détermine si la séquence est en mode automatique
+        get isAutoMode() {
+          return this.sequence ? this.sequence.isAuto : false;
+        },
+        
+        // Génération du prompt
+        get generatedPrompt() {
+          if (!this.sequence || !this.impayesColumns) return '';
+          
+          const contextLines = this.impayesColumns.map(col => `- ${col}: [[${col}]]`).join('\n');
+          
+          return `Rédigez un email professionnel de relance pour un impayé.\n
+Contexte:\n${contextLines}\n\nConsignes:\n- Soyez professionnel et courtois\n- Mentionnez clairement les informations pertinentes (montant, référence, date d'échéance)\n- Proposez une solution de paiement ou un arrangement\n- Adaptez le ton en fonction des informations disponibles\n- Utilisez les variables disponibles pour personnaliser le message\n- Variables disponibles: ${this.impayesColumns.join(', ')}`;
+        },
+        
+        // Nombre de filtres actifs
+        get activeFiltersCount() {
+          let count = 0;
+          for (const column in this.columnFilters) {
+            if (this.columnFilters[column] && this.columnFilters[column].value !== '') {
+              count++;
+            }
+          }
+          return count;
+        },
+        
+        // Filtres actifs
+        get activeFilters() {
+          const filters = {};
+          for (const column in this.columnFilters) {
+            if (this.columnFilters[column] && this.columnFilters[column].value !== '') {
+              filters[column] = this.columnFilters[column];
+            }
+          }
+          return filters;
+        },
+        
+        // ============================================
+        // MÉTHODES UTILITAIRES
+        // ============================================
+        
+        getSmtpProfileEmail(profileId) {
+          if (!profileId || !this.smtpProfiles) return '';
+          
+          const profile = this.smtpProfiles.find(p => p.objectId === profileId);
+          return profile ? profile.email : '';
+        },
+        
+        getSortedActions() {
+          if (!this.sequence || !this.sequence.actions) return [];
+          
+          return [...this.sequence.actions].sort((a, b) => (a.delay || 0) - (b.delay || 0));
+        },
+        
+        // ============================================
+        // CYCLE DE VIE
+        // ============================================
+        
+        async initFromUrl() {
+          this.isLoading = true;
+          
+          try {
+            const urlParams = new URLSearchParams(window.location.search);
+            this.sequenceId = urlParams.get('id');
+            
+            if (!this.sequenceId) {
+              throw new Error('No sequence ID provided in URL');
+            }
+            
+            await this.loadSequence();
+            
+            if (this.sequence) {
+              await this.loadImpayesColumns();
+              await this.loadSmtpProfiles();
+              
+              if (this.sequence.requete_auto) {
+                this.autoFilters = this.sequence.requete_auto;
+              }
+              
+              // Initialiser les colonnes visibles pour le tableau
+              this.visibleColumns = [...this.impayesColumns].slice(0, 8);
+            }
+            
+          } catch (error) {
+            console.error('Erreur lors de l\'initialisation:', error);
+          } finally {
+            this.isLoading = false;
+          }
+        },
+        
+        // ============================================
+        // CHARGEMENT DES DONNÉES
+        // ============================================
+        
+        async loadSequence() {
+          if (!this.sequenceId) {
+            console.error('No sequence ID provided');
+            // Marquer la séquence comme non trouvée
+            this.sequence = null;
+            return;
+          }
+          
+          this.isLoading = true;
+          
+          try {
+            if (!Parse.applicationId) {
+              throw new Error('Parse SDK non initialisé');
+            }
+            
+            const Sequences = Parse.Object.extend('Sequences');
+            const query = new Parse.Query(Sequences);
+            const sequence = await query.get(this.sequenceId);
+            
+            if (!sequence) {
+              throw new Error('Sequence not found');
+            }
+            
+            this.sequence = {
+              objectId: sequence.id,
+              ...sequence.toJSON()
+            };
+            
+            this.ensureSequenceProperties();
+            
+          } catch (error) {
+            console.error('Erreur lors du chargement de la séquence:', error);
+            // Marquer la séquence comme non trouvée en cas d'erreur
+            this.sequence = null;
+          } finally {
+            this.isLoading = false;
+          }
+        },
+        
+        ensureSequenceProperties() {
+          // La séquence est toujours définie par défaut, donc pas besoin de vérifier null
+          if (this.sequence.isAuto === undefined) {
+            this.sequence.isAuto = false;
+          }
+          if (this.sequence.isActif === undefined) {
+            this.sequence.isActif = false;
+          }
+          if (!this.sequence.actions) {
+            this.sequence.actions = [];
+          }
+          if (!this.sequence.requete_auto) {
+            this.sequence.requete_auto = { include: {}, exclude: {} };
+          }
+          if (!this.sequence.nom) {
+            this.sequence.nom = 'Séquence sans nom';
+          }
+          if (!this.sequence.description) {
+            this.sequence.description = '';
+          }
+        },
+        
+        async loadImpayesColumns() {
+          try {
+            this.isLoading = true;
+            
+            // Utiliser directement le Parse SDK pour récupérer un impayé et obtenir ses colonnes
+            const Impaye = Parse.Object.extend('Impayes');
+            const query = new Parse.Query(Impaye);
+            query.limit(1); // On a juste besoin d'un seul impayé pour obtenir la structure
+            
+            const results = await query.find();
+            
+            if (results.length > 0) {
+              const impaye = results[0];
+              const attributes = impaye.attributes;
+              
+              // Liste des champs système à exclure
+              const systemFields = ['objectId', 'createdAt', 'updatedAt', 'ACL', 'sequence'];
+              
+              // Extraire les noms des colonnes
+              this.impayesColumns = Object.keys(attributes)
+                .filter(fieldName => !systemFields.includes(fieldName));
+            } else {
+              // Liste par défaut si aucun impayé trouvé
+              this.impayesColumns = [
+                'nfacture', 'payeur_nom', 'payeur_email', 'resteapayer', 'datepiece',
+                'totalttcnet', 'refpiece', 'payeur_contact_email', 'payeur_type'
+              ];
+            }
+            
+          } catch (error) {
+            console.error('Erreur lors du chargement des colonnes:', error);
+            
+            // Liste par défaut en cas d'erreur
+            this.impayesColumns = [
+              'nfacture', 'payeur_nom', 'payeur_email', 'resteapayer', 'datepiece',
+              'totalttcnet', 'refpiece', 'payeur_contact_email', 'payeur_type'
+            ];
+          } finally {
+            this.isLoading = false;
+          }
+        },
+        
+        async loadSmtpProfiles() {
+          try {
+            this.isLoadingSmtpProfiles = true;
+            const SmtpProfiles = Parse.Object.extend('SMTPProfile');
+            const query = new Parse.Query(SmtpProfiles);
+            query.equalTo('isActive', true);
+            query.ascending('name');
+            
+            const profiles = await query.find();
+            this.smtpProfiles = profiles.map(p => p.toJSON());
+          } catch (error) {
+            console.error('Erreur lors du chargement des profils SMTP:', error);
+          } finally {
+            this.isLoadingSmtpProfiles = false;
+          }
+        },
+        
+        // ============================================
+        // GESTION DE LA SÉQUENCE
+        // ============================================
+        
+        async saveSequenceName() {
+          if (!this.sequenceId || !this.sequence.nom) return;
+          
+          try {
+            const Sequences = Parse.Object.extend('Sequences');
+            const sequenceToSave = new Sequences();
+            sequenceToSave.id = this.sequenceId;
+            sequenceToSave.set('nom', this.sequence.nom);
+            
+            await sequenceToSave.save();
+            this.showNotification('Succès', 'Nom de la séquence mis à jour', 'success');
+          } catch (error) {
+            console.error('Erreur lors de la sauvegarde du nom:', error);
+            this.showNotification('Erreur', 'Impossible de sauvegarder le nom', 'error');
+          }
+        },
+        
+        async saveSequenceDescription() {
+          if (!this.sequenceId) return;
+          
+          try {
+            const Sequences = Parse.Object.extend('Sequences');
+            const sequenceToSave = new Sequences();
+            sequenceToSave.id = this.sequenceId;
+            sequenceToSave.set('description', this.sequence.description);
+            
+            await sequenceToSave.save();
+            this.showNotification('Succès', 'Description mise à jour', 'success');
+          } catch (error) {
+            console.error('Erreur lors de la sauvegarde de la description:', error);
+            this.showNotification('Erreur', 'Impossible de sauvegarder la description', 'error');
+          }
+        },
+        
+        async toggleSequenceStatus() {
+          if (!this.sequenceId || this.sequence === null) return;
+          
+          // Afficher la confirmation
+          this.showActivationConfirmation = true;
+        },
+        
+        async confirmToggleStatus() {
+          this.showActivationConfirmation = false;
+          
+          if (!this.sequence) return;
+          
+          this.isTogglingStatus = true;
+          
+          try {
+            const Sequences = Parse.Object.extend('Sequences');
+            const sequenceToSave = new Sequences();
+            sequenceToSave.id = this.sequenceId;
+            sequenceToSave.set('isActif', !this.sequence.isActif);
+            
+            await sequenceToSave.save();
+            this.sequence.isActif = !this.sequence.isActif;
+            
+            const status = this.sequence.isActif ? 'activée' : 'désactivée';
+            this.showNotification('Succès', `Séquence ${status}`, 'success');
+          } catch (error) {
+            console.error('Erreur lors du changement de statut:', error);
+            this.showNotification('Erreur', 'Impossible de changer le statut', 'error');
+          } finally {
+            this.isTogglingStatus = false;
+          }
+        },
+        
+        async toggleAutoMode() {
+          if (!this.sequenceId || this.sequence === null) return;
+          
+          this.sequence.isAuto = !this.sequence.isAuto;
+          
+          try {
+            const Sequences = Parse.Object.extend('Sequences');
+            const sequenceToSave = new Sequences();
+            sequenceToSave.id = this.sequenceId;
+            sequenceToSave.set('isAuto', this.sequence.isAuto);
+            
+            await sequenceToSave.save();
+            this.showNotification('Succès', `Mode ${this.sequence.isAuto ? 'automatique' : 'manuel'} activé`, 'success');
+          } catch (error) {
+            console.error('Erreur lors du changement de mode:', error);
+            this.showNotification('Erreur', 'Impossible de changer le mode', 'error');
+          }
+        },
+        
+        async duplicateSequence() {
+          if (!this.sequenceId || this.sequence === null) return;
+          
+          try {
+            const Sequences = Parse.Object.extend('Sequences');
+            const newSequence = new Sequences();
+            
+            // Copier les propriétés
+            newSequence.set('nom', `${this.sequence.nom} (Copie)`);
+            newSequence.set('description', this.sequence.description);
+            newSequence.set('isAuto', this.sequence.isAuto);
+            newSequence.set('isActif', false);
+            newSequence.set('actions', JSON.parse(JSON.stringify(this.sequence.actions)));
+            newSequence.set('requete_auto', JSON.parse(JSON.stringify(this.sequence.requete_auto)));
+            
+            const savedSequence = await newSequence.save();
+            
+            this.showNotification('Succès', 'Séquence dupliquée avec succès', 'success');
+            
+            // Rediriger vers la nouvelle séquence
+            setTimeout(() => {
+              window.location.href = `/sequence-details2?id=${savedSequence.id}`;
+            }, 1000);
+          } catch (error) {
+            console.error('Erreur lors de la duplication:', error);
+            this.showNotification('Erreur', 'Impossible de dupliquer la séquence', 'error');
+          }
+        },
+        
+        async deleteSequence() {
+          if (!this.sequenceId || this.sequence === null) return;
+          
+          try {
+            const Sequences = Parse.Object.extend('Sequences');
+            const sequenceToDelete = new Sequences();
+            sequenceToDelete.id = this.sequenceId;
+            
+            await sequenceToDelete.destroy();
+            
+            this.showNotification('Succès', 'Séquence supprimée avec succès', 'success');
+            
+            // Rediriger vers la liste des séquences
+            setTimeout(() => {
+              window.location.href = '/sequences';
+            }, 1000);
+          } catch (error) {
+            console.error('Erreur lors de la suppression:', error);
+            this.showNotification('Erreur', 'Impossible de supprimer la séquence', 'error');
+          }
+        },
+        
+        // ============================================
+        // GESTION DES ACTIONS
+        // ============================================
+        
+        addNewAction() {
+          if (!this.sequenceId || this.sequence === null) return;
+          
+          const newAction = {
+            type: this.newActionType,
+            delay: parseInt(this.newActionDelay) || 0,
+            subject: this.newActionSubject,
+            senderEmail: this.newActionSender,
+            cc: this.newActionCC,
+            message: this.newActionMessage,
+            isMultipleImpayes: this.newActionIsMultipleImpayes,
+            multipleSubject: this.newActionMultipleSubject,
+            multipleMessage: this.newActionMultipleMessage,
+            smtpProfile: {
+              objectId: this.smtpProfiles.find(p => p.email === this.newActionSender)?.objectId
+            }
+          };
+          
+          this.sequence.actions.push(newAction);
+          this.saveActions();
+          
+          // Réinitialiser le formulaire
+          this.newActionDelay = 1;
+          this.newActionSubject = '';
+          this.newActionSender = '';
+          this.newActionCC = '';
+          this.newActionMessage = '';
+          this.newActionIsMultipleImpayes = false;
+          this.newActionMultipleSubject = '';
+          this.newActionMultipleMessage = '';
+        },
+        
+        editAction(index) {
+          if (!this.sequenceId || this.sequence === null || !this.sequence.actions[index]) return;
+          
+          const action = this.sequence.actions[index];
+          this.editingAction = { ...action };
+          this.editingActionIndex = index;
+          this.showEditDrawer = true;
+          
+          // Remplir les champs d'édition
+          this.editingActionType = action.type;
+          this.editingActionDelay = action.delay;
+          this.editingActionSubject = action.subject;
+          this.editingActionSender = action.senderEmail;
+          this.editingActionCC = action.cc || '';
+          this.editingActionMessage = action.message;
+          this.editingActionIsMultipleImpayes = action.isMultipleImpayes || false;
+          this.editingActionMultipleSubject = action.multipleSubject || '';
+          this.editingActionMultipleMessage = action.multipleMessage || '';
+        },
+        
+        async saveEditedAction() {
+          if (!this.sequence || this.editingActionIndex === null) return;
+          
+          this.isSavingAction = true;
+          
+          try {
+            // Mettre à jour l'action
+            this.sequence.actions[this.editingActionIndex] = {
+              type: this.editingActionType,
+              delay: parseInt(this.editingActionDelay) || 0,
+              subject: this.editingActionSubject,
+              senderEmail: this.editingActionSender,
+              cc: this.editingActionCC,
+              message: this.editingActionMessage,
+              isMultipleImpayes: this.editingActionIsMultipleImpayes,
+              multipleSubject: this.editingActionMultipleSubject,
+              multipleMessage: this.editingActionMultipleMessage,
+              smtpProfile: {
+                objectId: this.smtpProfiles.find(p => p.email === this.editingActionSender)?.objectId
+              }
+            };
+            
+            await this.saveActions();
+            this.showEditDrawer = false;
+            this.showNotification('Succès', 'Action mise à jour', 'success');
+          } catch (error) {
+            console.error('Erreur lors de la sauvegarde de l\'action:', error);
+            this.showNotification('Erreur', 'Impossible de sauvegarder l\'action', 'error');
+          } finally {
+            this.isSavingAction = false;
+          }
+        },
+        
+        deleteAction(index) {
+          if (!this.sequenceId || this.sequence === null || !this.sequence.actions[index]) return;
+          
+          this.sequence.actions.splice(index, 1);
+          this.saveActions();
+        },
+        
+        adjustActionDelay(index, delta) {
+          if (!this.sequenceId || this.sequence === null || !this.sequence.actions[index]) return;
+          
+          this.sequence.actions[index].delay = Math.max(0, (this.sequence.actions[index].delay || 0) + delta);
+          this.saveActions();
+        },
+        
+        async saveActions() {
+          if (!this.sequenceId || this.sequence === null) return;
+          
+          this.isSavingAction = true;
+          
+          try {
+            const Sequences = Parse.Object.extend('Sequences');
+            const sequenceToSave = new Sequences();
+            sequenceToSave.id = this.sequenceId;
+            sequenceToSave.set('actions', this.sequence.actions);
+            
+            await sequenceToSave.save();
+            this.showNotification('Succès', 'Actions sauvegardées', 'success');
+          } catch (error) {
+            console.error('Erreur lors de la sauvegarde des actions:', error);
+            this.showNotification('Erreur', 'Impossible de sauvegarder les actions', 'error');
+          } finally {
+            this.isSavingAction = false;
+          }
+        },
+        
+        // ============================================
+        // GESTION DES FILTRES AUTOMATIQUES
+        // ============================================
+        
+        addFilter(type) {
+          let newColumn = '';
+          let counter = 1;
+          
+          while (true) {
+            newColumn = `filter_${counter}`;
+            if (!this.autoFilters.include[newColumn] && !this.autoFilters.exclude[newColumn]) {
+              break;
+            }
+            counter++;
+          }
+          
+          if (type === 'include') {
+            this.autoFilters.include[newColumn] = {
+              operator: 'contains',
+              value: ''
+            };
+          } else {
+            this.autoFilters.exclude[newColumn] = {
+              operator: 'contains',
+              value: ''
+            };
+          }
+        },
+        
+        async saveAutoFilters() {
+          try {
+            this.isSavingFilters = true;
+            
+            this.sequence.requete_auto = this.autoFilters;
+            
+            const Sequences = Parse.Object.extend('Sequences');
+            const sequenceToSave = new Sequences();
+            sequenceToSave.id = this.sequenceId;
+            sequenceToSave.set('requete_auto', this.autoFilters);
+            
+            await sequenceToSave.save();
+            this.showNotification('Succès', 'Filtres automatiques sauvegardés', 'success');
+          } catch (error) {
+            console.error('Erreur lors de la sauvegarde des filtres:', error);
+            this.showNotification('Erreur', 'Impossible de sauvegarder les filtres', 'error');
+          } finally {
+            this.isSavingFilters = false;
+          }
+        },
+        
+        async clearAutoFilters() {
+          try {
+            this.autoFilters = {
+              include: {},
+              exclude: {}
+            };
+            
+            this.sequence.requete_auto = this.autoFilters;
+            
+            const Sequences = Parse.Object.extend('Sequences');
+            const sequenceToSave = new Sequences();
+            sequenceToSave.id = this.sequenceId;
+            sequenceToSave.set('requete_auto', this.autoFilters);
+            
+            await sequenceToSave.save();
+            this.showNotification('Succès', 'Filtres automatiques effacés', 'success');
+          } catch (error) {
+            console.error('Erreur lors de l\'effacement des filtres:', error);
+            this.showNotification('Erreur', 'Impossible d\'effacer les filtres', 'error');
+          }
+        },
+        
+        // ============================================
+        // GESTION DES FILTRES DE TABLEAU
+        // ============================================
+        
+        toggleColumnFilter(column) {
+          this.activeFilterColumn = this.activeFilterColumn === column ? null : column;
+          
+          if (!this.columnFilters[column]) {
+            this.columnFilters[column] = {
+              operator: 'contains',
+              value: '',
+              valueMin: '',
+              valueMax: ''
+            };
+          }
+        },
+        
+        getFilterOperator(column) {
+          return this.columnFilters[column]?.operator || 'contains';
+        },
+        
+        setFilterOperator(column, operator) {
+          if (!this.columnFilters[column]) {
+            this.columnFilters[column] = {
+              operator: operator,
+              value: '',
+              valueMin: '',
+              valueMax: ''
+            };
+          } else {
+            this.columnFilters[column].operator = operator;
+          }
+        },
+        
+        getFilterValue(column) {
+          return this.columnFilters[column]?.value || '';
+        },
+        
+        setFilterValue(column, value) {
+          if (!this.columnFilters[column]) {
+            this.columnFilters[column] = {
+              operator: 'contains',
+              value: value,
+              valueMin: '',
+              valueMax: ''
+            };
+          } else {
+            this.columnFilters[column].value = value;
+          }
+        },
+        
+        getFilterValueMin(column) {
+          return this.columnFilters[column]?.valueMin || '';
+        },
+        
+        setFilterValueMin(column, value) {
+          if (!this.columnFilters[column]) {
+            this.columnFilters[column] = {
+              operator: 'between',
+              value: '',
+              valueMin: value,
+              valueMax: ''
+            };
+          } else {
+            this.columnFilters[column].valueMin = value;
+          }
+        },
+        
+        getFilterValueMax(column) {
+          return this.columnFilters[column]?.valueMax || '';
+        },
+        
+        setFilterValueMax(column, value) {
+          if (!this.columnFilters[column]) {
+            this.columnFilters[column] = {
+              operator: 'between',
+              value: '',
+              valueMin: '',
+              valueMax: value
+            };
+          } else {
+            this.columnFilters[column].valueMax = value;
+          }
+        },
+        
+        clearColumnFilter(column) {
+          if (this.columnFilters[column]) {
+            this.columnFilters[column].value = '';
+            this.columnFilters[column].valueMin = '';
+            this.columnFilters[column].valueMax = '';
+          }
+          this.activeFilterColumn = null;
+          this.applyFilters();
+        },
+        
+        applyColumnFilter(column) {
+          this.activeFilterColumn = null;
+          this.applyFilters();
+        },
+        
+        applyFilters() {
+          if (!this.allInvoices.length) return;
+          
+          this.filteredInvoices = this.allInvoices.filter(invoice => {
+            for (const column in this.columnFilters) {
+              const filter = this.columnFilters[column];
+              if (!filter || !filter.value) continue;
+              
+              const cellValue = invoice[column];
+              if (cellValue === undefined || cellValue === null) return false;
+              
+              const value = String(cellValue).toLowerCase();
+              const filterValue = filter.value.toLowerCase();
+              
+              switch (filter.operator) {
+                case 'equals':
+                  if (value !== filterValue) return false;
+                  break;
+                case 'contains':
+                  if (!value.includes(filterValue)) return false;
+                  break;
+                case 'doesNotContain':
+                  if (value.includes(filterValue)) return false;
+                  break;
+                case 'startsWith':
+                  if (!value.startsWith(filterValue)) return false;
+                  break;
+                case 'endsWith':
+                  if (!value.endsWith(filterValue)) return false;
+                  break;
+                case 'isEmpty':
+                  if (value !== '') return false;
+                  break;
+                case 'isNotEmpty':
+                  if (value === '') return false;
+                  break;
+              }
+            }
+            return true;
+          });
+        },
+        
+        applyGlobalSearch() {
+          if (!this.allInvoices.length) return;
+          
+          const searchTerm = this.globalSearchTerm.toLowerCase();
+          
+          if (!searchTerm) {
+            this.filteredInvoices = [...this.allInvoices];
+            return;
+          }
+          
+          this.filteredInvoices = this.allInvoices.filter(invoice => {
+            return this.visibleColumns.some(column => {
+              const value = String(invoice[column] || '').toLowerCase();
+              return value.includes(searchTerm);
+            });
+          });
+        },
+        
+        toggleColumnVisibility(column) {
+          if (this.visibleColumns.includes(column)) {
+            this.visibleColumns = this.visibleColumns.filter(c => c !== column);
+          } else {
+            this.visibleColumns.push(column);
+          }
+        },
+        
+        resetAllFilters() {
+          this.columnFilters = {};
+          this.globalSearchTerm = '';
+          this.filteredInvoices = [...this.allInvoices];
+        },
+        
+        async loadInvoices() {
+          try {
+            this.isLoadingMore = true;
+            
+            // Charger les impayés via Cloud Code
+            const result = await Parse.Cloud.run('getImpayesForAutoSequence', {
+              limit: 50,
+              skip: this.allInvoices.length
+            });
+            
+            this.allInvoices = [...this.allInvoices, ...result.impayes];
+            this.filteredInvoices = [...this.allInvoices];
+            
+          } catch (error) {
+            console.error('Erreur lors du chargement des impayés:', error);
+          } finally {
+            this.isLoadingMore = false;
+          }
+        },
+        
+        async saveForceErase() {
+          try {
+            const Sequences = Parse.Object.extend('Sequences');
+            const sequenceToSave = new Sequences();
+            sequenceToSave.id = this.sequenceId;
+            sequenceToSave.set('forceErase', this.forceErase);
+            
+            await sequenceToSave.save();
+            this.showNotification('Succès', 'Paramètre de remplacement sauvegardé', 'success');
+          } catch (error) {
+            console.error('Erreur lors de la sauvegarde du paramètre:', error);
+            this.showNotification('Erreur', 'Impossible de sauvegarder le paramètre', 'error');
+          }
+        },
+        
+        // ============================================
+        // GESTION DES TESTS
+        // ============================================
+        
+        async sendTestEmail() {
+          try {
+            this.isSendingTest = true;
+            
+            if (!this.testEmail) {
+              this.showNotification('Erreur', 'Veuillez spécifier une adresse email de test', 'error');
+              return;
+            }
+            
+            if (!this.selectedImpaye) {
+              this.showNotification('Erreur', 'Veuillez sélectionner un impayé', 'error');
+              return;
+            }
+            
+            if (!this.sequenceId) {
+              this.showNotification('Erreur', 'Aucune séquence sélectionnée', 'error');
+              return;
+            }
+            
+            // Appeler la nouvelle fonction cloud
+            const result = await Parse.Cloud.run('testSequenceWithImpaye', {
+              testEmail: this.testEmail,
+              impayeId: this.selectedImpaye,
+              sequenceId: this.sequenceId
+            });
+            
+            if (result.success) {
+              const successCount = result.results.filter(r => r.success).length;
+              this.showNotification('Succès',
+                `${successCount}/${result.results.length} emails envoyés pour l\'impayé ${result.impayeInfo.nfacture}`,
+                'success');
+              
+              // Log des détails
+              console.log('Résultats du test:', result.results);
+              this.showTestDrawer = false;
+            } else {
+              this.showNotification('Erreur', result.message || 'Impossible d\'envoyer les emails de test', 'error');
+            }
+            
+          } catch (error) {
+            console.error('Erreur lors de l\'envoi du test:', error);
+            this.showNotification('Erreur', 'Impossible d\'envoyer les emails de test: ' + error.message, 'error');
+          } finally {
+            this.isSendingTest = false;
+          }
+        },
+        
+        // Méthode pour charger les impayés
+        async loadImpayes() {
+          try {
+            this.isLoadingImpayes = true;
+            const Impaye = Parse.Object.extend('Impayes');
+            const query = new Parse.Query(Impaye);
+            query.limit(100); // Limiter à 100 impayés pour la performance
+            query.descending('datepiece'); // Trier par date décroissante
+            
+            const impayes = await query.find();
+            this.impayesList = impayes.map(i => ({
+              objectId: i.id,
+              nfacture: i.get('nfacture'),
+              payeur: i.get('payeur_nom'),
+              montant: i.get('resteapayer'),
+              date: i.get('datepiece')
+            }));
+            
+          } catch (error) {
+            console.error('Erreur lors du chargement des impayés:', error);
+            this.showNotification('Erreur', 'Impossible de charger les impayés', 'error');
+          } finally {
+            this.isLoadingImpayes = false;
+          }
+        },
+        
+        // Méthode pour filtrer les impayés
+        getFilteredImpayes() {
+          if (!this.impayesFilter) return this.impayesList;
+          
+          return this.impayesList.filter(impaye =>
+            impaye.nfacture.toLowerCase().includes(this.impayesFilter.toLowerCase()) ||
+            impaye.payeur.toLowerCase().includes(this.impayesFilter.toLowerCase())
+          );
+        },
+        
+        // Méthode pour formater la date
+        formatDate(date) {
+          if (!date) return '';
+          if (date instanceof Date) {
+            return date.toLocaleDateString('fr-FR');
+          }
+          if (typeof date === 'string') {
+            const parsedDate = new Date(date);
+            if (!isNaN(parsedDate.getTime())) {
+              return parsedDate.toLocaleDateString('fr-FR');
+            }
+          }
+          return date;
+        },
+        
+        // Méthode pour formater la monnaie
+        formatCurrency(value) {
+          if (value === null || value === undefined) return '';
+          const numericValue = parseFloat(value);
+          if (isNaN(numericValue)) return value;
+          return numericValue.toLocaleString('fr-FR', {
+            style: 'currency',
+            currency: 'EUR',
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+          });
+        },
+        
+        // ============================================
+        // UTILITAIRES
+        // ============================================
+        
+        copyToClipboard(text) {
+          const isVariable = this.impayesColumns.includes(text);
+          const textToCopy = isVariable ? `[[${text}]]` : text;
+          
+          navigator.clipboard.writeText(textToCopy).then(() => {
+            this.showNotification('Succès', `Copié dans le presse-papiers: ${textToCopy}`, 'success');
+          }).catch((error) => {
+            console.error('Erreur lors de la copie dans le presse-papiers:', error);
+            this.showNotification('Erreur', 'Impossible de copier dans le presse-papiers', 'error');
+          });
+        },
+        
+        showNotification(title, message, type) {
+          this.notification = {
+            show: true,
+            title: title,
+            message: message,
+            type: type
+          };
+          
+          setTimeout(() => {
+            this.notification.show = false;
+          }, 5000);
+        },
+        
+        insertVariable(variable) {
+          if (this.editingAction) {
+            this.editingActionMessage += `[[${variable}]]`;
+          } else {
+            this.newActionMessage += `[[${variable}]]`;
+          }
+        },
+        
+        truncateText(text, maxLength = 240) {
+          if (!text) return '';
+          if (text.length <= maxLength) return text;
+          return text.substring(0, maxLength) + '...';
+        },
+        
+        formatDate(dateString) {
+          if (!dateString) return 'Non défini';
+          
+          try {
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return 'Date invalide';
+            
+            return date.toLocaleDateString('fr-FR', {
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            });
+          } catch (error) {
+            console.error('Erreur de formatage de date:', error);
+            return 'Date invalide';
+          }
+        },
+        
+        formatCellValue(value, column) {
+          if (value === undefined || value === null) return '';
+          
+          if (typeof value === 'object') {
+            return JSON.stringify(value);
+          }
+          
+          if (column.toLowerCase().includes('date')) {
+            return this.formatDate(value);
+          }
+          
+          return String(value);
+        },
+        
+        getFilterDescription(filter) {
+          if (!filter || !filter.operator) return '';
+          
+          const operators = {
+            'equals': 'égal à',
+            'contains': 'contient',
+            'doesNotContain': 'ne contient pas',
+            'startsWith': 'commence par',
+            'endsWith': 'finit par',
+            'isEmpty': 'est vide',
+            'isNotEmpty': 'n\'est pas vide',
+            'greaterThan': 'supérieur à',
+            'lessThan': 'inférieur à',
+            'between': 'entre'
+          };
+          
+          return operators[filter.operator] || filter.operator;
+        },
+        
+        getOperatorPlaceholder(operator) {
+          const placeholders = {
+            'equals': 'Valeur exacte',
+            'contains': 'Texte à rechercher',
+            'doesNotContain': 'Texte à exclure',
+            'startsWith': 'Début du texte',
+            'endsWith': 'Fin du texte',
+            'greaterThan': 'Valeur minimale',
+            'lessThan': 'Valeur maximale'
+          };
+          
+          return placeholders[operator] || 'Valeur';
+        },
+        
+        isEmptyOperator(operator) {
+          return operator === 'isEmpty' || operator === 'isNotEmpty';
+        },
+        
+        getFilterTestResultsDescription() {
+          if (!this.filterTestResults) return '';
+          
+          return `${this.filterTestResults.filtered} impayés sur ${this.filterTestResults.total} correspondent aux critères`;
+        }
+        
+      }));
+    });
+  </script>
+  
+  <!-- Contenu principal -->
+  <div x-data="sequenceDetails2State()" x-init="initFromUrl()">
+    <!-- État de chargement -->
+    <div class="fixed inset-0 bg-white bg-opacity-75 flex items-center justify-center z-50" x-show="isLoading">
+      <div class="text-center">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+        <p class="text-gray-600">Chargement en cours...</p>
+      </div>
+    </div>
+    
+    <!-- Message d'erreur si séquence introuvable -->
+    <div class="min-h-screen" x-show="!isLoading && !sequence">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="bg-white rounded-lg shadow p-8 text-center">
+          <AlertTriangle class="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <h2 class="text-xl font-bold text-gray-900 mb-2">Séquence introuvable</h2>
+          <p class="text-gray-600 mb-4">La séquence demandée n'existe pas ou a été supprimée.</p>
+          <a href="/sequences" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#007ACE] hover:bg-[#006BC2]">
+            ← Retour à la liste des séquences
+          </a>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Contenu principal - seulement si la séquence est chargée et existe -->
+    <div x-show="sequence !== null && !isLoading" class="min-h-screen">
+      <!-- En-tête -->
+      <header class="bg-white shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div class="flex justify-between items-center">
+            <div>
+              <h1 class="text-2xl font-bold text-gray-900">Détails de la séquence</h1>
+              <p class="text-sm text-gray-500">Gérez et testez vos séquences de relance</p>
+            </div>
+            <a href="/sequences" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+              ← Retour à la liste
+            </a>
+          </div>
+        </div>
+      </header>
+      
+      <!-- Contenu principal -->
+      <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <!-- Avertissement si aucun profil SMTP -->
+        <div x-show="!isLoadingSmtpProfiles && smtpProfiles.length === 0" class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+          <div class="flex">
+            <div class="flex-shrink-0">
+              <AlertTriangle class="h-5 w-5 text-yellow-400" />
+            </div>
+            <div class="ml-3">
+              <p class="text-sm text-yellow-700">
+                Aucun profil SMTP configuré. 
+                <a href="/settings/profil-smtp" class="font-medium text-yellow-700 underline hover:text-yellow-600">
+                  Configurez un profil SMTP
+                </a> 
+                pour pouvoir envoyer des e-mails.
+              </p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Indication de chargement des profils SMTP -->
+        <div x-show="isLoadingSmtpProfiles" class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
+          <div class="flex">
+            <div class="flex-shrink-0">
+              <Loader2 class="h-5 w-5 text-blue-400 animate-spin" />
+            </div>
+            <div class="ml-3">
+              <p class="text-sm text-blue-700">Chargement des profils SMTP en cours...</p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Section d'information de la séquence -->
+        <section class="bg-white rounded-lg shadow mb-6 p-6">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Nom de la séquence -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Nom de la séquence</label>
+              <div class="flex items-center">
+                <h2 class="text-xl font-semibold text-gray-900 mr-2" x-text="sequence.nom || 'Séquence sans nom'" x-show="!editingSequenceName" @click="editingSequenceName = true"></h2>
+                <input type="text" class="flex-1 border border-gray-300 rounded-md px-3 py-2 text-xl font-semibold" x-model="sequence.nom" x-show="editingSequenceName && sequence" @blur="editingSequenceName = false; saveSequenceName()" @keyup.enter="editingSequenceName = false; saveSequenceName()">
+                <button class="ml-2 text-gray-400 hover:text-gray-600" @click="editingSequenceName = true" x-show="!editingSequenceName">
+                  <Edit class="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+            
+            <!-- Statut et toggle -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Statut</label>
+              <div class="flex items-center">
+                <span class="px-2 py-1 rounded-full text-xs font-medium mr-2" :class="{
+                  'bg-[#007ACE] bg-opacity-20 text-[#007ACE]': sequence.isActif,
+                  'bg-red-100 text-red-800': !sequence.isActif
+                }" x-text="sequence.isActif ? 'Actif' : 'Inactif'"></span>
+                <button class="relative inline-flex items-center h-6 rounded-full w-11 focus:outline-none" :class="{
+                  'bg-[#007ACE]': sequence?.isActif,
+                  'bg-gray-200': !sequence?.isActif
+                }" @click="toggleSequenceStatus()" :disabled="isTogglingStatus || !sequence">
+                  <span class="inline-block w-4 h-4 transform bg-white rounded-full transition-transform" :class="{
+                    'translate-x-6': sequence?.isActif,
+                    'translate-x-1': !sequence?.isActif
+                  }"></span>
+                </button>
+              </div>
+            </div>
+            
+            <!-- Type de séquence avec toggle -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Type de séquence</label>
+              <div class="flex items-center">
+                <span class="px-2 py-1 rounded-full text-xs font-medium mr-2" :class="{
+                  'bg-blue-100 text-blue-800': isAutoMode,
+                  'bg-gray-100 text-gray-800': !isAutoMode
+                }" x-text="isAutoMode ? 'Automatique' : 'Manuel'"></span>
+                <button class="relative inline-flex items-center h-6 rounded-full w-11 focus:outline-none ml-2" :class="{
+                  'bg-blue-600': isAutoMode,
+                  'bg-gray-200': !isAutoMode
+                }" @click="toggleAutoMode()" :disabled="!sequence">
+                  <span class="inline-block w-4 h-4 transform bg-white rounded-full transition-transform" :class="{
+                    'translate-x-6': isAutoMode,
+                    'translate-x-1': !isAutoMode
+                  }"></span>
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Description -->
+          <div class="mt-6">
+            <div class="flex items-center justify-between mb-1">
+              <label class="text-sm font-medium text-gray-700">Description</label>
+              <button class="text-gray-400 hover:text-gray-600 ml-2" @click="editingDescription = true" x-show="!editingDescription">
+                <Edit class="w-4 h-4" />
+              </button>
+            </div>
+            <div class="flex items-start">
+              <p class="text-gray-600 flex-1" x-text="sequence.description ? truncateText(sequence.description, 240) : 'Aucune description'" x-show="!editingDescription" @click="editingDescription = true"></p>
+              <textarea class="flex-1 border border-gray-300 rounded-md px-3 py-2 text-gray-600" rows="3" x-model="sequence.description" x-show="editingDescription && sequence" @blur="editingDescription = false; saveSequenceDescription()"></textarea>
+            </div>
+          </div>
+          
+          <!-- Actions principales -->
+          <div class="mt-6 flex flex-wrap gap-2">
+            <button class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#007ACE] hover:bg-[#006BC2]" @click="showTestDrawer = true" :disabled="!sequence">
+              <Mail class="w-4 h-4 mr-2" />
+              Tester la séquence
+            </button>
+            
+            <button class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50" @click="duplicateSequence()" :disabled="!sequence">
+              <Copy class="w-4 h-4 mr-2" />
+              Dupliquer
+            </button>
+            
+            <button class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700" @click="showDeleteConfirmation = true" :disabled="!sequence">
+              <Trash2 class="w-4 h-4 mr-2" />
+              Supprimer
+            </button>
+            
+            <button class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700" @click="showAutoFilterDrawer = true" :disabled="!isAutoMode || !sequence" x-show="isAutoMode">
+              <SlidersHorizontal class="w-4 h-4 mr-2" />
+              Configurer les filtres
+            </button>
+          </div>
+        </section>
+        
+        <!-- Contenu principal en 2 colonnes -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Colonne gauche - Flow des messages -->
+          <div class="lg:col-span-2">
+            <div class="bg-white rounded-lg shadow p-6">
+              <!-- En-tête -->
+              <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-medium text-gray-900">Flow des messages et délais</h2>
+                <span class="text-sm text-gray-500" x-text="`${getSortedActions().length} actions`"></span>
+              </div>
+              
+              <!-- Liste des actions -->
+              <div class="space-y-4" x-show="getSortedActions().length > 0">
+                <template x-for="(action, index) in getSortedActions()">
+                  <div class="border border-gray-200 rounded-lg p-4">
+                    <div class="flex justify-between items-start">
+                      <div class="flex-1">
+                        <div class="flex items-center mb-2">
+                          <span class="px-2 py-1 rounded-full text-xs font-medium bg-[#007ACE] bg-opacity-20 text-[#007ACE] mr-2">
+                            <MailIcon class="w-3 h-3 inline mr-1" />
+                            Email
+                          </span>
+                          <span class="text-sm font-medium text-gray-900" x-text="`Jour ${action.delay}`"></span>
+                          <span class="ml-2 px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800" x-show="action.isMultipleImpayes">
+                            Multiples
+                          </span>
+                        </div>
+                        <h3 class="font-medium text-gray-900 mb-1" x-text="action.subject"></h3>
+                        <p class="text-sm text-gray-500 mb-2" x-text="action.senderEmail"></p>
+                        <p class="text-sm text-gray-600 line-clamp-2" x-text="action.message"></p>
+                        <p class="text-sm text-gray-600 line-clamp-2 mt-1" x-show="action.isMultipleImpayes && action.multipleSubject" x-text="'Multiples: ' + action.multipleSubject"></p>
+                      </div>
+                      <div class="flex flex-col space-y-2 ml-4">
+                        <button class="p-1 text-gray-400 hover:text-gray-600" @click="editAction(index)" :disabled="sequence.isActif">
+                          <EditIcon class="w-4 h-4" />
+                        </button>
+                        <button class="p-1 text-gray-400 hover:text-gray-600" @click="deleteAction(index)" :disabled="sequence.isActif">
+                          <Trash2Icon class="w-4 h-4" />
+                        </button>
+                        <div class="flex items-center">
+                          <button class="p-1 text-gray-400 hover:text-gray-600" @click="adjustActionDelay(index, -1)" :disabled="sequence.isActif">
+                            <Minus class="w-4 h-4" />
+                          </button>
+                          <button class="p-1 text-gray-400 hover:text-gray-600" @click="adjustActionDelay(index, 1)" :disabled="sequence.isActif">
+                            <Plus class="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </template>
+              </div>
+              
+              <!-- Message si aucune action -->
+              <div class="text-center py-8 text-gray-400" x-show="getSortedActions().length === 0">
+                <Inbox class="w-12 h-12 mx-auto mb-2" />
+                <p class="text-sm">Aucune action dans cette séquence</p>
+                <p class="text-xs text-gray-500 mt-1">Ajoutez des actions email pour configurer votre séquence de relance</p>
+              </div>
+              
+              <!-- Boutons pour création avec IA -->
+              <div class="mt-6 border-t border-gray-200 pt-6 flex flex-wrap gap-3" x-show="!sequence.isActif">
+                <button type="button" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700" @click="showCreateFullSequenceDrawer = true">
+                  <Sparkles class="w-4 h-4 mr-2" />
+                  Créer séquence complète avec IA
+                </button>
+                
+                <button type="button" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700" @click="showCreateSingleEmailDrawer = true">
+                  <MailPlus class="w-4 h-4 mr-2" />
+                  Créer un email avec IA
+                </button>
+              </div>
+               
+              <!-- Formulaire d'ajout manuel -->
+              <div class="mt-6 border-t border-gray-200 pt-6" x-show="!sequence.isActif">
+                <h3 class="text-sm font-medium text-gray-900 mb-4">Ajouter une nouvelle action manuellement</h3>
+                <form class="space-y-4" @submit.prevent="addNewAction()">
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                      <select class="w-full border border-gray-300 rounded-md px-3 py-2" x-model="newActionType" disabled>
+                        <option value="email">Email</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Délai (jours)</label>
+                      <input type="number" min="0" class="w-full border border-gray-300 rounded-md px-3 py-2" x-model="newActionDelay" required>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Sujet</label>
+                    <input type="text" class="w-full border border-gray-300 rounded-md px-3 py-2" x-model="newActionSubject" required>
+                  </div>
+                  
+                  <!-- Option pour les multiples impayés -->
+                  <div class="flex items-center">
+                    <input type="checkbox" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" x-model="newActionIsMultipleImpayes">
+                    <label class="ml-2 block text-sm font-medium text-gray-700">
+                      Activer pour les multiples impayés
+                    </label>
+                    <span class="ml-2 text-xs text-gray-500">(Regrouper les impayés par payeur)</span>
+                  </div>
+                  
+                  <!-- Champs pour les multiples impayés -->
+                  <div x-show="newActionIsMultipleImpayes" x-transition>
+                    <div class="mt-4 p-3 bg-blue-50 border-l-4 border-blue-400 rounded">
+                      <div class="flex items-start">
+                        <Info class="w-5 h-5 text-blue-400 flex-shrink-0" />
+                        <div class="ml-3">
+                          <h3 class="text-sm font-medium text-blue-800">Configuration pour les multiples impayés</h3>
+                          <p class="text-sm text-blue-700 mt-1">Ces champs seront utilisés lorsque plusieurs impayés sont regroupés pour un même payeur.</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div class="mt-4">
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Sujet (multiples)</label>
+                      <input type="text" class="w-full border border-gray-300 rounded-md px-3 py-2" x-model="newActionMultipleSubject" placeholder="Ex: Rappel pour [[[COUNT]]] factures impayées">
+                      <p class="text-xs text-gray-500 mt-1">Utilisez [[[COUNT]]], [[[LIST:field]]], [[[SUM:field]]] pour les données agrégées</p>
+                    </div>
+                    
+                    <div class="mt-4">
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Message (multiples)</label>
+                      <textarea rows="4" class="w-full border border-gray-300 rounded-md px-3 py-2" x-model="newActionMultipleMessage" placeholder="Ex: Vous avez [[[COUNT]]] factures impayées : [[[LIST:nfacture]]]"></textarea>
+                      <p class="text-xs text-gray-500 mt-1">Variables spéciales : [[[COUNT]]], [[[LIST:nfacture]]], [[[SUM:resteapayer]]]</p>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Email émetteur</label>
+                    <select class="w-full border border-gray-300 rounded-md px-3 py-2" x-model="newActionSender" required>
+                      <option value="" disabled>Sélectionnez un profil SMTP</option>
+                      <template x-for="profile in smtpProfiles">
+                        <option :value="profile.email" x-text="profile.email"></option>
+                      </template>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">CC (optionnel)</label>
+                    <input type="text" class="w-full border border-gray-300 rounded-md px-3 py-2" x-model="newActionCC" placeholder="email1@example.com, email2@example.com">
+                  </div>
+                  
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Message</label>
+                    <textarea rows="4" class="w-full border border-gray-300 rounded-md px-3 py-2" x-model="newActionMessage" required></textarea>
+                    <p class="text-xs text-gray-500 mt-1">Utilisez les variables disponibles</p>
+                  </div>
+                  
+                  <div class="flex justify-end">
+                    <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#007ACE] hover:bg-[#006BC2]" :disabled="smtpProfiles.length === 0">
+                      <Plus class="w-4 h-4 mr-2" />
+                      <span x-text="smtpProfiles.length === 0 ? 'Aucun profil SMTP' : 'Ajouter la relance'"></span>
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Colonne droite - Outils -->
+          <div class="lg:col-span-1 space-y-6">
+            <!-- Variables disponibles -->
+            <div class="bg-white rounded-lg shadow p-6">
+              <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-medium text-gray-900">Variables disponibles</h2>
+                <span class="text-sm text-gray-500" x-text="`${filteredVariables?.length || 0} variables`"></span>
+              </div>
+              
+              <div class="mb-4">
+                <input type="text" placeholder="Rechercher une variable..." class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500" x-model="variableSearch">
+              </div>
+              
+              <div class="space-y-2 max-h-64 overflow-y-auto">
+                <template x-for="column in filteredVariables">
+                  <div class="flex items-center justify-between p-2 border border-gray-200 rounded">
+                    <code class="text-sm font-mono text-blue-600" x-text="column"></code>
+                    <button class="text-gray-400 hover:text-gray-600" @click="copyToClipboard(column)">
+                      <Copy class="w-4 h-4" />
+                    </button>
+                  </div>
+                </template>
+              </div>
+            </div>
+            
+            <!-- Prompt pour rédaction -->
+            <div class="bg-white rounded-lg shadow p-6">
+              <h2 class="text-lg font-medium text-gray-900 mb-4">Prompt pour rédiger des emails</h2>
+              
+              <div class="mb-4">
+                <textarea rows="6" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500" x-model="generatedPrompt" readonly></textarea>
+              </div>
+              
+              <button class="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#007ACE] hover:bg-[#006BC2]" @click="copyToClipboard(generatedPrompt)">
+                <Copy class="w-4 h-4 mr-2" />
+                Copier le prompt
+              </button>
+            </div>
+            
+            <!-- Aide contextuelle -->
+            <div class="bg-white rounded-lg shadow p-6">
+              <h2 class="text-lg font-medium text-gray-900 mb-4">Aide contextuelle</h2>
+              
+              <div class="space-y-4 text-sm text-gray-600">
+                <div class="flex items-start">
+                  <Info class="w-4 h-4 text-blue-500 mr-2 mt-0.5 flex-shrink-0" />
+                  <p>Utilisez les variables entre doubles accolades <code>[[ variable ]]</code> dans vos messages.</p>
+                </div>
+                
+                <div class="flex items-start">
+                  <Info class="w-4 h-4 text-blue-500 mr-2 mt-0.5 flex-shrink-0" />
+                  <p>Les délais sont calculés à partir de la date de création de l'impayé.</p>
+                </div>
+                
+                <div class="flex items-start">
+                  <Info class="w-4 h-4 text-blue-500 mr-2 mt-0.5 flex-shrink-0" />
+                  <p>Pour les multiples impayés, utilisez <code>[[[COUNT]]]</code>, <code>[[[LIST:field]]]</code>, <code>[[[SUM:field]]]</code> pour les données agrégées.</p>
+                </div>
+                
+                <div class="flex items-start">
+                  <Info class="w-4 h-4 text-blue-500 mr-2 mt-0.5 flex-shrink-0" />
+                  <p>Testez toujours votre séquence avant activation pour vérifier le rendu des emails.</p>
+                </div>
+                
+                <div class="flex items-start" x-show="isAutoMode">
+                  <Filter class="w-4 h-4 text-purple-500 mr-2 mt-0.5 flex-shrink-0" />
+                  <p>En mode automatique, les filtres déterminent quels impayés seront inclus dans la séquence.</p>
+                </div>
+                
+                <div class="flex items-start" x-show="!isAutoMode">
+                  <ToggleLeft class="w-4 h-4 text-gray-500 mr-2 mt-0.5 flex-shrink-0" />
+                  <p>En mode manuel, vous pouvez ajouter des actions spécifiques pour chaque étape de relance.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+    
+    <!-- Test Drawer -->
+    <div class="fixed inset-0 overflow-hidden z-50" x-show="showTestDrawer" x-transition>
+      <div class="absolute inset-0 overflow-hidden">
+        <div class="absolute inset-0 bg-gray-500 bg-opacity-75" @click="showTestDrawer = false"></div>
+        <div class="fixed inset-y-0 right-0 pl-10 max-w-full flex sm:pl-16">
+          <div class="relative w-screen max-w-2xl" @click.away="showTestDrawer = false">
+            <div class="h-full flex flex-col bg-white shadow-xl overflow-y-scroll">
+              <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                  <h2 class="text-lg font-medium text-gray-900">Tester la séquence</h2>
+                  <button class="text-gray-400 hover:text-gray-600" @click="showTestDrawer = false">
+                    <X class="w-6 h-6" />
+                  </button>
+                </div>
+                
+                <div class="mb-6">
+                  <div class="bg-blue-50 border-l-4 border-blue-400 p-4">
+                    <div class="flex">
+                      <Info class="w-5 h-5 text-blue-400 mr-3" />
+                      <div class="text-sm text-blue-700">
+                        <p class="font-medium">Information sur le test</p>
+                        <p class="mt-1">Sélectionnez un impayé spécifique pour peupler les templates et envoyer les emails de test.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Charger automatiquement les impayés à l'ouverture -->
+                <div x-init="loadImpayes()"></div>
+                
+                <form class="space-y-4" @submit.prevent="sendTestEmail()">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Adresse email de test</label>
+                    <input type="email" class="w-full border border-gray-300 rounded-md px-3 py-2" x-model="testEmail" required placeholder="exemple@domaine.com">
+                    <p class="text-xs text-gray-500 mt-1">L'email sera envoyé à cette adresse avec les données de test.</p>
+                  </div>
+                  
+                  <!-- Sélection de l'impayé déplacée au-dessus des actions -->
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Sélectionner un impayé</label>
+                    <div class="relative">
+                      <input type="text"
+                             class="w-full border border-gray-300 rounded-md px-3 py-2 pr-10"
+                             x-model="impayesFilter"
+                             placeholder="Filtrer par numéro de facture ou payeur..."
+                             @input.debounce.500ms="loadImpayes()">
+
+                      <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                        <Search class="w-5 h-5 text-gray-400" />
+                      </div>
+                    </div>
+
+                    <div class="mt-2 max-h-64 overflow-y-auto border border-gray-200 rounded-md">
+                      <div x-show="isLoadingImpayes" class="p-4 text-center text-gray-500">
+                        <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mx-auto mb-2"></div>
+                        Chargement des impayés...
+                      </div>
+
+                      <template x-for="impaye in getFilteredImpayes()" :key="impaye.objectId">
+                        <div class="p-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
+                             @click="selectedImpaye = impaye.objectId"
+                             :class="{ 'bg-blue-50': selectedImpaye === impaye.objectId }">
+                          <div class="flex justify-between items-center">
+                            <div>
+                              <p class="font-medium text-gray-900" x-text="impaye.nfacture"></p>
+                              <p class="text-sm text-gray-500" x-text="impaye.payeur"></p>
+                            </div>
+                            <div class="text-right">
+                              <p class="text-sm font-medium" x-text="formatCurrency(impaye.montant)"></p>
+                              <p class="text-xs text-gray-400" x-text="formatDate(impaye.date)"></p>
+                            </div>
+                          </div>
+                        </div>
+                      </template>
+
+                      <div x-show="getFilteredImpayes().length === 0 && !isLoadingImpayes" class="p-4 text-center text-gray-500">
+                        Aucun impayé trouvé
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Affichage de l'impayé sélectionné -->
+                  <div x-show="selectedImpaye" class="mt-4 p-3 bg-blue-50 rounded-md border border-blue-200">
+                    <p class="text-sm font-medium text-blue-800 flex items-center">
+                      <CheckCircle2 class="w-4 h-4 text-blue-600 mr-2" />
+                      Impayé sélectionné :
+                    </p>
+                    <div class="mt-2 flex justify-between items-center">
+                      <div>
+                        <p class="font-medium text-gray-900" x-text="impayesList.find(i => i.objectId === selectedImpaye)?.nfacture || 'Chargement...'"></p>
+                        <p class="text-sm text-gray-600" x-text="impayesList.find(i => i.objectId === selectedImpaye)?.payeur || ''"></p>
+                      </div>
+                      <div class="text-right">
+                        <p class="text-sm font-medium text-gray-900" x-text="formatCurrency(impayesList.find(i => i.objectId === selectedImpaye)?.montant)"></p>
+                        <p class="text-xs text-gray-500" x-text="formatDate(impayesList.find(i => i.objectId === selectedImpaye)?.date)"></p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="mt-6">
+                    <h3 class="text-sm font-medium text-gray-900 mb-2">Actions à envoyer</h3>
+                    <div class="space-y-2 max-h-48 overflow-y-auto border border-gray-200 rounded-md p-2">
+                      <template x-for="action in getSortedActions()">
+                        <div class="flex items-center justify-between p-2 border border-gray-100 rounded">
+                          <div class="flex items-center">
+                            <Mail class="w-4 h-4 text-blue-500 mr-2" />
+                            <span class="text-sm text-gray-600" x-text="`Jour ${action.delay}: ${action.subject}`"></span>
+                          </div>
+                          <span class="text-xs text-gray-400" x-text="getSmtpProfileEmail(action.smtpProfile?.objectId)"></span>
+                        </div>
+                      </template>
+                    </div>
+                  </div>
+                  
+                  <div class="flex justify-end space-x-3 mt-6">
+                    <button type="button" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50" @click="showTestDrawer = false">
+                      Annuler
+                    </button>
+                    <button type="submit" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700" :disabled="isSendingTest || !selectedImpaye || !testEmail">
+                      <span x-show="!isSendingTest">
+                        <Send class="w-4 h-4 mr-2 inline" />
+                        <span x-text="!selectedImpaye ? 'Sélectionnez un impayé' : !testEmail ? 'Email requis' : 'Envoyer le test'"></span>
+                      </span>
+                      <span x-show="isSendingTest">
+                        <Loader2 class="w-4 h-4 mr-2 inline animate-spin" />
+                        Envoi en cours...
+                      </span>
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Edit Drawer -->
+    <div class="fixed inset-0 overflow-hidden z-50" x-show="showEditDrawer" x-transition>
+      <div class="absolute inset-0 overflow-hidden">
+        <div class="absolute inset-0 bg-gray-500 bg-opacity-75" @click="showEditDrawer = false"></div>
+        <div class="fixed inset-y-0 right-0 pl-10 max-w-full flex sm:pl-16">
+          <div class="relative w-screen max-w-2xl" @click.away="showEditDrawer = false">
+            <div class="h-full flex flex-col bg-white shadow-xl overflow-y-scroll">
+              <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                  <h2 class="text-lg font-medium text-gray-900">Éditer l'action</h2>
+                  <button class="text-gray-400 hover:text-gray-600" @click="showEditDrawer = false">
+                    <X class="w-6 h-6" />
+                  </button>
+                </div>
+                
+                <form class="space-y-4" @submit.prevent="saveEditedAction()">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                    <select class="w-full border border-gray-300 rounded-md px-3 py-2" x-model="editingActionType" disabled>
+                      <option value="email">Email</option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Délai (jours)</label>
+                    <input type="number" min="0" class="w-full border border-gray-300 rounded-md px-3 py-2" x-model="editingActionDelay" required>
+                  </div>
+                  
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Sujet</label>
+                    <input type="text" class="w-full border border-gray-300 rounded-md px-3 py-2" x-model="editingActionSubject" required>
+                  </div>
+                  
+                  <!-- Option pour les multiples impayés -->
+                  <div class="flex items-center">
+                    <input type="checkbox" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" x-model="editingActionIsMultipleImpayes">
+                    <label class="ml-2 block text-sm font-medium text-gray-700">
+                      Activer pour les multiples impayés
+                    </label>
+                    <span class="ml-2 text-xs text-gray-500">(Regrouper les impayés par payeur)</span>
+                  </div>
+                  
+                  <!-- Champs pour les multiples impayés -->
+                  <div x-show="editingActionIsMultipleImpayes" x-transition>
+                    <div class="mt-4 p-3 bg-blue-50 border-l-4 border-blue-400 rounded">
+                      <div class="flex items-start">
+                        <Info class="w-5 h-5 text-blue-400 flex-shrink-0" />
+                        <div class="ml-3">
+                          <h3 class="text-sm font-medium text-blue-800">Configuration pour les multiples impayés</h3>
+                          <p class="text-sm text-blue-700 mt-1">Ces champs seront utilisés lorsque plusieurs impayés sont regroupés pour un même payeur.</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div class="mt-4">
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Sujet (multiples)</label>
+                      <input type="text" class="w-full border border-gray-300 rounded-md px-3 py-2" x-model="editingActionMultipleSubject" placeholder="Ex: Rappel pour [[[COUNT]]] factures impayées">
+                      <p class="text-xs text-gray-500 mt-1">Utilisez [[[COUNT]]], [[[LIST:field]]], [[[SUM:field]]] pour les données agrégées</p>
+                    </div>
+                    
+                    <div class="mt-4">
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Message (multiples)</label>
+                      <textarea rows="6" class="w-full border border-gray-300 rounded-md px-3 py-2" x-model="editingActionMultipleMessage" placeholder="Ex: Vous avez [[[COUNT]]] factures impayées : [[[LIST:nfacture]]]"></textarea>
+                      <p class="text-xs text-gray-500 mt-1">Variables spéciales : [[[COUNT]]], [[[LIST:nfacture]]], [[[SUM:resteapayer]]]</p>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Profil SMTP</label>
+                    <select class="w-full border border-gray-300 rounded-md px-3 py-2" x-model="editingActionSender" required>
+                      <option value="" disabled>Sélectionnez un profil SMTP</option>
+                      <template x-for="profile in smtpProfiles">
+                        <option :value="profile.email" x-text="profile.email"></option>
+                      </template>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">CC (optionnel)</label>
+                    <input type="text" class="w-full border border-gray-300 rounded-md px-3 py-2" x-model="editingActionCC" placeholder="email1@example.com, email2@example.com">
+                  </div>
+                  
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Message</label>
+                    <textarea rows="6" class="w-full border border-gray-300 rounded-md px-3 py-2" x-model="editingActionMessage" required></textarea>
+                    <p class="text-xs text-gray-500 mt-1">Utilisez les variables disponibles comme <code>[[variable]]</code></p>
+                  </div>
+                  
+                  <div class="mt-6">
+                    <h3 class="text-sm font-medium text-gray-900 mb-2">Variables disponibles</h3>
+                    <div class="flex flex-wrap gap-2 max-h-24 overflow-y-auto border border-gray-200 rounded-md p-2">
+                      <template x-for="column in impayesColumns.slice(0, 10)">
+                        <button type="button" class="px-2 py-1 text-xs bg-gray-100 rounded hover:bg-gray-200" @click="insertVariable(column)" x-text="column"></button>
+                      </template>
+                    </div>
+                  </div>
+                  
+                  <div class="flex justify-end space-x-3 mt-6">
+                    <button type="button" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50" @click="showEditDrawer = false">
+                      Annuler
+                    </button>
+                    <button type="submit" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700" :disabled="isSavingAction || smtpProfiles.length === 0">
+                      <span x-show="!isSavingAction">
+                        <Save class="w-4 h-4 mr-2 inline" />
+                        <span x-text="smtpProfiles.length === 0 ? 'Aucun profil SMTP' : 'Enregistrer les modifications'"></span>
+                      </span>
+                      <span x-show="isSavingAction">
+                        <Loader2 class="w-4 h-4 mr-2 inline animate-spin" />
+                        Sauvegarde en cours...
+                      </span>
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Auto Filters Drawer -->
+    <div class="fixed inset-0 overflow-hidden z-50" x-show="showAutoFilterDrawer" x-transition>
+      <div class="absolute inset-0 overflow-hidden">
+        <div class="absolute inset-0 bg-gray-500 bg-opacity-75" @click="showAutoFilterDrawer = false"></div>
+        <div class="fixed inset-y-0 right-0 pl-10 max-w-full flex sm:pl-16">
+          <div class="relative w-screen max-w-2xl" @click.away="showAutoFilterDrawer = false">
+            <div class="h-full flex flex-col bg-white shadow-xl overflow-y-scroll">
+              <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                  <h2 class="text-lg font-medium text-gray-900">Configuration des filtres automatiques</h2>
+                  <button class="text-gray-400 hover:text-gray-600" @click="showAutoFilterDrawer = false">
+                    <X class="w-6 h-6" />
+                  </button>
+                </div>
+                
+                <!-- Force erase -->
+                <div class="mb-6 p-3 bg-yellow-50 border-l-4 border-yellow-400 rounded">
+                  <div class="flex items-start">
+                    <AlertTriangle class="h-5 w-5 text-yellow-400 flex-shrink-0" />
+                    <div class="ml-3">
+                      <h3 class="text-sm font-medium text-yellow-800">Forcer le remplacement</h3>
+                      <div class="mt-2">
+                        <p class="text-sm text-yellow-700">
+                          Cette option permet d'inclure des impayés qui sont déjà dans une autre séquence.
+                        </p>
+                        <div class="mt-3 flex items-center">
+                          <input type="checkbox" class="h-4 w-4 text-yellow-600 focus:ring-yellow-500 border-gray-300 rounded" x-model="forceErase" @change="saveForceErase()">
+                          <label class="ml-2 block text-sm text-gray-900">
+                            <span class="font-medium">Forcer le remplacement des séquences existantes</span>
+                            <span class="text-xs text-gray-600 block">Si coché, les impayés seront retirés de leur séquence actuelle pour rejoindre cette séquence automatique.</span>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Filtres actifs -->
+                <div class="mb-6" x-show="activeFiltersCount > 0">
+                  <div class="bg-blue-50 border-l-4 border-blue-400 rounded p-4">
+                    <div class="flex items-start">
+                      <Filter class="h-5 w-5 text-blue-400 flex-shrink-0" />
+                      <div class="ml-3">
+                        <h3 class="text-sm font-medium text-blue-800">Filtres actifs</h3>
+                        <div class="mt-2">
+                          <p class="text-sm text-blue-700">
+                            Voici l'ensemble des filtres actuellement actifs pour cette séquence :
+                          </p>
+                          <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <template x-for="(filter, column) in activeFilters">
+                              <div class="flex items-center justify-between p-2 bg-white border border-blue-200 rounded">
+                                <div>
+                                  <span class="text-sm font-medium text-blue-600" x-text="column"></span>
+                                  <span class="text-xs text-gray-500 ml-2" x-text="getFilterDescription(filter)"></span>
+                                </div>
+                                <button class="text-red-500 hover:text-red-700" @click="clearColumnFilter(column)">
+                                  <Trash2 class="w-4 h-4" />
+                                </button>
+                              </div>
+                            </template>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Barre de recherche globale -->
+                <div class="mb-4">
+                  <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Search class="w-5 h-5 text-gray-400" />
+                    </div>
+                    <input type="text" placeholder="Rechercher dans toutes les colonnes..." class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm" x-model="globalSearchTerm" @input="applyGlobalSearch()">
+                  </div>
+                </div>
+                
+                <!-- Tableau avec filtres par colonne -->
+                <div class="overflow-x-auto">
+                  <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                      <tr>
+                        <template x-for="column in visibleColumns">
+                          <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider relative group">
+                            <div class="flex items-center justify-between">
+                              <span x-text="column"></span>
+                              <div class="flex items-center">
+                                <button class="p-1 rounded-full hover:bg-gray-200 text-gray-400 hover:text-gray-600" @click="toggleColumnFilter(column)">
+                                  <Filter class="w-4 h-4" />
+                                </button>
+                                <button class="p-1 rounded-full hover:bg-gray-200 text-gray-400 hover:text-gray-600 ml-1" @click="toggleColumnVisibility(column)">
+                                  <X class="w-4 h-4" />
+                                </button>
+                              </div>
+                            </div>
+                            <!-- Filtre de colonne -->
+                            <div x-show="activeFilterColumn === column" class="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-md shadow-lg p-3 z-20 mt-1">
+                              <div class="flex items-center justify-between mb-2">
+                                <h4 class="text-sm font-medium text-gray-900" x-text="column"></h4>
+                                <button class="text-gray-400 hover:text-gray-600" @click="activeFilterColumn = null">
+                                  <X class="w-4 h-4" />
+                                </button>
+                              </div>
+                              
+                              <!-- Sélecteur d'opérateur -->
+                              <div class="mb-2">
+                                <select class="block w-full pl-3 pr-10 py-1.5 text-sm border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 rounded-md" x-model="getFilterOperator(column)" @change="setFilterOperator(column, $event.target.value)">
+                                  <option value="equals">Égal à</option>
+                                  <option value="contains">Contient</option>
+                                  <option value="doesNotContain">Ne contient pas</option>
+                                  <option value="startsWith">Commence par</option>
+                                  <option value="endsWith">Finit par</option>
+                                  <option value="isEmpty">Est vide</option>
+                                  <option value="isNotEmpty">N'est pas vide</option>
+                                  <option value="greaterThan">Supérieur à</option>
+                                  <option value="lessThan">Inférieur à</option>
+                                  <option value="between">Entre</option>
+                                </select>
+                              </div>
+                              
+                              <!-- Champ de valeur -->
+                              <div x-show="!isEmptyOperator(columnFilters[column]?.operator)">
+                                <template x-if="columnFilters[column]?.operator === 'between'">
+                                  <div class="flex space-x-2">
+                                    <input type="text" placeholder="Min" class="flex-1 pl-3 pr-3 py-1.5 border border-gray-300 rounded-md text-sm" x-model="getFilterValueMin(column)" @input="setFilterValueMin(column, $event.target.value)">
+                                    <input type="text" placeholder="Max" class="flex-1 pl-3 pr-3 py-1.5 border border-gray-300 rounded-md text-sm" x-model="getFilterValueMax(column)" @input="setFilterValueMax(column, $event.target.value)">
+                                  </div>
+                                </template>
+                                <template x-if="columnFilters[column]?.operator !== 'between'">
+                                  <input type="text" class="block w-full pl-3 pr-10 py-1.5 border border-gray-300 rounded-md text-sm" x-model="getFilterValue(column)" @input="setFilterValue(column, $event.target.value)" :placeholder="getOperatorPlaceholder(columnFilters[column]?.operator)">
+                                </template>
+                              </div>
+                              
+                              <div class="flex justify-end space-x-2 mt-3">
+                                <button class="px-3 py-1 text-sm text-gray-600 hover:text-gray-800" @click="clearColumnFilter(column)">
+                                  Effacer
+                                </button>
+                                <button class="px-3 py-1 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-md" @click="applyColumnFilter(column)">
+                                  Appliquer
+                                </button>
+                              </div>
+                            </div>
+                          </th>
+                        </template>
+                      </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                      <template x-for="(invoice, index) in filteredInvoices" :key="invoice.objectId">
+                        <tr class="hover:bg-gray-50">
+                          <template x-for="column in visibleColumns">
+                            <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500" x-text="formatCellValue(invoice[column], column)"></td>
+                          </template>
+                        </tr>
+                      </template>
+                    </tbody>
+                  </table>
+                </div>
+                
+                <!-- Boutons d'action -->
+                <div class="mt-6 flex justify-between items-center">
+                  <div>
+                    <button class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50" @click="resetAllFilters()">
+                      Réinitialiser tout
+                    </button>
+                  </div>
+                  <div class="flex space-x-3">
+                    <button class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50" @click="loadInvoices()" :disabled="isLoadingMore">
+                      <span x-show="!isLoadingMore">Charger plus</span>
+                      <span x-show="isLoadingMore">
+                        <Loader2 class="w-4 h-4 mr-2 inline animate-spin" />
+                        Chargement...
+                      </span>
+                    </button>
+                    <button class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#007ACE] hover:bg-[#006BCE]" @click="saveAutoFilters()" :disabled="isSaving">
+                      <span x-show="!isSaving">
+                        <Save class="w-4 h-4 mr-2 inline" />
+                        Enregistrer la requête
+                      </span>
+                      <span x-show="isSaving">
+                        <Loader2 class="w-4 h-4 mr-2 inline animate-spin" />
+                        Sauvegarde...
+                      </span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Drawer de confirmation de suppression -->
+    <div class="fixed inset-0 overflow-hidden z-50" x-show="showDeleteConfirmation" x-transition>
+      <div class="absolute inset-0 overflow-hidden">
+        <div class="absolute inset-0 bg-gray-500 bg-opacity-75" @click="showDeleteConfirmation = false"></div>
+        <div class="fixed inset-y-0 right-0 pl-10 max-w-full flex">
+          <div class="relative w-screen max-w-md" @click.away="showDeleteConfirmation = false">
+            <div class="h-full flex flex-col bg-white shadow-xl overflow-y-scroll">
+              <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                  <h2 class="text-lg font-medium text-gray-900">Supprimer la séquence</h2>
+                  <button class="text-gray-400 hover:text-gray-600" @click="showDeleteConfirmation = false">
+                    <X class="w-6 h-6" />
+                  </button>
+                </div>
+                
+                <div class="mb-6">
+                  <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+                    <div class="flex">
+                      <AlertTriangle class="w-5 h-5 text-yellow-400 mr-3" />
+                      <div class="text-sm text-yellow-700">
+                        <p class="font-medium">Attention</p>
+                        <p>Cette action est irréversible. Toutes les données de cette séquence seront définitivement supprimées.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="flex justify-end space-x-3">
+                  <button class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50" @click="showDeleteConfirmation = false">
+                    Annuler
+                  </button>
+                  <button class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700" @click="deleteSequence()">
+                    Supprimer définitivement
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Drawer de confirmation d'activation -->
+    <div class="fixed inset-0 overflow-hidden z-50" x-show="showActivationConfirmation" x-transition>
+      <div class="absolute inset-0 overflow-hidden">
+        <div class="absolute inset-0 bg-gray-500 bg-opacity-75" @click="showActivationConfirmation = false"></div>
+        <div class="fixed inset-y-0 right-0 pl-10 max-w-full flex">
+          <div class="relative w-screen max-w-md" @click.away="showActivationConfirmation = false">
+            <div class="h-full flex flex-col bg-white shadow-xl overflow-y-scroll">
+              <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                  <h2 class="text-lg font-medium text-gray-900" x-text="sequence.isActif ? 'Désactiver la séquence' : 'Activer la séquence'"></h2>
+                  <button class="text-gray-400 hover:text-gray-600" @click="showActivationConfirmation = false">
+                    <X class="w-6 h-6" />
+                  </button>
+                </div>
+                
+                <div class="mb-6">
+                  <template x-if="!sequence?.isActif">
+                    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+                      <div class="flex">
+                        <AlertTriangle class="w-5 h-5 text-yellow-400 mr-3" />
+                        <div class="text-sm text-yellow-700">
+                          <p class="font-medium">L'activation va:</p>
+                          <ol class="list-decimal list-inside mt-2 space-y-1">
+                            <li>Supprimer toutes les relances non envoyées</li>
+                            <li>Recréer la séquence pour tous les impayés</li>
+                            <li>Planifier les envois selon les délais configurés</li>
+                          </ol>
+                        </div>
+                      </div>
+                    </div>
+                  </template>
+                  
+                  <template x-if="sequence?.isActif">
+                    <div class="bg-[#007ACE] bg-opacity-10 border-l-4 border-[#007ACE] p-4">
+                      <div class="flex">
+                        <Info class="w-5 h-5 text-[#007ACE] mr-3" />
+                        <div class="text-sm text-[#007ACE]">
+                          <p class="font-medium">La désactivation va:</p>
+                          <p class="mt-2">Arrêter la création de nouvelles relances pour cette séquence. Les relances déjà planifiées ne seront pas affectées.</p>
+                        </div>
+                      </div>
+                    </div>
+                  </template>
+                </div>
+                
+                <div class="flex justify-end space-x-3">
+                  <button class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50" @click="showActivationConfirmation = false">
+                    Annuler
+                  </button>
+                  <button class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white" :class="{
+                    'bg-[#007ACE] hover:bg-[#006BCE]': !sequence?.isActif,
+                    'bg-gray-600 hover:bg-gray-700': sequence?.isActif
+                  }" @click="confirmToggleStatus()">
+                    <span x-text="sequence.isActif ? 'Confirmer la désactivation' : 'Confirmer activation'"></span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Notifications -->
+    <div class="fixed bottom-4 right-4 z-50" x-show="notification.show" x-transition>
+      <div class="p-4 rounded-md shadow-lg" :class="{
+        'bg-[#007ACE] bg-opacity-10 border border-[#007ACE] text-[#007ACE]': notification.type === 'success',
+        'bg-red-50 border border-red-400 text-red-800': notification.type === 'error',
+        'bg-[#007ACE] bg-opacity-10 border border-[#007ACE] text-[#007ACE]': notification.type === 'info',
+        'bg-yellow-50 border border-yellow-400 text-yellow-800': notification.type === 'warning'
+      }">
+        <div class="flex items-start">
+          <div class="flex-shrink-0">
+            <CheckCircle2 class="w-5 h-5" x-show="notification.type === 'success'" />
+            <AlertTriangle class="w-5 h-5" x-show="notification.type === 'error'" />
+            <Info class="w-5 h-5" x-show="notification.type === 'info'" />
+            <AlertTriangle class="w-5 h-5" x-show="notification.type === 'warning'" />
+          </div>
+          <div class="ml-3">
+            <p class="text-sm font-medium" x-text="notification.title"></p>
+            <p class="text-sm mt-1" x-text="notification.message"></p>
+          </div>
+          <div class="ml-auto pl-3">
+            <div class="-mx-1.5 -my-1.5">
+              <button class="inline-flex bg-transparent rounded-md p-1.5 text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2" @click="notification.show = false">
+                <span class="sr-only">Fermer</span>
+                <X class="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Drawer pour créer une séquence complète avec IA -->
+  <div class="fixed inset-0 overflow-hidden z-50" x-show="showCreateFullSequenceDrawer" x-transition>
+    <div class="absolute inset-0 overflow-hidden">
+      <div class="absolute inset-0 bg-gray-500 bg-opacity-75" @click="showCreateFullSequenceDrawer = false"></div>
+      <div class="fixed inset-y-0 right-0 pl-10 max-w-full flex sm:pl-16">
+        <div class="relative w-screen max-w-2xl" @click.away="showCreateFullSequenceDrawer = false">
+          <div class="h-full flex flex-col bg-white shadow-xl overflow-y-scroll">
+            <div class="p-6">
+              <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-medium text-gray-900">Créer une séquence complète avec IA</h2>
+                <button class="text-gray-400 hover:text-gray-600" @click="showCreateFullSequenceDrawer = false">
+                  <X class="w-6 h-6" />
+                </button>
+              </div>
+              
+              <div class="mb-6">
+                <div class="bg-blue-50 border-l-4 border-blue-400 p-4">
+                  <div class="flex">
+                    <Info class="w-5 h-5 text-blue-400 mr-3" />
+                    <div class="text-sm text-blue-700">
+                      <p class="font-medium">Génération intelligente de séquence</p>
+                      <p class="mt-1">L'IA va créer une séquence complète de relances basée sur vos réponses. Vous pourrez modifier les emails générés après la création.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <form class="space-y-6" @submit.prevent="createFullSequenceWithAI()">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Destinataire cible</label>
+                  <select class="w-full border border-gray-300 rounded-md px-3 py-2" x-model="iaSequenceTarget" required>
+                    <option value="" disabled>Sélectionnez le type de destinataire</option>
+                    <option value="particulier">Particulier</option>
+                    <option value="professionnel">Professionnel/Entreprise</option>
+                    <option value="syndic">Syndic de copropriété</option>
+                    <option value="locataire">Locataire</option>
+                    <option value="proprietaire">Propriétaire</option>
+                  </select>
+                  <p class="text-xs text-gray-500 mt-1">À qui s'adressent principalement ces relances ?</p>
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Gestion des multiples impayés</label>
+                  <div class="mt-2 flex items-center">
+                    <input type="checkbox" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" x-model="iaSequenceMultipleImpayes">
+                    <label class="ml-2 block text-sm text-gray-700">
+                      Ce destinataire peut avoir plusieurs impayés simultanés
+                    </label>
+                  </div>
+                  <p class="text-xs text-gray-500 mt-1">Si coché, l'IA générera des messages adaptés pour les cas de multiples factures impayées.</p>
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Ton du début de la séquence</label>
+                  <select class="w-full border border-gray-300 rounded-md px-3 py-2" x-model="iaSequenceStartTone" required>
+                    <option value="professionnel">Professionnel et courtois</option>
+                    <option value="amiable">Amiable et compréhensif</option>
+                    <option value="formel">Formel et officiel</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Ton de la fin de la séquence</label>
+                  <select class="w-full border border-gray-300 rounded-md px-3 py-2" x-model="iaSequenceEndTone" required>
+                    <option value="ferme">Firme avec menace de poursuites</option>
+                    <option value="urgent">Urgent avec délai strict</option>
+                    <option value="juridique">Juridique avec mentions légales</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Seuil de transmission à l'huissier</label>
+                  <input type="number" min="1" max="10" class="w-full border border-gray-300 rounded-md px-3 py-2" x-model="iaSequenceHuissierThreshold" required>
+                  <p class="text-xs text-gray-500 mt-1">Après combien de relances infructueuses préparer la transmission à un huissier ?</p>
+                </div>
+                
+                <div class="flex justify-end space-x-3 mt-6">
+                  <button type="button" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50" @click="showCreateFullSequenceDrawer = false">
+                    Annuler
+                  </button>
+                  <button type="submit" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700" :disabled="isGeneratingWithAI">
+                    <span x-show="!isGeneratingWithAI">
+                      <Sparkles class="w-4 h-4 mr-2 inline" />
+                      Générer la séquence avec IA
+                    </span>
+                    <span x-show="isGeneratingWithAI">
+                      <Loader2 class="w-4 h-4 mr-2 inline animate-spin" />
+                      Génération en cours...
+                    </span>
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Drawer pour créer un email unique avec IA -->
+  <div class="fixed inset-0 overflow-hidden z-50" x-show="showCreateSingleEmailDrawer" x-transition>
+    <div class="absolute inset-0 overflow-hidden">
+      <div class="absolute inset-0 bg-gray-500 bg-opacity-75" @click="showCreateSingleEmailDrawer = false"></div>
+      <div class="fixed inset-y-0 right-0 pl-10 max-w-full flex sm:pl-16">
+        <div class="relative w-screen max-w-2xl" @click.away="showCreateSingleEmailDrawer = false">
+          <div class="h-full flex flex-col bg-white shadow-xl overflow-y-scroll">
+            <div class="p-6">
+              <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-medium text-gray-900">Créer un email de relance avec IA</h2>
+                <button class="text-gray-400 hover:text-gray-600" @click="showCreateSingleEmailDrawer = false">
+                  <X class="w-6 h-6" />
+                </button>
+              </div>
+              
+              <div class="mb-6">
+                <div class="bg-green-50 border-l-4 border-green-400 p-4">
+                  <div class="flex">
+                    <Info class="w-5 h-5 text-green-400 mr-3" />
+                    <div class="text-sm text-green-700">
+                      <p class="font-medium">Génération intelligente d'email</p>
+                      <p class="mt-1">L'IA va créer un email de relance personnalisé que vous pourrez modifier avant envoi.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <form class="space-y-6" @submit.prevent="createSingleEmailWithAI()">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Destinataire de l'email</label>
+                  <select class="w-full border border-gray-300 rounded-md px-3 py-2" x-model="iaEmailTarget" required>
+                    <option value="" disabled>Sélectionnez le type de destinataire</option>
+                    <option value="particulier">Particulier</option>
+                    <option value="professionnel">Professionnel/Entreprise</option>
+                    <option value="syndic">Syndic de copropriété</option>
+                    <option value="locataire">Locataire</option>
+                    <option value="proprietaire">Propriétaire</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Ton de l'email</label>
+                  <select class="w-full border border-gray-300 rounded-md px-3 py-2" x-model="iaEmailTone" required>
+                    <option value="professionnel">Professionnel et courtois</option>
+                    <option value="amiable">Amiable et compréhensif</option>
+                    <option value="ferme">Firme avec rappel des obligations</option>
+                    <option value="urgent">Urgent avec délai strict</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Délai avant envoi (jours)</label>
+                  <input type="number" min="0" class="w-full border border-gray-300 rounded-md px-3 py-2" x-model="iaEmailDelay" required>
+                  <p class="text-xs text-gray-500 mt-1">Nombre de jours après l'impayé pour envoyer cet email.</p>
+                </div>
+                
+                <div class="flex justify-end space-x-3 mt-6">
+                  <button type="button" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50" @click="showCreateSingleEmailDrawer = false">
+                    Annuler
+                  </button>
+                  <button type="submit" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700" :disabled="isGeneratingWithAI">
+                    <span x-show="!isGeneratingWithAI">
+                      <MailPlus class="w-4 h-4 mr-2 inline" />
+                      Générer l'email avec IA
+                    </span>
+                    <span x-show="isGeneratingWithAI">
+                      <Loader2 class="w-4 h-4 mr-2 inline animate-spin" />
+                      Génération en cours...
+                    </span>
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</BaseLayout>

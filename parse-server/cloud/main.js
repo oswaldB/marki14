@@ -9,14 +9,17 @@ require('./initCollections');
 // Importer la fonction de synchronisation des impayés
 require('./syncImpayes');
 
-// Importer la fonction pour récupérer le schéma
-require('./getSchema');
-
 // Importer la fonction pour envoyer un email de test
 require('./sendTestEmail');
 
+// Importer la fonction pour tester une séquence avec un impayé spécifique
+require('./testSequenceWithImpaye');
+
 // Importer les fonctions pour la gestion des profils SMTP
 require('./smtpProfiles');
+
+// Importer la fonction pour générer des emails avec Ollama
+require('./generateEmailWithOllama');
 
 // Importer les fonctions pour la gestion des utilisateurs
 require('./userManagement');
@@ -38,4 +41,8 @@ require('./cleanupRelancesOnDeactivate');
 
 // Importer la fonction pour gérer l'association manuelle d'une séquence à un impayé
 require('./handleManualSequenceAssignment');
+
+// Importer les fonctions pour la génération de séquences avec IA
+require('./generateFullSequenceWithAI');
+require('./generateSingleEmailWithAI');
 

@@ -1,0 +1,324 @@
+---// src/components/DevTools.astro
+// Ce composant affiche les échanges réseau et les logs de la console
+// uniquement sur dev.markidiags.com/
+---
+
+<script is:inline>
+  // Vérifier si nous sommes sur l'URL de développement
+  const isDevEnvironment = window.location.hostname === 'dev.markidiags.com';
+  
+  if (isDevEnvironment) {
+    // Charger les données persistantes depuis localStorage
+    let consoleLogs = JSON.parse(localStorage.getItem('devToolsConsoleLogs') || '[]');
+    let networkRequests = JSON.parse(localStorage.getItem('devToolsNetworkRequests') || '[]');
+    
+    // Fonction pour sauvegarder les données dans localStorage
+    function saveToLocalStorage() {
+      try {
+        localStorage.setItem('devToolsConsoleLogs', JSON.stringify(consoleLogs));
+        localStorage.setItem('devToolsNetworkRequests', JSON.stringify(networkRequests));
+      } catch (error) {
+        console.error('Erreur lors de la sauvegarde dans localStorage:', error);
+      }
+    }
+    
+    // Sauvegarder périodiquement (toutes les 5 secondes)
+    setInterval(saveToLocalStorage, 5000);
+    
+    // Stocker les logs de la console
+    const originalConsoleLog = console.log;
+    const originalConsoleError = console.error;
+    const originalConsoleWarn = console.warn;
+    const originalConsoleInfo = console.info;
+    
+    console.log = function(...args) {
+      consoleLogs.push({ type: 'log', args: [...args], timestamp: new Date().toISOString() });
+      originalConsoleLog.apply(console, args);
+      saveToLocalStorage();
+    };
+    
+    console.error = function(...args) {
+      consoleLogs.push({ type: 'error', args: [...args], timestamp: new Date().toISOString() });
+      originalConsoleError.apply(console, args);
+      saveToLocalStorage();
+    };
+    
+    console.warn = function(...args) {
+      consoleLogs.push({ type: 'warn', args: [...args], timestamp: new Date().toISOString() });
+      originalConsoleWarn.apply(console, args);
+      saveToLocalStorage();
+    };
+    
+    console.info = function(...args) {
+      consoleLogs.push({ type: 'info', args: [...args], timestamp: new Date().toISOString() });
+      originalConsoleInfo.apply(console, args);
+      saveToLocalStorage();
+    };
+    
+    // Intercepter les requêtes fetch
+    const originalFetch = window.fetch;
+    window.fetch = async function(...args) {
+      const startTime = performance.now();
+      const request = args[0] instanceof Request ? args[0] : new Request(...args);
+      
+      try {
+        const response = await originalFetch.apply(window, args);
+        const endTime = performance.now();
+        const duration = endTime - startTime;
+        
+        networkRequests.push({
+          url: request.url,
+          method: request.method,
+          status: response.status,
+          duration: duration.toFixed(2) + 'ms',
+          timestamp: new Date().toISOString(),
+          type: 'fetch'
+        });
+        
+        saveToLocalStorage();
+        return response;
+      } catch (error) {
+        const endTime = performance.now();
+        const duration = endTime - startTime;
+        
+        networkRequests.push({
+          url: request.url,
+          method: request.method,
+          status: 'ERROR',
+          duration: duration.toFixed(2) + 'ms',
+          timestamp: new Date().toISOString(),
+          type: 'fetch',
+          error: error.message
+        });
+        
+        saveToLocalStorage();
+        throw error;
+      }
+    };
+    
+    // Intercepter les requêtes XMLHttpRequest
+    const originalXHROpen = XMLHttpRequest.prototype.open;
+    const originalXHRSend = XMLHttpRequest.prototype.send;
+    
+    XMLHttpRequest.prototype.open = function(method, url) {
+      this._method = method;
+      this._url = url;
+      this._startTime = performance.now();
+      return originalXHROpen.apply(this, arguments);
+    };
+    
+    XMLHttpRequest.prototype.send = function(body) {
+      const self = this;
+      const originalOnReadyStateChange = this.onreadystatechange;
+      
+      this.onreadystatechange = function() {
+        if (self.readyState === 4) {
+          const endTime = performance.now();
+          const duration = endTime - self._startTime;
+          
+          networkRequests.push({
+            url: self._url,
+            method: self._method,
+            status: self.status,
+            duration: duration.toFixed(2) + 'ms',
+            timestamp: new Date().toISOString(),
+            type: 'xhr'
+          });
+          
+          saveToLocalStorage();
+        }
+        
+        if (originalOnReadyStateChange) {
+          originalOnReadyStateChange.apply(self, arguments);
+        }
+      };
+      
+      return originalXHRSend.apply(this, arguments);
+    };
+    
+    // Fonction pour afficher les logs et requêtes
+    function displayDevTools() {
+      const devToolsContainer = document.getElementById('dev-tools-container');
+      if (!devToolsContainer) return;
+      
+      const html = `
+        <div class="dev-tools-panel">
+          <style>
+            .dev-tools-panel {
+              background: #1a1a1a;
+              color: #e0e0e0;
+              padding: 1rem;
+              border-top: 2px solid #ff5722;
+              font-family: monospace;
+              font-size: 14px;
+              line-height: 1.4;
+              min-height: 50vh;
+            }
+            
+            .dev-tools-tabs {
+              display: flex;
+              gap: 1rem;
+              margin-bottom: 1rem;
+              border-bottom: 1px solid #333;
+            }
+            
+            .dev-tools-tab {
+              padding: 0.5rem 1rem;
+              cursor: pointer;
+              border-bottom: 2px solid transparent;
+              color: #aaa;
+            }
+            
+            .dev-tools-tab.active {
+              border-bottom-color: #ff5722;
+              color: #fff;
+            }
+            
+            .dev-tools-tabs {
+              display: flex;
+              gap: 1rem;
+              margin-bottom: 1rem;
+              border-bottom: 1px solid #333;
+              align-items: center;
+            }
+            
+            #clear-devtools {
+              background: #ff5722;
+              border: none;
+              cursor: pointer;
+              padding: 0.25rem 0.75rem;
+              border-radius: 4px;
+              font-size: 12px;
+              margin-left: auto;
+            }
+            
+            #clear-devtools:hover {
+              background: #e64a19;
+            }
+            
+            .dev-tools-content {
+              display: none;
+            }
+            
+            .dev-tools-content.active {
+              display: block;
+            }
+            
+            .log-entry {
+              padding: 0.5rem;
+              border-bottom: 1px solid #333;
+            }
+            
+            .log-entry.log {
+              color: #e0e0e0;
+            }
+            
+            .log-entry.error {
+              color: #ff5722;
+            }
+            
+            .log-entry.warn {
+              color: #ffd700;
+            }
+            
+            .log-entry.info {
+              color: #00bcd4;
+            }
+            
+            .network-entry {
+              padding: 0.5rem;
+              border-bottom: 1px solid #333;
+              display: grid;
+              grid-template-columns: 100px 80px 60px 1fr 80px;
+              gap: 1rem;
+            }
+            
+            .network-entry-header {
+              font-weight: bold;
+              padding: 0.5rem;
+              border-bottom: 1px solid #333;
+              display: grid;
+              grid-template-columns: 100px 80px 60px 1fr 80px;
+              gap: 1rem;
+            }
+          </style>
+          
+          <div class="dev-tools-tabs">
+            <div class="dev-tools-tab active" data-tab="console">Console Logs</div>
+            <div class="dev-tools-tab" data-tab="network">Network</div>
+            <button id="clear-devtools" class="ml-auto bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm" title="Effacer tous les logs">
+              Clear All
+            </button>
+          </div>
+          
+          <div class="dev-tools-content active" id="console-content">
+            <div class="log-entries">
+              ${consoleLogs.map(log => `
+                <div class="log-entry ${log.type}">
+                  <span style="color: #666;">[${new Date(log.timestamp).toLocaleTimeString()}]</span>
+                  <span class="log-type">[${log.type.toUpperCase()}]</span>
+                  ${log.args.map(arg => {
+                    if (typeof arg === 'object') {
+                      return `<pre>${JSON.stringify(arg, null, 2)}</pre>`;
+                    }
+                    return arg;
+                  }).join(' ')}
+                </div>
+              `).join('')}
+            </div>
+          </div>
+          
+          <div class="dev-tools-content" id="network-content">
+            <div class="network-entry-header">
+              <div>Method</div>
+              <div>Status</div>
+              <div>Time</div>
+              <div>URL</div>
+              <div>Type</div>
+            </div>
+            <div class="network-entries">
+              ${networkRequests.map(request => `
+                <div class="network-entry">
+                  <div>${request.method}</div>
+                  <div style="color: ${request.status === 'ERROR' ? '#ff5722' : request.status >= 400 ? '#ffd700' : '#4caf50'}">${request.status}</div>
+                  <div>${request.duration}</div>
+                  <div style="word-break: break-all;">${request.url}</div>
+                  <div>${request.type.toUpperCase()}</div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+      
+      devToolsContainer.innerHTML = html;
+      
+      // Ajouter les événements pour les onglets
+      document.querySelectorAll('.dev-tools-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          document.querySelectorAll('.dev-tools-tab').forEach(t => t.classList.remove('active'));
+          document.querySelectorAll('.dev-tools-content').forEach(c => c.classList.remove('active'));
+          
+          tab.classList.add('active');
+          document.getElementById(`${tab.dataset.tab}-content`).classList.add('active');
+        });
+      });
+      
+      // Ajouter l'événement pour effacer les données
+      document.getElementById('clear-devtools').addEventListener('click', () => {
+        if (confirm('Êtes-vous sûr de vouloir effacer tous les logs et requêtes réseau ?')) {
+          consoleLogs = [];
+          networkRequests = [];
+          localStorage.removeItem('devToolsConsoleLogs');
+          localStorage.removeItem('devToolsNetworkRequests');
+          displayDevTools(); // Rafraîchir l'affichage
+        }
+      });
+    }
+    
+    // Attendre que le DOM soit chargé
+    document.addEventListener('DOMContentLoaded', displayDevTools);
+  }
+</script>
+
+<div id="dev-tools-container"></div>

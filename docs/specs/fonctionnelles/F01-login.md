@@ -3,143 +3,117 @@
 ## Contexte
 Permettre aux utilisateurs authentifiés d'accéder à l'application Marki14 avec gestion de session persistante et restauration automatique.
 
-## Acteurs
-- **Utilisateurs authentifiés** : Accès complet à l'application
-- **Administrateurs** : Gestion des utilisateurs et des sessions
-- **Visiteurs non connectés** : Redirection vers la page de login
+---
 
-## Fonctionnalités Clés
+## User Stories
 
-### 1. Formulaire de Connexion
-- Champs email et mot de passe obligatoires
-- Bouton de soumission avec état de chargement
-- Option "Se souvenir de moi" pour session persistante
-- Lien vers récupération de mot de passe (futur)
+### US1 : Formulaire de Connexion avec Validation
+**En tant qu'** utilisateur,
+**Je veux** pouvoir me connecter avec mon email et mot de passe,
+**Afin de** accéder à mon espace personnel sécurisé.
 
-### 2. Validation et Authentification
-- Validation des champs obligatoires
-- Appel à Parse.User.logIn()
-- Gestion des erreurs d'authentification
-- Messages d'erreur spécifiques par code Parse
+**Critères d'Acceptation** :
+- [ ] Champs email et mot de passe obligatoires avec validation
+- [ ] Bouton de soumission avec état de chargement
+- [ ] Option "Se souvenir de moi" pour session persistante
+- [ ] Messages d'erreur spécifiques pour credentials invalides
+- [ ] Temps de réponse < 2 secondes
+- [ ] Design responsive (mobile, tablet, desktop)
 
-### 3. Gestion de Session
-- Stockage du token dans localStorage (si "Se souvenir de moi")
-- Stockage du token dans sessionStorage (session temporaire)
-- Restauration automatique de session au chargement
-- Redirection vers la page demandée ou dashboard
+**Scénarios** :
+1. **Connexion réussie** :
+   - Étant donné que je suis sur la page /login
+   - Quand je saisis un email et mot de passe valides
+   - Et que je clique sur "Se connecter"
+   - Alors je suis redirigé vers /dashboard
+   - Et un token de session est stocké
 
-### 4. États et Feedback
-- État de chargement pendant l'authentification
-- Messages d'erreur clairs et spécifiques
-- Feedback visuel pour les champs invalides
-- Redirection automatique après connexion réussie
+2. **Connexion échouée (mot de passe incorrect)** :
+   - Étant donné que je suis sur la page /login
+   - Quand je saisis un email valide et mot de passe incorrect
+   - Et que je clique sur "Se connecter"
+   - Alors je vois le message "Email ou mot de passe incorrect"
+   - Et je peux réessayer
 
-## Critères d'Acceptation
+3. **Champs obligatoires non remplis** :
+   - Étant donné que je suis sur la page /login
+   - Quand je laisse les champs vides
+   - Et que je clique sur "Se connecter"
+   - Alors je vois des messages d'erreur "Champ obligatoire"
+   - Et le bouton reste actif
+
+**Lien vers l'implémentation** : [`docs/scenarios/F01/user-stories/US1/implementation.md`](US1/implementation.md)
+
+---
+
+### US2 : Gestion de Session et Restauration Automatique
+**En tant qu'** utilisateur,
+**Je veux** que ma session soit restaurée automatiquement,
+**Afin de** ne pas avoir à me reconnecter à chaque visite.
+
+**Critères d'Acceptation** :
+- [ ] Session persistante avec "Se souvenir de moi" (localStorage)
+- [ ] Session temporaire sans l'option (sessionStorage)
+- [ ] Restauration automatique de session valide
+- [ ] Détection et gestion des sessions expirées
+- [ ] Temps de restauration < 500ms
+- [ ] Redirection transparente vers la page demandée
+
+**Scénarios** :
+1. **Restauration de session automatique** :
+   - Étant donné que j'ai une session valide en localStorage
+   - Quand j'accède à n'importe quelle page de l'application
+   - Alors ma session est restaurée automatiquement
+   - Et je suis redirigé vers la page demandée
+
+2. **Session expirée** :
+   - Étant donné que j'ai un token de session expiré
+   - Quand j'accède à une page protégée
+   - Alors le token est supprimé
+   - Et je suis redirigé vers /login avec un message approprié
+
+3. **Session temporaire (sans "Se souvenir de moi")** :
+   - Étant donné que je me connecte sans cocher "Se souvenir de moi"
+   - Quand je ferme le navigateur
+   - Alors ma session n'est pas restaurée au prochain accès
+
+**Lien vers l'implémentation** : [`docs/scenarios/F01/user-stories/US2/implementation.md`](US2/implementation.md)
+
+---
+
+## Garde-fous Fonctionnels
 
 ### Performance
-- Temps de réponse < 2 secondes
-- Temps de chargement de page < 1 seconde
-- Restauration de session < 500ms
+- Limiter à 1 requête Parse max pour la restauration de session
+- Utiliser un cache local pour éviter les appels redondants à `Parse.User.current()`
+- Optimiser le temps de chargement initial
 
-### Fonctionnel
-- Connexion réussie avec credentials valides
-- Messages d'erreur appropriés pour credentials invalides
-- Session persistante fonctionnelle avec "Se souvenir de moi"
-- Déconnexion automatique après fermeture (session temporaire)
-- Restauration automatique de session valide
+### Données
+- Vérifier que la table `_User` existe avec les champs requis
+- S'assurer que les index nécessaires sont en place pour les requêtes d'authentification
 
 ### Sécurité
-- Token de session sécurisé
-- Pas de stockage de mot de passe en clair
-- Gestion sécurisée des erreurs d'authentification
+- Ne jamais stocker de mot de passe en clair
+- Utiliser des tokens de session sécurisés
+- Gestion sécurisée des erreurs (pas de fuite d'information)
+- Validation côté client ET serveur
+- Protection CSRF via Parse SDK
 
 ### UX/UI
 - Formulaire accessible (navigation clavier, labels)
-- Design responsive (mobile, tablet, desktop)
 - Feedback visuel clair pour toutes les actions
 - Messages d'erreur compréhensibles
+- Design cohérent avec le reste de l'application
 
 ### Robustesse
 - Gestion des erreurs réseau
 - Fallback en cas d'indisponibilité de Parse
-- Validation côté client et serveur
-
-## Cas d'Usage
-
-### Cas 1: Connexion réussie avec session persistante
-1. Utilisateur arrive sur /login
-2. Entre email et mot de passe valides
-3. Coche "Se souvenir de moi"
-4. Clique sur "Se connecter"
-5. Système valide les credentials via Parse
-6. Token stocké dans localStorage
-7. Redirection vers /dashboard
-8. Session restaurée automatiquement aux visites suivantes
-
-### Cas 2: Connexion échouée (mot de passe incorrect)
-1. Utilisateur arrive sur /login
-2. Entre email valide et mot de passe incorrect
-3. Clique sur "Se connecter"
-4. Système tente l'authentification via Parse
-5. Reçoit erreur code 101
-6. Affiche message "Email ou mot de passe incorrect"
-7. Utilisateur peut réessayer
-
-### Cas 3: Restauration de session automatique
-1. Utilisateur a une session valide en localStorage
-2. Accède à n'importe quelle page de l'application
-3. Système détecte le token de session
-4. Valide le token via Parse.User.become()
-5. Redirige vers la page demandée
-6. Pas de passage par l'écran de login
-
-### Cas 4: Session expirée
-1. Utilisateur a un token expiré
-2. Accède à une page protégée
-3. Système tente de restaurer la session
-4. Parse retourne une erreur d'authentification
-5. Token supprimé du storage
-6. Redirection vers /login avec message approprié
-
-## Exemples de Données
-
-### Requête de Connexion Réussie
-```json
-{
-  "email": "utilisateur@example.com",
-  "password": "motdepasse123",
-  "remember": true
-}
-```
-
-### Réponse Parse (Succès)
-```json
-{
-  "username": "utilisateur@example.com",
-  "objectId": "abc123def456",
-  "sessionToken": "r:abc123...",
-  "createdAt": "2024-01-15T10:30:00.000Z"
-}
-```
-
-### Stockage de Session
-```json
-{
-  "parseSessionToken": "r:abc123...",
-  "parseUserId": "abc123def456"
-}
-```
-
-### Erreur Parse (Code 101)
-```json
-{
-  "code": 101,
-  "error": "Invalid login credentials."
-}
-```
+- Validation des entrées utilisateur
+- Gestion des cas limites (email/mot de passe très longs)
 
 ## Priorité et Complexité
-- **Priorité**: Haute (fonctionnalité critique)
+- **Priorité**: Haute (fonctionnalité critique, blocage pour toutes les autres fonctionnalités)
 - **Complexité**: Moyenne
 - **Effort estimé**: 8-12 heures
-- **Dépendances**: Parse SDK, Alpine.js, Tailwind CSS
+- **Dépendances**: Parse SDK initialisé, structure de projet en place
+- **Risques**: Problèmes de compatibilité avec Parse SDK, gestion des sessions cross-domain

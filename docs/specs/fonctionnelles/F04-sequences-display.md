@@ -3,161 +3,120 @@
 ## Contexte
 Permettre aux utilisateurs de visualiser, créer, modifier et gérer les séquences de relance automatisées pour le recouvrement des impayés. Les séquences définissent les étapes et le timing des communications avec les débiteurs.
 
-## Acteurs
-- **Gestionnaires de recouvrement** : Création et gestion des séquences
-- **Responsables financiers** : Surveillance et optimisation des séquences
-- **Administrateurs** : Configuration avancée et maintenance
+---
 
-## Fonctionnalités Clés
+## User Stories
 
-### 1. Liste des Séquences
-- **Affichage en grille** : Vue responsive des séquences
-- **Cartes informatives** : Aperçu des propriétés clés
-- **Filtrage** : Par type, statut, date de création
-- **Tri** : Par nom, date, nombre d'actions
-- **Recherche** : Fonctionnalité de recherche globale
+### US1 : Liste et Visualisation des Séquences
+**En tant qu'** gestionnaire de recouvrement,
+**Je veux** voir une liste complète de toutes les séquences,
+**Afin de** surveiller et gérer efficacement les processus de relance.
 
-### 2. Détails des Séquences
-- **Informations de base** : Nom, description, type
-- **Statut** : Active/Inactive avec toggle
-- **Type** : Normale vs Automatique
-- **Actions** : Liste des étapes de la séquence
-- **Statistiques** : Nombre d'actions, dernière exécution
+**Critères d'Acceptation** :
+- [ ] Affichage en grille responsive des séquences
+- [ ] Cartes informatives avec aperçu des propriétés clés
+- [ ] Filtrage par type, statut, date de création
+- [ ] Tri par nom, date, nombre d'actions
+- [ ] Fonctionnalité de recherche globale
+- [ ] Chargement initial < 1 seconde
+- [ ] Interface intuitive et responsive
 
-### 3. Création de Séquences
-- **Formulaire de création** : Nom, description, type
-- **Validation** : Champs obligatoires et format
-- **Types de séquences** : Normale ou automatique
-- **État initial** : Active par défaut
-- **Feedback** : Confirmation de création
+**Scénarios** :
+1. **Visualisation de la liste** :
+   - Étant donné que je suis sur la page des séquences
+   - Quand je regarde la liste
+   - Alors je vois toutes les séquences sous forme de grille
+   - Et chaque carte affiche le nom, statut et nombre d'actions
 
-### 4. Gestion des Séquences
-- **Modification** : Édition des propriétés
-- **Activation/Désactivation** : Toggle de statut
-- **Duplication** : Création de copies
-- **Suppression** : Avec confirmation
-- **Export** : Format JSON/CSV (futur)
+2. **Filtrage des séquences** :
+   - Étant donné que j'ai plusieurs séquences
+   - Quand je sélectionne "Type: Automatique"
+   - Alors seules les séquences automatiques sont affichées
+   - Et le compteur de résultats est mis à jour
 
-### 5. Actions des Séquences
-- **Visualisation** : Liste des étapes
-- **Création** : Ajout de nouvelles actions
-- **Modification** : Édition des actions existantes
-- **Réorganisation** : Changement d'ordre
-- **Suppression** : Retrait d'actions
+3. **Recherche globale** :
+   - Étant donné que je cherche une séquence spécifique
+   - Quand je saisis "Relance Standard" dans la recherche
+   - Alors seules les séquences correspondant sont affichées
 
-## Critères d'Acceptation
+**Lien vers l'implémentation** : [`docs/scenarios/F04/user-stories/US1/implementation.md`](US1/implementation.md)
 
-### Fonctionnel
-- Affichage correct de toutes les séquences
-- Création réussie avec validation
-- Modification et suppression fonctionnelles
-- Filtrage et tri opérationnels
-- Persistence des données
+---
+
+### US2 : Création et Gestion des Séquences
+**En tant qu'** gestionnaire de recouvrement,
+**Je veux** créer et gérer des séquences de relance,
+**Afin de** personnaliser les processus de recouvrement.
+
+**Critères d'Acceptation** :
+- [ ] Formulaire de création avec validation
+- [ ] Création réussie avec confirmation
+- [ ] Modification des propriétés existantes
+- [ ] Activation/Désactivation via toggle
+- [ ] Suppression avec confirmation
+- [ ] Création/modification < 500ms
+- [ ] Feedback visuel pour toutes les actions
+
+**Scénarios** :
+1. **Création d'une nouvelle séquence** :
+   - Étant donné que je suis sur la page des séquences
+   - Quand je clique sur "Créer une séquence"
+   - Alors un formulaire s'affiche
+   - Quand je remplis les champs et clique sur "Créer"
+   - Alors la séquence est créée et j'ai une confirmation
+
+2. **Modification d'une séquence** :
+   - Étant donné que je suis sur les détails d'une séquence
+   - Quand je clique sur "Modifier"
+   - Alors je peux modifier les champs
+   - Quand je sauvegarde
+   - Alors les changements sont appliqués
+
+3. **Suppression d'une séquence** :
+   - Étant donné que je suis sur une séquence
+   - Quand je clique sur "Supprimer"
+   - Alors une confirmation est demandée
+   - Quand je confirme
+   - Alors la séquence est supprimée
+
+**Lien vers l'implémentation** : [`docs/scenarios/F04/user-stories/US2/implementation.md`](US2/implementation.md)
+
+---
+
+## Garde-fous Fonctionnels
 
 ### Performance
-- Chargement initial < 1 seconde
-- Création/modification < 500ms
-- Affichage des détails < 300ms
-- Pas de blocage de l'UI
+- Chargement différé des détails des séquences
+- Cache des données fréquemment utilisées
+- Optimisation des requêtes Parse
+- Minimisation des reflows pendant les mises à jour
 
-### UX/UI
-- Interface intuitive et responsive
-- Feedback visuel pour toutes les actions
-- Messages d'erreur clairs
-- Design cohérent avec l'application
-- Accessibilité complète
+### Données
+- Validation des structures de données
+- Nettoyage des données obsolètes
+- Synchronisation entre client et serveur
 
 ### Sécurité
-- Validation côté client et serveur
-- Protection contre les injections
+- Validation côté client ET serveur
+- Protection contre les injections (XSS, SQL)
 - Gestion sécurisée des erreurs
-- Audit des actions sensibles
+- Audit des actions sensibles (suppression)
+
+### UX/UI
+- Messages d'erreur clairs et spécifiques
+- Confirmations pour les actions destructives
+- Feedback visuel pour toutes les interactions
+- Design cohérent avec l'application
 
 ### Robustesse
-- Gestion des erreurs réseau
+- Gestion des erreurs réseau avec retry
 - Fallback pour les données manquantes
-- Validation des entrées
-- Résistant aux manipulations
-
-## Cas d'Usage
-
-### Cas 1: Création d'une nouvelle séquence
-1. Utilisateur clique sur "Créer une séquence"
-2. Remplit le formulaire (nom, description)
-3. Sélectionne le type (normale/automatique)
-4. Clique sur "Créer"
-5. Système valide et sauvegarde
-6. Redirection vers la liste
-7. Nouvelle séquence apparaît dans la liste
-
-### Cas 2: Visualisation des détails
-1. Utilisateur clique sur une séquence
-2. Page de détails s'affiche
-3. Informations de base affichées
-4. Liste des actions visible
-5. Statistiques disponibles
-
-### Cas 3: Modification d'une séquence
-1. Utilisateur ouvre les détails
-2. Clique sur "Modifier"
-3. Modifie les champs nécessaires
-4. Sauvegarde les changements
-5. Confirmation affichée
-
-### Cas 4: Suppression d'une séquence
-1. Utilisateur sélectionne une séquence
-2. Clique sur "Supprimer"
-3. Confirmation demandée
-4. Suppression effectuée
-5. Liste mise à jour
-
-## Exemples de Données
-
-### Structure d'une Séquence
-```json
-{
-  "objectId": "seq123",
-  "nom": "Relance Standard",
-  "description": "Séquence de relance pour les clients particuliers",
-  "isActif": true,
-  "isAuto": false,
-  "actions": [
-    {
-      "type": "email",
-      "delay": 0,
-      "subject": "Rappel - Facture [[nfacture]] impayée",
-      "message": "Bonjour [[payeur_nom]],...",
-      "senderEmail": "comptable@example.com"
-    },
-    {
-      "type": "email",
-      "delay": 7,
-      "subject": "Second rappel - Facture [[nfacture]]",
-      "message": "Bonjour [[payeur_nom]],...",
-      "senderEmail": "comptable@example.com"
-    }
-  ],
-  "createdAt": "2024-02-20T10:00:00Z",
-  "updatedAt": "2024-02-20T14:30:00Z",
-  "lastRun": null
-}
-```
-
-### Action de Séquence
-```json
-{
-  "type": "email",
-  "delay": 5,
-  "subject": "Rappel urgent - Facture [[nfacture]]",
-  "senderEmail": "comptable@example.com",
-  "cc": "responsable@example.com",
-  "message": "Bonjour [[payeur_nom]],\n\nVotre facture...",
-  "isMultipleImpayes": false
-}
-```
+- Validation des entrées utilisateur
+- Résistance aux manipulations DOM
 
 ## Priorité et Complexité
-- **Priorité**: Haute (fonctionnalité core)
+- **Priorité**: Haute (fonctionnalité core pour le recouvrement)
 - **Complexité**: Moyenne à Élevée
 - **Effort estimé**: 20-24 heures
 - **Dépendances**: Parse SDK, Alpine.js, Tailwind CSS
+- **Risques**: Complexité de la gestion des actions, synchronisation des données

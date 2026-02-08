@@ -1,0 +1,754 @@
+[  {
+    "className": "_User",
+    "fields": {
+      "objectId": {
+        "type": "String"
+      },
+      "createdAt": {
+        "type": "Date"
+      },
+      "updatedAt": {
+        "type": "Date"
+      },
+      "ACL": {
+        "type": "ACL"
+      },
+      "username": {
+        "type": "String"
+      },
+      "password": {
+        "type": "String"
+      },
+      "email": {
+        "type": "String"
+      },
+      "emailVerified": {
+        "type": "Boolean"
+      },
+      "authData": {
+        "type": "Object"
+      }
+    },
+    "classLevelPermissions": {
+      "ACL": {
+        "*": {
+          "read": true,
+          "write": true
+        }
+      },
+      "find": {
+        "*": true
+      },
+      "count": {
+        "*": true
+      },
+      "get": {
+        "*": true
+      },
+      "create": {
+        "*": true
+      },
+      "update": {
+        "*": true
+      },
+      "delete": {
+        "*": true
+      },
+      "addField": {
+        "*": true
+      },
+      "protectedFields": {
+        "*": []
+      }
+    },
+    "indexes": {
+      "_id_": {
+        "_id": 1
+      },
+      "username_1": {
+        "username": 1
+      },
+      "case_insensitive_username": {
+        "username": 1
+      },
+      "case_insensitive_email": {
+        "email": 1
+      },
+      "email_1": {
+        "email": 1
+      },
+      "_email_verify_token": {
+        "_email_verify_token": 1
+      },
+      "_perishable_token": {
+        "_perishable_token": 1
+      }
+    }
+  },
+  {
+    "className": "_Role",
+    "fields": {
+      "objectId": {
+        "type": "String"
+      },
+      "createdAt": {
+        "type": "Date"
+      },
+      "updatedAt": {
+        "type": "Date"
+      },
+      "ACL": {
+        "type": "ACL"
+      },
+      "name": {
+        "type": "String"
+      },
+      "users": {
+        "type": "Relation",
+        "targetClass": "_User"
+      },
+      "roles": {
+        "type": "Relation",
+        "targetClass": "_Role"
+      }
+    },
+    "classLevelPermissions": {
+      "ACL": {
+        "*": {
+          "read": true,
+          "write": true
+        }
+      },
+      "find": {
+        "*": true
+      },
+      "count": {
+        "*": true
+      },
+      "get": {
+        "*": true
+      },
+      "create": {
+        "*": true
+      },
+      "update": {
+        "*": true
+      },
+      "delete": {
+        "*": true
+      },
+      "addField": {
+        "*": true
+      },
+      "protectedFields": {
+        "*": []
+      }
+    },
+    "indexes": {
+      "_id_": {
+        "_id": 1
+      },
+      "name_1": {
+        "name": 1
+      }
+    }
+  },
+  {
+    "className": "_Session",
+    "fields": {
+      "objectId": {
+        "type": "String"
+      },
+      "createdAt": {
+        "type": "Date"
+      },
+      "updatedAt": {
+        "type": "Date"
+      },
+      "ACL": {
+        "type": "ACL"
+      },
+      "user": {
+        "type": "Pointer",
+        "targetClass": "_User"
+      },
+      "installationId": {
+        "type": "String"
+      },
+      "sessionToken": {
+        "type": "String"
+      },
+      "expiresAt": {
+        "type": "Date"
+      },
+      "createdWith": {
+        "type": "Object"
+      }
+    },
+    "classLevelPermissions": {
+      "ACL": {
+        "*": {
+          "read": true,
+          "write": true
+        }
+      },
+      "find": {
+        "*": true
+      },
+      "count": {
+        "*": true
+      },
+      "get": {
+        "*": true
+      },
+      "create": {
+        "*": true
+      },
+      "update": {
+        "*": true
+      },
+      "delete": {
+        "*": true
+      },
+      "addField": {
+        "*": true
+      },
+      "protectedFields": {
+        "*": []
+      }
+    },
+    "indexes": {
+      "_id_": {
+        "_id": 1
+      }
+    }
+  },
+  {
+    "className": "Impayes",
+    "fields": {
+      "objectId": {
+        "type": "String"
+      },
+      "createdAt": {
+        "type": "Date"
+      },
+      "updatedAt": {
+        "type": "Date"
+      },
+      "ACL": {
+        "type": "ACL"
+      },
+      "datepiece": {
+        "type": "Date"
+      },
+      "dateDebutMission": {
+        "type": "Date"
+      },
+      "totalttcnet": {
+        "type": "Number"
+      },
+      "resteapayer": {
+        "type": "Number"
+      },
+      "facturesoldee": {
+        "type": "Boolean"
+      },
+      "commentaire_piece": {
+        "type": "String"
+      },
+      "refpiece": {
+        "type": "String"
+      },
+      "idDossier": {
+        "type": "Number"
+      },
+      "nfacture": {
+        "type": "Number"
+      },
+      "statut_intitule": {
+        "type": "String"
+      },
+      "contactPlace": {
+        "type": "String"
+      },
+      "reference": {
+        "type": "String"
+      },
+      "numero": {
+        "type": "Number"
+      },
+      "totalhtnet": {
+        "type": "Number"
+      },
+      "commentaire_dossier": {
+        "type": "String"
+      },
+      "adresse": {
+        "type": "String"
+      },
+      "cptAdresse": {
+        "type": "String"
+      },
+      "codePostal": {
+        "type": "String"
+      },
+      "ville": {
+        "type": "String"
+      },
+      "numeroLot": {
+        "type": "String"
+      },
+      "etage": {
+        "type": "String"
+      },
+      "escalier": {
+        "type": "String"
+      },
+      "porte": {
+        "type": "String"
+      },
+      "numVoie": {
+        "type": "String"
+      },
+      "cptNumVoie": {
+        "type": "String"
+      },
+      "typeVoie": {
+        "type": "String"
+      },
+      "employe_intervention": {
+        "type": "String"
+      },
+      "payeur_nom": {
+        "type": "String"
+      },
+      "idStatut": {
+        "type": "Number"
+      },
+      "datecre": {
+        "type": "Date"
+      },
+      "payeur_contact_email": {
+        "type": "String"
+      },
+      "proprietaire_nom": {
+        "type": "String"
+      },
+      "proprietaire_typePersonne": {
+        "type": "String"
+      },
+      "payeur_type": {
+        "type": "String"
+      },
+      "invoice_url": {
+        "type": "String"
+      },
+      "idEmployeIntervention": {
+        "type": "Number"
+      },
+      "payeur_typePersonne": {
+        "type": "String"
+      },
+      "entree": {
+        "type": "String"
+      },
+      "payeur_contact_nom": {
+        "type": "String"
+      },
+      "apporteur_affaire_nom": {
+        "type": "String"
+      },
+      "apporteur_affaire_email": {
+        "type": "String"
+      },
+      "apporteur_affaire_contact_email": {
+        "type": "String"
+      },
+      "apporteur_affaire_typePersonne": {
+        "type": "String"
+      },
+      "payeur_email": {
+        "type": "String"
+      },
+      "apporteur_affaire_contact_nom": {
+        "type": "String"
+      },
+      "donneur_ordre_email": {
+        "type": "String"
+      },
+      "proprietaire_email": {
+        "type": "String"
+      },
+      "donneur_ordre_nom": {
+        "type": "String"
+      },
+      "proprietaire_contact_nom": {
+        "type": "String"
+      },
+      "proprietaire_contact_email": {
+        "type": "String"
+      },
+      "proprietaire_telephone": {
+        "type": "String"
+      },
+      "donneur_ordre_telephone": {
+        "type": "String"
+      },
+      "syndic_email": {
+        "type": "String"
+      },
+      "apporteur_affaire_telephone": {
+        "type": "String"
+      },
+      "referenceExterne": {
+        "type": "String"
+      },
+      "notaire_email": {
+        "type": "String"
+      },
+      "notaire_nom": {
+        "type": "String"
+      },
+      "payeur_telephone": {
+        "type": "String"
+      },
+      "locataire_entrant_nom": {
+        "type": "String"
+      },
+      "locataire_entrant_email": {
+        "type": "String"
+      },
+      "locataire_entrant_telephone": {
+        "type": "String"
+      },
+      "locataire_sortant_email": {
+        "type": "String"
+      },
+      "locataire_sortant_nom": {
+        "type": "String"
+      },
+      "locataire_sortant_telephone": {
+        "type": "String"
+      },
+      "acquerur_email": {
+        "type": "String"
+      },
+      "sequence": {
+        "type": "Pointer",
+        "targetClass": "Sequence"
+      },
+      "sequenceName": {
+        "type": "String"
+      },
+      "sequenceIsAutomatic": {
+        "type": "Boolean"
+      }
+    },
+    "classLevelPermissions": {
+      "ACL": {
+        "*": {
+          "read": true,
+          "write": true
+        }
+      },
+      "find": {
+        "*": true
+      },
+      "count": {
+        "*": true
+      },
+      "get": {
+        "*": true
+      },
+      "create": {
+        "*": true
+      },
+      "update": {
+        "*": true
+      },
+      "delete": {
+        "*": true
+      },
+      "addField": {
+        "*": true
+      },
+      "protectedFields": {
+        "*": []
+      }
+    },
+    "indexes": {
+      "_id_": {
+        "_id": 1
+      }
+    }
+  },
+  {
+    "className": "Sequences",
+    "fields": {
+      "objectId": {
+        "type": "String"
+      },
+      "createdAt": {
+        "type": "Date"
+      },
+      "updatedAt": {
+        "type": "Date"
+      },
+      "ACL": {
+        "type": "ACL"
+      },
+      "actions": {
+        "type": "Array"
+      },
+      "isActif": {
+        "type": "Boolean"
+      },
+      "nom": {
+        "type": "String"
+      },
+      "isAuto": {
+        "type": "Boolean"
+      },
+      "description": {
+        "type": "String"
+      },
+      "isArchived": {
+        "type": "Boolean",
+        "required": false,
+        "defaultValue": false
+      }
+    },
+    "classLevelPermissions": {
+      "ACL": {
+        "*": {
+          "read": true,
+          "write": true
+        }
+      },
+      "find": {
+        "*": true
+      },
+      "count": {
+        "*": true
+      },
+      "get": {
+        "*": true
+      },
+      "create": {
+        "*": true
+      },
+      "update": {
+        "*": true
+      },
+      "delete": {
+        "*": true
+      },
+      "addField": {
+        "*": true
+      },
+      "protectedFields": {
+        "*": []
+      }
+    },
+    "indexes": {
+      "_id_": {
+        "_id": 1
+      }
+    }
+  },
+  {
+    "className": "SMTPProfile",
+    "fields": {
+      "objectId": {
+        "type": "String"
+      },
+      "createdAt": {
+        "type": "Date"
+      },
+      "updatedAt": {
+        "type": "Date"
+      },
+      "ACL": {
+        "type": "ACL"
+      },
+      "host": {
+        "type": "String"
+      },
+      "port": {
+        "type": "String"
+      },
+      "password": {
+        "type": "String"
+      },
+      "username": {
+        "type": "String"
+      },
+      "useTLS": {
+        "type": "Boolean"
+      },
+      "isActive": {
+        "type": "Boolean"
+      },
+      "isArchived": {
+        "type": "Boolean"
+      },
+      "email": {
+        "type": "String"
+      },
+      "fromName": {
+        "type": "String"
+      },
+      "useSSL": {
+        "type": "Boolean"
+      },
+      "name": {
+        "type": "String"
+      },
+      "htmlSignature": {
+        "type": "String"
+      }
+    },
+    "classLevelPermissions": {
+      "ACL": {
+        "*": {
+          "read": true,
+          "write": true
+        }
+      },
+      "find": {
+        "*": true
+      },
+      "count": {
+        "*": true
+      },
+      "get": {
+        "*": true
+      },
+      "create": {
+        "*": true
+      },
+      "update": {
+        "*": true
+      },
+      "delete": {
+        "*": true
+      },
+      "addField": {
+        "*": true
+      },
+      "protectedFields": {
+        "*": []
+      }
+    },
+    "indexes": {
+      "_id_": {
+        "_id": 1
+      }
+    }
+  },
+  {
+    "className": "Relances",
+    "fields": {
+      "objectId": {
+        "type": "String"
+      },
+      "createdAt": {
+        "type": "Date"
+      },
+      "updatedAt": {
+        "type": "Date"
+      },
+      "ACL": {
+        "type": "ACL"
+      },
+      "send_date": {
+        "type": "Date"
+      },
+      "email_sender": {
+        "type": "String"
+      },
+      "email_subject": {
+        "type": "String"
+      },
+      "email_body": {
+        "type": "String"
+      },
+      "email_to": {
+        "type": "String"
+      },
+      "email_cc": {
+        "type": "String"
+      },
+      "is_sent": {
+        "type": "Boolean"
+      },
+      "impaye": {
+        "type": "Pointer",
+        "targetClass": "Impayes"
+      },
+      "sequence": {
+        "type": "Pointer",
+        "targetClass": "Sequences"
+      },
+      "date": {
+        "type": "Date"
+      },
+      "type": {
+        "type": "String"
+      },
+      "message": {
+        "type": "String"
+      },
+      "isSent": {
+        "type": "Boolean"
+      },
+      "action_type": {
+        "type": "String"
+      },
+      "action_index": {
+        "type": "Number"
+      },
+      "smtpProfile": {
+        "type": "Pointer",
+        "targetClass": "SMTPProfile"
+      }
+    },
+    "classLevelPermissions": {
+      "ACL": {
+        "*": {
+          "read": true,
+          "write": true
+        }
+      },
+      "find": {
+        "*": true
+      },
+      "count": {
+        "*": true
+      },
+      "get": {
+        "*": true
+      },
+      "create": {
+        "*": true
+      },
+      "update": {
+        "*": true
+      },
+      "delete": {
+        "*": true
+      },
+      "addField": {
+        "*": true
+      },
+      "protectedFields": {
+        "*": []
+      }
+    },
+    "indexes": {
+      "_id_": {
+        "_id": 1
+      }
+    }
+  }
+]

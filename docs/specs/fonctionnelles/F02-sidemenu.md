@@ -3,167 +3,155 @@
 ## Contexte
 Fournir une navigation intuitive et responsive pour accéder aux différentes sections de l'application Marki14, avec une expérience optimisée pour desktop et mobile.
 
-## Acteurs
-- **Utilisateurs authentifiés** : Accès complet à toutes les sections
-- **Utilisateurs mobiles** : Navigation optimisée pour petits écrans
-- **Administrateurs** : Accès aux sections de configuration
+---
 
-## Fonctionnalités Clés
+## User Stories
 
-### 1. Navigation Desktop
-- **Double Sidebar Layout** : Icônes seulement + menu complet
-- **Menu hiérarchique** : Sections expansibles/collapsibles
-- **État persistant** : Mémorisation de l'état ouvert/fermé
-- **Indicateurs visuels** : Badges et états pour les sections
+### US1 : Navigation Desktop avec Double Sidebar
+**En tant qu'** utilisateur sur desktop,
+**Je veux** un menu latéral avec icônes et sous-menus expansibles,
+**Afin de** naviguer efficacement entre les différentes sections de l'application.
 
-### 2. Navigation Mobile
-- **Dock rétractable** : Menu accessible en bas d'écran
-- **Icônes avec labels** : Navigation claire sur mobile
-- **Gestion tactile** : Optimisé pour les écrans tactiles
-- **Animations fluides** : Transitions douces
+**Critères d'Acceptation** :
+- [ ] Double sidebar layout : icônes seulement + menu complet
+- [ ] Menu hiérarchique avec sections expansibles/collapsibles
+- [ ] État persistant du menu entre les recharges
+- [ ] Indicateurs visuels pour la section active
+- [ ] Temps de rendu < 300ms
+- [ ] Pas de reflow layout pendant les animations
+- [ ] Navigation fluide entre toutes les sections
 
-### 3. Sections de Navigation
-- **Dashboard** : Vue d'ensemble
-- **Impayés** : Sous-menu avec plusieurs vues
-  - Vue Factures
-  - Groupé par payeur
-  - Vue Séquence
-  - Vue par Acteur
-  - À réparer
-- **Séquences** : Gestion des séquences de relance
-- **Relances** : Suivi des follow-ups
-- **Paramètres** : Configuration globale
+**Scénarios** :
+1. **Navigation standard** :
+   - Étant donné que je suis sur le dashboard
+   - Quand je clique sur "Impayés" dans le menu latéral
+   - Alors le sous-menu "Impayés" s'expande
+   - Et j'ai accès aux options "Vue Factures", "Groupé par payeur", etc.
 
-### 4. Gestion d'État
-- **Persistence locale** : Stockage dans localStorage
-- **Synchronisation** : État cohérent entre onglets
-- **Performance** : Chargement rapide même avec beaucoup d'items
+2. **Persistence de l'état** :
+   - Étant donné que j'ai ouvert le menu "Impayés"
+   - Quand je recharge la page
+   - Alors le menu "Impayés" reste ouvert
+   - Et l'état est restauré depuis localStorage
 
-### 5. Accessibilité
-- **Navigation clavier** : Complète
-- **ARIA attributes** : Pour les lecteurs d'écran
-- **Contraste** : Respect des standards WCAG
-- **Focus visible** : Pour tous les éléments interactifs
+3. **Navigation entre sections** :
+   - Étant donné que je suis dans "Impayés > Groupé par payeur"
+   - Quand je clique sur "Séquences"
+   - Alors le menu "Séquences" devient actif
+   - Et le contenu principal se met à jour
 
-## Critères d'Acceptation
+**Lien vers l'implémentation** : [`docs/scenarios/F02/user-stories/US1/implementation.md`](US1/implementation.md)
 
-### Fonctionnel
-- Navigation fluide entre toutes les sections
-- État persistant entre les recharges
-- Menu mobile fonctionnel et ergonomique
-- Sous-menus expansibles pour les sections
-- Indicateurs visuels pour les sections actives
+---
+
+### US2 : Navigation Mobile avec Dock Rétractable
+**En tant qu'** utilisateur sur mobile,
+**Je veux** un dock rétractable en bas d'écran,
+**Afin de** naviguer facilement sur un petit écran tactile.
+
+**Critères d'Acceptation** :
+- [ ] Dock rétractable accessible en bas d'écran
+- [ ] Icônes avec labels pour une navigation claire
+- [ ] Gestion tactile optimisée
+- [ ] Animations fluides à 60 FPS
+- [ ] Dock se rétracte automatiquement après sélection
+- [ ] Temps de rendu < 300ms sur mobile
+
+**Scénarios** :
+1. **Navigation mobile basique** :
+   - Étant donné que je suis sur mobile avec le dock rétracté
+   - Quand je clique sur l'icône menu
+   - Alors le dock s'expande avec les options
+   - Et j'ai accès à toutes les sections principales
+
+2. **Sélection et rétraction automatique** :
+   - Étant donné que le dock est expanded
+   - Quand je sélectionne "Séquences"
+   - Alors le dock se rétracte automatiquement
+   - Et la page des séquences s'affiche
+
+3. **Navigation tactile** :
+   - Étant donné que je suis sur un écran tactile
+   - Quand je fais un swipe sur le dock
+   - Alors je peux naviguer entre les icônes
+   - Et la navigation est fluide et responsive
+
+**Lien vers l'implémentation** : [`docs/scenarios/F02/user-stories/US2/implementation.md`](US2/implementation.md)
+
+---
+
+### US3 : Gestion d'État et Persistence
+**En tant qu'** utilisateur,
+**Je veux** que l'état de navigation soit persistant,
+**Afin de** retrouver mon contexte de travail après un rechargement.
+
+**Critères d'Acceptation** :
+- [ ] Persistence locale dans localStorage
+- [ ] Synchronisation de l'état entre onglets
+- [ ] Restauration rapide même avec beaucoup d'items
+- [ ] Gestion des conflits d'état
+- [ ] Nettoyage automatique des états corrompus
+
+**Scénarios** :
+1. **Persistence entre recharges** :
+   - Étant donné que j'ai ouvert plusieurs sous-menus
+   - Quand je recharge la page
+   - Alors tous les menus ouverts restent ouverts
+   - Et la section active est restaurée
+
+2. **Synchronisation entre onglets** :
+   - Étant donné que j'ai deux onglets ouverts
+   - Quand je change de section dans un onglet
+   - Alors l'autre onglet reflète le changement
+   - Et l'état est cohérent
+
+3. **Gestion des états corrompus** :
+   - Étant donné que localStorage contient des données corrompues
+   - Quand je charge l'application
+   - Alors les données corrompues sont nettoyées
+   - Et un état par défaut est restauré
+
+**Lien vers l'implémentation** : [`docs/scenarios/F02/user-stories/US3/implementation.md`](US3/implementation.md)
+
+---
+
+## Garde-fous Fonctionnels
 
 ### Performance
-- Temps de rendu < 300ms
-- Pas de reflow layout pendant les animations
 - Chargement différé des sous-menus
-- Optimisé pour 60 FPS sur mobile
+- Optimisation pour 60 FPS sur mobile
+- Minimisation des reflows et repaints
+- Cache des états de menu
 
-### UX/UI
-- Design cohérent avec la charte graphique
-- Animations fluides et naturelles
-- Feedback visuel pour toutes les interactions
-- Adapté à toutes les tailles d'écran
-- Navigation intuitive et discoverable
+### Données
+- Structure cohérente pour les items de menu
+- Validation des données avant stockage
+- Nettoyage périodique des données obsolètes
 
 ### Accessibilité
-- Navigation clavier complète
-- Tous les éléments ont des labels
-- Contraste suffisant pour tous les textes
-- Compatible avec les lecteurs d'écran
+- Navigation clavier complète (Tab, Entrée, Échap)
+- Attributs ARIA pour tous les éléments interactifs
+- Contraste suffisant (WCAG 2.1 niveau AA)
+- Labels clairs pour les lecteurs d'écran
 - Pas de pièges au clavier
 
+### UX/UI
+- Animations naturelles et fluides
+- Feedback visuel pour toutes les interactions
+- Design responsive adapté à toutes les tailles
+- Cohérence avec la charte graphique
+- États visuels clairs (hover, active, focus)
+
 ### Robustesse
-- Gestion des erreurs de rendu
-- Fallback pour les navigateurs anciens
 - Dégradation gracieuse si JavaScript désactivé
-- Résistant aux manipulations DOM
-
-## Cas d'Usage
-
-### Cas 1: Navigation desktop standard
-1. Utilisateur arrive sur l'application
-2. Menu latéral s'affiche avec icônes
-3. Utilisateur clique sur "Impayés"
-4. Sous-menu s'expande avec les options
-5. Utilisateur sélectionne "Groupé par payeur"
-6. Contenu principal se met à jour
-
-### Cas 2: Navigation mobile avec dock
-1. Utilisateur arrive sur mobile
-2. Dock rétracté en bas d'écran
-3. Utilisateur clique sur l'icône menu
-4. Dock s'expande avec les options
-5. Utilisateur sélectionne "Séquences"
-6. Dock se rétracte automatiquement
-7. Page des séquences s'affiche
-
-### Cas 3: Persistence de l'état
-1. Utilisateur ouvre le menu "Impayés"
-2. Ferme l'onglet ou recharge la page
-3. Retourne sur l'application
-4. Menu "Impayés" reste ouvert
-5. État restauré depuis localStorage
-
-### Cas 4: Navigation clavier
-1. Utilisateur appuie sur Tab
-2. Focus se déplace entre les éléments
-3. Appuie sur Entrée pour sélectionner
-4. Appuie sur Échap pour fermer les sous-menus
-5. Navigation complète sans souris
-
-## Exemples de Données
-
-### État du Menu (localStorage)
-```json
-{
-  "isImpayesOpen": true,
-  "isSettingsOpen": false,
-  "activeSection": "impayes",
-  "activeSubSection": "by-payer"
-}
-```
-
-### Structure des Items de Menu
-```json
-{
-  "items": [
-    {
-      "id": "dashboard",
-      "label": "Dashboard",
-      "icon": "LayoutDashboard",
-      "route": "/dashboard",
-      "isActive": false
-    },
-    {
-      "id": "impayes",
-      "label": "Impayés",
-      "icon": "BanknoteX",
-      "route": "/impayes",
-      "isActive": true,
-      "isOpen": true,
-      "subItems": [
-        {
-          "id": "list",
-          "label": "Vue Factures",
-          "route": "/impayes/list",
-          "isActive": false
-        },
-        {
-          "id": "by-payer",
-          "label": "Groupé par payeur",
-          "route": "/impayes/",
-          "isActive": true
-        }
-      ]
-    }
-  ]
-}
-```
+- Fallback pour les navigateurs anciens
+- Gestion des erreurs de rendu
+- Résistance aux manipulations DOM
+- Tests cross-browser
 
 ## Priorité et Complexité
-- **Priorité**: Haute (navigation critique)
-- **Complexité**: Moyenne
+- **Priorité**: Haute (navigation critique pour l'expérience utilisateur)
+- **Complexité**: Moyenne à Élevée
 - **Effort estimé**: 12-16 heures
 - **Dépendances**: Alpine.js, Tailwind CSS, Lucide Icons
+- **Risques**: Complexité de la gestion d'état, performance sur mobile, accessibilité
