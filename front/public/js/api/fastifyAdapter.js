@@ -21,6 +21,7 @@ async function fastifyCloudRun(functionName, params = {}) {
       'initCollections': { method: 'POST', endpoint: '/initCollections', body: params },
       'syncImpayes': { method: 'POST', endpoint: '/sync-impayes', body: params },
       'generateEmailWithOllama': { method: 'POST', endpoint: '/generate-email', body: params },
+      'generateFullSequenceWithAI': { method: 'POST', endpoint: '/generate-full-sequence', body: params },
       'generateSingleEmailWithAI': { method: 'POST', endpoint: '/generate-single-email', body: params },
       'populateRelanceSequence': { method: 'POST', endpoint: '/populate-relance-sequence', body: params },
       'cleanupRelancesOnDeactivate': { method: 'POST', endpoint: '/cleanup-relances', body: params },
@@ -47,7 +48,8 @@ async function fastifyCloudRun(functionName, params = {}) {
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
-      }
+      },
+      credentials: 'include'
     };
 
     // Ajouter le body si nécessaire
@@ -101,4 +103,4 @@ window.Parse.Cloud.run = ParseCloudRun;
 // Exporter aussi la fonction directement
 export { fastifyCloudRun, ParseCloudRun };
 
-default fastifyCloudRun;
+export default fastifyCloudRun;

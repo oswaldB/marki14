@@ -5,10 +5,12 @@ import { generateEmailWithOllama } from '../ollama.js'
 import { query } from '../db.js'
 
 export default async function (fastify) {
-  
+
   // POST /api/generate-single-email - Génère un seul email avec IA
   fastify.post('/api/generate-single-email', async (request, reply) => {
     try {
+      // Log the request for debugging
+      fastify.log.info(`Received request to generate single email from origin: ${request.headers.origin || 'unknown'}`)
       const { 
         sequenceId, 
         target, 
@@ -69,6 +71,10 @@ export default async function (fastify) {
       
       await query(updateQuery, [JSON.stringify(currentActions), sequenceId])
       
+      // Set CORS headers explicitly for this response
+      reply.header('Access-Control-Allow-Origin', 'https://dev.markidiags.com')
+      reply.header('Access-Control-Allow-Credentials', 'true')
+      
       return {
         success: true,
         message: 'Email généré avec succès et ajouté à la séquence',
@@ -77,6 +83,9 @@ export default async function (fastify) {
       
     } catch (error) {
       fastify.log.error('Error in POST /api/generate-single-email:', error)
+      // Set CORS headers even for error responses
+      reply.header('Access-Control-Allow-Origin', 'https://dev.markidiags.com')
+      reply.header('Access-Control-Allow-Credentials', 'true')
       return reply.status(500).send({
         success: false,
         error: error.message,

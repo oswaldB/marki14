@@ -36,6 +36,10 @@ export default async function (fastify) {
       const result = await generateEmailWithOllama(impayeData, sequenceName, actionType, isMultiple, template)
       
       if (result.success) {
+        // Set CORS headers for successful response
+        reply.header('Access-Control-Allow-Origin', 'https://dev.markidiags.com')
+        reply.header('Access-Control-Allow-Credentials', 'true')
+        
         return {
           success: true,
           subject: result.subject,
@@ -45,6 +49,10 @@ export default async function (fastify) {
           timestamp: new Date().toISOString()
         }
       } else {
+        // Set CORS headers for fallback response
+        reply.header('Access-Control-Allow-Origin', 'https://dev.markidiags.com')
+        reply.header('Access-Control-Allow-Credentials', 'true')
+        
         // Retourner le fallback si Ollama a échoué
         return {
           success: false,
@@ -56,6 +64,9 @@ export default async function (fastify) {
       
     } catch (error) {
       fastify.log.error('Error in POST /api/generate-email:', error)
+      // Set CORS headers even for error responses
+      reply.header('Access-Control-Allow-Origin', 'https://dev.markidiags.com')
+      reply.header('Access-Control-Allow-Credentials', 'true')
       return reply.status(500).send({
         success: false,
         error: error.message,

@@ -94,7 +94,7 @@ export const prerender = false;
           this.isLoading = true;
           try {
             const urlParams = new URLSearchParams(window.location.search);
-            this.sequenceId = urlParams.get('id');
+            this.sequenceId = urlParams.get('sequenceId') || urlParams.get('id');
             if (!this.sequenceId) throw new Error('No sequence ID provided in URL');
             
             // Initialiser avec un état sécurisé
@@ -323,7 +323,7 @@ export const prerender = false;
             const savedSequence = await newSequence.save();
 
             setTimeout(() => {
-              window.location.href = `/sequence-detail?id=${savedSequence.id}`;
+              window.location.href = `/sequence-detail?sequenceId=${savedSequence.id}`;
             }, 1000);
           } catch (error) {
             console.error('Erreur lors de la duplication:', error);

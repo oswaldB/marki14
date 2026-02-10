@@ -52,6 +52,10 @@ export default async function (fastify) {
         updatedAt: new Date().toISOString()
       })
       
+      // Set CORS headers for successful response
+      reply.header('Access-Control-Allow-Origin', 'https://dev.markidiags.com')
+      reply.header('Access-Control-Allow-Credentials', 'true')
+      
       return {
         success: true,
         message: 'Séquence complète générée avec succès',
@@ -60,6 +64,9 @@ export default async function (fastify) {
       
     } catch (error) {
       fastify.log.error('Error in POST /api/generate-full-sequence:', error)
+      // Set CORS headers even for error responses
+      reply.header('Access-Control-Allow-Origin', 'https://dev.markidiags.com')
+      reply.header('Access-Control-Allow-Credentials', 'true')
       return reply.status(500).send({
         success: false,
         error: error.message,

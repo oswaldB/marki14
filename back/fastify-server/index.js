@@ -9,13 +9,38 @@ const app = fastify({ logger: true })
 
 // Configuration CORS
 app.register(fastifyCors, {
-  origin: true,
+  origin: ['https://dev.markidiags.com', 'http://localhost:3000', 'http://localhost:5173'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Parse-Application-Id', 'X-Parse-Session-Token']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Parse-Application-Id', 'X-Parse-Session-Token'],
+  credentials: true,
+  optionsSuccessStatus: 200
 })
 
 // Plugin pour le support des formulaires
 app.register(fastifyFormbody)
+
+// Middleware pour gérer les requêtes OPTIONS (preflight)
+app.addHook('onRequest', async (request, reply) => {
+  if (request.method === 'OPTIONS') {
+    app.log.info(`Handling OPTIONS request for: ${request.url}`)
+    reply.header('Access-Control-Allow-Origin', 'https://dev.markidiags.com')
+    reply.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+    reply.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Parse-Application-Id, X-Parse-Session-Token')
+    reply.header('Access-Control-Allow-Credentials', 'true')
+    reply.send()
+  }
+})
+
+// Middleware pour ajouter les headers CORS à toutes les réponses
+app.addHook('onSend', async (request, reply) => {
+  reply.header('Access-Control-Allow-Origin', 'https://dev.markidiags.com')
+  reply.header('Access-Control-Allow-Credentials', 'true')
+  
+  // Log CORS headers for debugging
+  if (request.method !== 'OPTIONS') {
+    app.log.debug(`CORS headers added to response for ${request.method} ${request.url}`)
+  }
+})
 
 // Plugin pour le support JSON
 app.register(fastifySensible)
@@ -28,6 +53,19 @@ app.get('/api/health', async (request, reply) => {
 // Route de test pour vérifier la migration
 app.get('/api/test', async (request, reply) => {
   return { message: 'Fastify migration server is running!' }
+})
+
+// Route de test CORS
+app.get('/api/test-cors', async (request, reply) => {
+  return {
+    message: 'CORS test successful!',
+    origin: request.headers.origin || 'unknown',
+    method: request.method,
+    corsHeaders: {
+      'Access-Control-Allow-Origin': 'https://dev.markidiags.com',
+      'Access-Control-Allow-Credentials': 'true'
+    }
+  }
 })
 
 // Route pour simuler l'initialisation des collections (version mock)

@@ -133,7 +133,7 @@ async function handleSequenceDeletion(request, reply) {
 // Exporter les endpoints pour Fastify
 module.exports = async function (fastify, options) {
   // Endpoint pour le changement de statut de séquence
-  fastify.post('/sequence-status-change', {
+  fastify.post('/api/sequence-status-change', {
     schema: {
       body: {
         type: 'object',
@@ -147,7 +147,7 @@ module.exports = async function (fastify, options) {
   }, handleSequenceStatusChange);
 
   // Endpoint pour l'association manuelle de séquence
-  fastify.post('/impaye-sequence-assignment', {
+  fastify.post('/api/impaye-sequence-assignment', {
     schema: {
       body: {
         type: 'object',
@@ -161,7 +161,7 @@ module.exports = async function (fastify, options) {
   }, handleImpayeSequenceAssignment);
 
   // Endpoint pour la suppression de séquence
-  fastify.post('/sequence-deletion', {
+  fastify.post('/api/sequence-deletion', {
     schema: {
       body: {
         type: 'object',

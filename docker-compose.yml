@@ -55,8 +55,6 @@ services:
       FTP_PORT: "2222"
       FTP_USERNAME: "m.wegener"
       FTP_PASSWORD: "Pomme5-Compas6"
-      # Chemin vers le code cloud Parse
-      PARSE_SERVER_CLOUD: "/parse-server/cloud/main.js"
     volumes:
       - ./parse-server/cloud:/parse-server/cloud
 

@@ -21,6 +21,9 @@ export default defineConfig({
     mode: 'standalone',
     port: 5000  // Set production server to use port 5000
   }),
+  devToolbar: {
+    enabled: false
+  },
   integrations: [tailwind(), alpinejs()],
   server: {
     host: true,
