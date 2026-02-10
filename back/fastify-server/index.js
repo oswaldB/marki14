@@ -71,6 +71,7 @@ const routes = [
   'populateRelanceSequence',  // Route pour peupler les relances d'une séquence
   'cleanupRelancesOnDeactivate', // Route pour nettoyer les relances
   'handleManualSequenceAssignment', // Route pour l'association manuelle de séquences
+  'sequenceTriggers',   // Route pour gérer les triggers de séquences (migration)
   'syncImpayes'       // Route pour synchroniser les impayés (mock pour compatibilité)
 ]
 
