@@ -4,6 +4,17 @@
 
 Ce guide explique comment adapter le frontend pour utiliser les nouveaux endpoints Fastify au lieu des fonctions Parse Cloud. L'objectif est de permettre une transition en douceur pendant la migration.
 
+## 🌐 Configuration du Serveur
+
+Le serveur Fastify est configuré pour utiliser les mêmes paramètres que Parse Cloud :
+
+- **URL de base** : `https://dev.api.markidiags.com/api`
+- **Base de données** : PostgreSQL (195.15.233.213:5432)
+- **SFTP** : serveur.adti06.com:2222
+- **Site** : ADTI
+
+## 🔧 Configuration Requise
+
 ## 🔧 Configuration Requise
 
 ### 1. Importer l'Adaptateur
@@ -47,6 +58,46 @@ Pour les nouveaux développements, utilisez directement l'adaptateur :
 ```javascript
 // Utilisation directe de l'adaptateur
 const response = await fastifyCloudRun('getInvoicePdf', { invoiceId: 'FACT001' });
+```
+
+### Nouveaux Endpoints - Triggers de Séquences (10/02/2024)
+
+Trois nouveaux endpoints ont été ajoutés pour remplacer les triggers Parse Cloud :
+
+#### 1. Changement de Statut de Séquence
+Remplace `Parse.Cloud.afterSave('Sequences')`
+
+```javascript
+// Activer une séquence
+const result = await fastifyCloudRun('sequenceStatusChange', {
+  sequenceId: 'SEQ001',
+  isActif: true
+});
+
+// Désactiver une séquence
+const result = await fastifyCloudRun('sequenceStatusChange', {
+  sequenceId: 'SEQ001',
+  isActif: false
+});
+```
+
+#### 2. Association Manuelle de Séquence
+Remplace `Parse.Cloud.afterSave('Impayes')`
+
+```javascript
+const result = await fastifyCloudRun('impayeSequenceAssignment', {
+  impayeId: 'IMP001',
+  sequenceId: 'SEQ001'
+});
+```
+
+#### 3. Suppression de Séquence
+Remplace `Parse.Cloud.beforeDelete('Sequences')`
+
+```javascript
+const result = await fastifyCloudRun('sequenceDeletion', {
+  sequenceId: 'SEQ001'
+});
 ```
 
 ## 📊 Mappage des Fonctions

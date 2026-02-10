@@ -24,7 +24,11 @@ async function fastifyCloudRun(functionName, params = {}) {
       'generateSingleEmailWithAI': { method: 'POST', endpoint: '/generate-single-email', body: params },
       'populateRelanceSequence': { method: 'POST', endpoint: '/populate-relance-sequence', body: params },
       'cleanupRelancesOnDeactivate': { method: 'POST', endpoint: '/cleanup-relances', body: params },
-      'handleManualSequenceAssignment': { method: 'POST', endpoint: '/assign-sequence', body: params }
+      'handleManualSequenceAssignment': { method: 'POST', endpoint: '/assign-sequence', body: params },
+      // Nouveaux endpoints pour les triggers de séquences (migration du 10/02/2024)
+      'sequenceStatusChange': { method: 'POST', endpoint: '/sequence-status-change', body: params },
+      'impayeSequenceAssignment': { method: 'POST', endpoint: '/impaye-sequence-assignment', body: params },
+      'sequenceDeletion': { method: 'POST', endpoint: '/sequence-deletion', body: params }
     };
 
     const mapping = endpointMap[functionName];
