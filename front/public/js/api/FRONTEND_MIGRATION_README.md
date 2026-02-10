@@ -4,14 +4,37 @@
 
 Ce guide explique comment adapter le frontend pour utiliser les nouveaux endpoints Fastify au lieu des fonctions Parse Cloud. L'objectif est de permettre une transition en douceur pendant la migration.
 
-## 🌐 Configuration du Serveur
+## 🌐 Architecture Hybride
 
-Le serveur Fastify est configuré pour utiliser les mêmes paramètres que Parse Cloud :
+L'application utilise maintenant une **architecture hybride** pour une migration en douceur :
 
-- **URL de base** : `https://dev.api.markidiags.com/api`
-- **Base de données** : PostgreSQL (195.15.233.213:5432)
-- **SFTP** : serveur.adti06.com:2222
-- **Site** : ADTI
+### Parse Server (Authentification uniquement) 🔒
+- **URL** : `https://dev.parse.markidiags.com`
+- **Fonctionnalités** :
+  - Gestion des utilisateurs
+  - Sessions et tokens
+  - Login/Logout
+  - Sécurité et ACLs
+
+### Fastify Server (Cloud Functions) ⚡
+- **URL** : `https://dev.api.markidiags.com/api`
+- **Fonctionnalités** :
+  - Toutes les Cloud Functions
+  - Génération de séquences
+  - Traitement des impayés
+  - Envoi d'emails
+  - Accès à la base de données
+
+### Base de données PostgreSQL 🗃️
+- **Hôte** : 195.15.233.213:5432
+- **Utilisateur** : webadmin2
+- **Base** : postgres
+
+### SFTP 📁
+- **Hôte** : serveur.adti06.com:2222
+- **Utilisateur** : m.wegener
+
+## 🔧 Configuration Requise
 
 ## 🔧 Configuration Requise
 
@@ -59,6 +82,29 @@ Pour les nouveaux développements, utilisez directement l'adaptateur :
 // Utilisation directe de l'adaptateur
 const response = await fastifyCloudRun('getInvoicePdf', { invoiceId: 'FACT001' });
 ```
+
+### Approche Hybride (Parse Auth + Fastify Cloud)
+
+L'application utilise une architecture hybride où :
+
+1. **Parse Server** gère uniquement l'authentification (login, sessions, utilisateurs)
+2. **Fastify Server** gère toutes les Cloud Functions (business logic)
+
+```javascript
+// ✅ Authentification via Parse (inchangé)
+const user = await Parse.User.logIn(username, password);
+const sessionToken = user.getSessionToken();
+
+// ✅ Cloud Functions via Fastify (nouveau)
+const result = await Parse.Cloud.run('generateFullSequenceWithAI', params);
+// → Redirigé automatiquement vers Fastify par l'adaptateur
+```
+
+**Avantages** :
+- Migration progressive sans interruption
+- Authentification éprouvée avec Parse
+- Performances améliorées avec Fastify pour la business logic
+- Séparation claire des responsabilités
 
 ### Nouveaux Endpoints - Triggers de Séquences (10/02/2024)
 

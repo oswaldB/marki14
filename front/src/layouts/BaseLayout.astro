@@ -26,17 +26,30 @@ import DockComponent from '../components/DockComponent.astro';
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
     [x-cloak] { display: none !important; }
   </style>
+  <!-- Approche Hybride: Parse pour Auth + Fastify pour Cloud Functions -->
   <script is:inline src="https://unpkg.com/parse@5.3.0/dist/parse.min.js"></script>
   <script is:inline>
-    // Initialiser Parse SDK côté client uniquement
+    // Configuration Hybride: Parse (Auth) + Fastify (Cloud Functions)
     if (typeof window !== 'undefined') {
+      // 1. Configurer Parse UNIQUEMENT pour l'authentification
       const appId = 'marki';
       const jsKey = 'Careless7-Gore4-Guileless0-Jogger5-Clubbed9';
       const serverUrl = 'https://dev.parse.markidiags.com';
       
       Parse.initialize(appId, jsKey);
       Parse.serverURL = serverUrl;
-      console.log('✅ Parse SDK initialisé avec:', serverUrl);
+      console.log('✅ Parse SDK initialisé pour AUTH:', serverUrl);
+      
+      // 2. Configurer Fastify pour les Cloud Functions
+      window.FASTIFY_API_BASE = 'https://dev.api.markidiags.com/api';
+      console.log('✅ Fastify API configurée pour CLOUD:', window.FASTIFY_API_BASE);
+      
+      // 3. Charger l'adaptateur Fastify
+      import('/js/api/fastifyAdapter.js').then(module => {
+        console.log('✅ Adaptateur Fastify chargé - Cloud Functions redirigées');
+      }).catch(error => {
+        console.error('❌ Erreur de chargement de l\'adaptateur Fastify:', error);
+      });
     }
   </script>
 </head>
@@ -51,7 +64,7 @@ import DockComponent from '../components/DockComponent.astro';
       
       if (authEnabled) {
         window.addEventListener('DOMContentLoaded', async () => {
-          // Attendre que Parse SDK soit complètement initialisé
+          // Attendre que Parse SDK soit complètement initialisé (pour AUTH)
           await new Promise(resolve => {
             if (typeof Parse !== 'undefined' && Parse.serverURL) {
               resolve();
@@ -70,20 +83,20 @@ import DockComponent from '../components/DockComponent.astro';
 
           if (sessionToken) {
             try {
-              // Restaurer la session avec le token
+              // Restaurer la session avec le token (Parse gère l'auth)
               const user = await Parse.User.become(sessionToken);
               const newToken = user.getSessionToken();
               
               // Re-sauvegarder le token dans le bon stockage selon l'origine
               if (isPersistent) {
                 localStorage.setItem('parseSessionToken', newToken);
-                console.log('✅ Session persistante restaurée dans BaseLayout');
+                console.log('✅ Session persistante restaurée (Parse Auth)');
               } else {
                 sessionStorage.setItem('parseSessionToken', newToken);
-                console.log('✅ Session temporaire restaurée dans BaseLayout');
+                console.log('✅ Session temporaire restaurée (Parse Auth)');
               }
             } catch (error) {
-              console.error('❌ Token invalide:', error);
+              console.error('❌ Token invalide (Parse Auth):', error);
               // Supprimer le token invalide des deux stockages
               sessionStorage.removeItem('parseSessionToken');
               localStorage.removeItem('parseSessionToken');
