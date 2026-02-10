@@ -1,0 +1,915 @@
+<!--
+  ~ src/pages/superadmin.astro
+  ~ Page d'administration pour les super-administrateurs
+  ~ Permet de lancer les scripts d'initialisation et de synchronisation
+-->
+
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { Plus, X } from '@lucide/astro';
+---
+<!--
+    ~ Script Alpine.js pour gérer l'exécution des scripts
+    ~ Code intégré directement dans le fichier Astro pour éviter les problèmes de chargement
+  -->
+  <script is:inline>
+    /**
+     * superadminState.js
+     * 
+     * Composant Alpine.js pour gérer l'exécution des scripts d'administration
+     * sur la page superadmin.astro
+     */
+    document.addEventListener('alpine:init', () => {
+      Alpine.data('superadminState', () => ({
+        // État initial
+        isLoading: {
+          initCollections: false,
+          syncImpayes: false
+        },
+        // Logs des scripts
+        scriptLogs: '',
+        
+        // État pour la gestion des utilisateurs
+        users: [],
+        userSearchTerm: '',
+        currentUserId: null,
+        isUserFormOpen: false,
+        currentUser: null,
+        userForm: {
+          firstName: '',
+          lastName: '',
+          email: '',
+          password: '',
+          is_admin: false
+        },
+
+        /**
+         * Initialisation du composant
+         */
+        async init() {
+            // Charger les utilisateurs
+            await this.loadUsers();
+            
+            // Charger l'ID de l'utilisateur actuel
+            const currentUser = Parse.User.current();
+            if (currentUser) {
+                this.currentUserId = currentUser.id;
+            }
+        },
+          
+
+
+        /**
+         * Exécute un script d'administration
+         * @param {string} scriptName - Nom du script à exécuter ('initCollections' ou 'syncImpayes')
+         */
+        async runScript(scriptName) {
+          // Vérifier que l'utilisateur est bien un superadmin
+          const currentUser = Parse.User.current();
+          if (!currentUser) {
+            this.addLog('Erreur: Utilisateur non connecté', 'error');
+            return;
+          }
+
+          // Vérifier le rôle superadmin (à implémenter côté serveur)
+          // Pour l'instant, on suppose que seul un superadmin peut accéder à cette page
+
+          // Mettre à jour l'état de chargement
+          this.isLoading[scriptName] = true;
+          this.addLog(`Début de l'exécution du script: ${scriptName}`);
+
+          try {
+            // Appeler la fonction cloud correspondante
+            const response = await Parse.Cloud.run(scriptName);
+            
+            this.addLog(`Script ${scriptName} exécuté avec succès`, 'success');
+            this.addLog(`Résultat: ${JSON.stringify(response, null, 2)}`);
+          } catch (error) {
+            // Gestion spécifique des erreurs 502 (Bad Gateway)
+            if (error.message.includes('502') || error.message.includes('Bad Gateway')) {
+              this.addLog(`Erreur 502: Le serveur Parse est indisponible`, 'error');
+              this.addLog(`Veuillez vérifier que le serveur Parse est en cours d'exécution`, 'error');
+            } else {
+              this.addLog(`Erreur lors de l'exécution du script ${scriptName}`, 'error');
+              this.addLog(`Détails: ${error.message}`, 'error');
+            }
+            console.error('Erreur détaillée:', error);
+          } finally {
+            // Réinitialiser l'état de chargement
+            this.isLoading[scriptName] = false;
+          }
+        },
+
+        /**
+         * Ajoute un message aux logs
+         * @param {string} message - Message à ajouter
+         * @param {string} [type='info'] - Type de message ('info', 'success', 'error', 'warning')
+         */
+        addLog(message, type = 'info') {
+          const timestamp = new Date().toISOString();
+          const logTypes = {
+            info: '[INFO]',
+            success: '[SUCCESS]',
+            error: '[ERROR]',
+            warning: '[WARNING]'
+          };
+          
+          const logClasses = {
+            info: 'text-blue-600',
+            success: 'text-green-600',
+            error: 'text-red-600',
+            warning: 'text-yellow-600'
+          };
+          
+          const logMessage = `[${timestamp}] <span class="${logClasses[type] || logClasses.info}">${logTypes[type] || '[INFO]'}</span> ${message}`;
+          
+          // Ajouter le message aux logs existants
+          this.scriptLogs = this.scriptLogs ? `${this.scriptLogs}\n${logMessage}` : logMessage;
+          
+          // Faire défiler vers le bas
+          this.$nextTick(() => {
+            const logsContainer = document.getElementById('scriptLogs');
+            if (logsContainer) {
+              logsContainer.scrollTop = logsContainer.scrollHeight;
+            }
+          });
+        },
+
+        /**
+         * Efface les logs
+         */
+        clearLogs() {
+          this.scriptLogs = '';
+          this.addLog('Logs effacés');
+        },
+
+        // État pour le test SFTP
+        sftpTest: {
+          isLoading: false,
+          host: '',
+          port: '',
+          username: '',
+          password: '',
+          testPath: '/',
+          useEnvCredentials: true
+        },
+        
+        // État pour la génération du schéma
+        schemaGeneration: {
+          isLoadingFullSchema: false,
+          isLoadingImpayesColumns: false,
+          fullSchemaResult: null,
+          impayesColumnsResult: null
+        },
+
+        /**
+         * Initialiser les champs SFTP avec les valeurs par défaut
+         */
+        initSftpForm() {
+          // Ne réinitialiser que si on utilise les identifiants .env
+          if (this.sftpTest.useEnvCredentials) {
+            this.sftpTest = {
+              ...this.sftpTest,
+              host: '',
+              port: '2222',
+              username: '',
+              password: '',
+              testPath: '/'
+            };
+          }
+        },
+        
+        /**
+         * Générer et afficher le schéma complet
+         */
+        async generateFullSchema() {
+          this.schemaGeneration.isLoadingFullSchema = true;
+          this.schemaGeneration.fullSchemaResult = null;
+          this.addLog('📊 Début de la génération du schéma complet...');
+          
+          try {
+            const response = await Parse.Cloud.run('getFullSchema');
+            
+            if (response.success) {
+              this.schemaGeneration.fullSchemaResult = response.schema;
+              this.addLog(`✅ Schéma complet généré avec succès !`, 'success');
+              this.addLog(`   Classes trouvées: ${Object.keys(response.schema).filter(k => k !== 'timestamp').join(', ')}`);
+            } else {
+              this.addLog(`❌ Erreur lors de la génération du schéma: ${response.message}`, 'error');
+              if (response.error) {
+                this.addLog(`   Détails: ${response.error}`, 'error');
+              }
+            }
+          } catch (error) {
+            this.addLog(`❌ Erreur lors de la génération du schéma: ${error.message}`, 'error');
+            console.error('Erreur de génération de schéma:', error);
+          } finally {
+            this.schemaGeneration.isLoadingFullSchema = false;
+            this.addLog('📊 Génération du schéma complet terminée');
+          }
+        },
+        
+        /**
+         * Générer et afficher les colonnes des impayés
+         */
+        async generateImpayesColumns() {
+          this.schemaGeneration.isLoadingImpayesColumns = true;
+          this.schemaGeneration.impayesColumnsResult = null;
+          this.addLog('📋 Début de la génération des colonnes des impayés...');
+          
+          try {
+            // Utiliser directement le Parse SDK pour récupérer un impayé et obtenir ses colonnes
+            const Impaye = Parse.Object.extend('Impayes');
+            const query = new Parse.Query(Impaye);
+            query.limit(1); // On a juste besoin d'un seul impayé pour obtenir la structure
+            
+            const results = await query.find();
+            
+            if (results.length > 0) {
+              const impaye = results[0];
+              const attributes = impaye.attributes;
+              
+              // Liste des champs système à exclure
+              const systemFields = ['objectId', 'createdAt', 'updatedAt', 'ACL', 'sequence'];
+              
+              // Extraire les noms des colonnes
+              const columns = Object.keys(attributes)
+                .filter(fieldName => !systemFields.includes(fieldName));
+              
+              this.schemaGeneration.impayesColumnsResult = {
+                columns: columns,
+                count: columns.length
+              };
+              this.addLog(`✅ Colonnes des impayés générées avec succès !`, 'success');
+              this.addLog(`   Nombre de colonnes: ${columns.length}`);
+            } else {
+              this.addLog(`❌ Aucun impayé trouvé pour générer les colonnes`, 'error');
+            }
+          } catch (error) {
+            this.addLog(`❌ Erreur lors de la génération des colonnes: ${error.message}`, 'error');
+            console.error('Erreur de génération des colonnes:', error);
+          } finally {
+            this.schemaGeneration.isLoadingImpayesColumns = false;
+            this.addLog('📋 Génération des colonnes des impayés terminée');
+          }
+        },
+
+        /**
+         * Tester la connexion SFTP
+         */
+        async testSftpConnection() {
+          this.sftpTest.isLoading = true;
+          this.addLog('🔌 Début du test de connexion SFTP...');
+
+          try {
+            const params = this.sftpTest.useEnvCredentials ? {} : {
+              host: this.sftpTest.host,
+              port: this.sftpTest.port,
+              username: this.sftpTest.username,
+              password: this.sftpTest.password,
+              testPath: this.sftpTest.testPath
+            };
+
+            this.addLog(`   Utilisation des identifiants: ${this.sftpTest.useEnvCredentials ? 'fichier .env' : 'personnalisés'}`);
+
+            const response = await Parse.Cloud.run('testSftpConnection', params);
+
+            if (response.success) {
+              this.addLog(`✅ Test SFTP réussi !`, 'success');
+              this.addLog(`   Temps de connexion: ${response.connectionTime}ms`);
+              
+              // Afficher les logs détaillés
+              if (response.logs && response.logs.length > 0) {
+                response.logs.forEach(log => this.addLog(`   ${log}`));
+              }
+            } else {
+              this.addLog(`❌ Test SFTP échoué: ${response.message}`, 'error');
+              
+              // Afficher les logs détaillés
+              if (response.logs && response.logs.length > 0) {
+                response.logs.forEach(log => this.addLog(`   ${log}`));
+              }
+            }
+
+          } catch (error) {
+            this.addLog(`❌ Erreur lors du test SFTP: ${error.message}`, 'error');
+            console.error('Erreur SFTP:', error);
+          } finally {
+            this.sftpTest.isLoading = false;
+            this.addLog('🔌 Test SFTP terminé');
+          }
+        },
+
+        // Méthodes pour la gestion des utilisateurs
+        
+        /**
+         * Charger tous les utilisateurs
+         */
+        async loadUsers() {
+            try {
+                this.users = await Parse.Cloud.run('getAllUsers');
+            } catch (error) {
+                console.error('Erreur lors du chargement des utilisateurs:', error);
+                this.addLog(`❌ Erreur lors du chargement des utilisateurs: ${error.message}`, 'error');
+            }
+        },
+
+        /**
+         * Rechercher des utilisateurs
+         */
+        async searchUsers() {
+            try {
+                if (this.userSearchTerm.trim() === '') {
+                    await this.loadUsers();
+                } else {
+                    this.users = await Parse.Cloud.run('searchUsers', { searchTerm: this.userSearchTerm });
+                }
+            } catch (error) {
+                console.error('Erreur lors de la recherche d\'utilisateurs:', error);
+                this.addLog(`❌ Erreur lors de la recherche d\'utilisateurs: ${error.message}`, 'error');
+            }
+        },
+
+        /**
+         * Ouvrir le formulaire d'utilisateur
+         */
+        openUserForm() {
+            this.resetUserForm();
+            this.currentUser = null;
+            this.isUserFormOpen = true;
+        },
+
+        /**
+         * Modifier un utilisateur
+         */
+        async editUser(userId) {
+            try {
+                const user = await Parse.Cloud.run('getUserDetails', { objectId: userId });
+                this.userForm = {
+                    firstName: user.firstName,
+                    lastName: user.lastName,
+                    email: user.email,
+                    password: '',
+                    is_admin: user.is_admin
+                };
+                this.currentUser = user;
+                this.isUserFormOpen = true;
+            } catch (error) {
+                console.error('Erreur lors de la récupération de l\'utilisateur:', error);
+                this.addLog(`❌ Erreur lors de la récupération de l\'utilisateur: ${error.message}`, 'error');
+            }
+        },
+
+        /**
+         * Supprimer un utilisateur
+         */
+        async deleteUser(userId) {
+            if (confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')) {
+                try {
+                    await Parse.Cloud.run('deleteUser', { objectId: userId });
+                    await this.loadUsers();
+                    this.addLog(`🗑️ Utilisateur supprimé avec succès`, 'success');
+                } catch (error) {
+                    console.error('Erreur lors de la suppression de l\'utilisateur:', error);
+                    this.addLog(`❌ Erreur lors de la suppression de l\'utilisateur: ${error.message}`, 'error');
+                }
+            }
+        },
+
+        /**
+         * Réinitialiser le formulaire d'utilisateur
+         */
+        resetUserForm() {
+            this.userForm = {
+                firstName: '',
+                lastName: '',
+                email: '',
+                password: '',
+                is_admin: false
+            };
+        },
+
+        /**
+         * Sauvegarder un utilisateur
+         */
+        async saveUser() {
+            try {
+                // Validation
+                if (!this.userForm.firstName || !this.userForm.lastName || !this.userForm.email) {
+                    alert('Veuillez remplir tous les champs obligatoires');
+                    return;
+                }
+
+                const params = {
+                    firstName: this.userForm.firstName,
+                    lastName: this.userForm.lastName,
+                    email: this.userForm.email,
+                    is_admin: this.userForm.is_admin
+                };
+
+                // Ajouter le mot de passe uniquement s'il est fourni
+                if (this.userForm.password) {
+                    params.password = this.userForm.password;
+                }
+
+                let result;
+                if (this.currentUser) {
+                    // Mise à jour
+                    params.objectId = this.currentUser.objectId;
+                    result = await Parse.Cloud.run('updateUser', params);
+                    this.addLog(`📝 Utilisateur mis à jour avec succès`, 'success');
+                } else {
+                    // Création
+                    if (!params.password) {
+                        alert('Le mot de passe est obligatoire pour la création d\'un utilisateur');
+                        return;
+                    }
+                    result = await Parse.Cloud.run('createUser', params);
+                    this.addLog(`👤 Utilisateur créé avec succès`, 'success');
+                }
+
+                // Recharger les utilisateurs et fermer le formulaire
+                await this.loadUsers();
+                this.isUserFormOpen = false;
+                
+            } catch (error) {
+                console.error('Erreur lors de la sauvegarde de l\'utilisateur:', error);
+                this.addLog(`❌ Erreur lors de la sauvegarde de l\'utilisateur: ${error.message}`, 'error');
+            }
+        }
+      }));
+    });
+  </script>
+<BaseLayout>
+  <div class="container mx-auto px-4 py-8" x-data="superadminState()" x-init="init()">
+    <h1 class="text-3xl font-bold text-gray-900 mb-8">Super Admin Dashboard</h1>
+
+    <!--
+      ~ Section des scripts d'administration
+      ~ Contient les boutons pour lancer les scripts
+    -->
+    <div class="bg-white shadow rounded-lg p-6 mb-8">
+      <h2 class="text-xl font-semibold text-gray-800 mb-4">Scripts d'administration</h2>
+      <p class="text-gray-600 mb-6">Cette section permet de lancer les scripts d'initialisation et de synchronisation.</p>
+
+      <div class="space-y-4">
+        <!-- Bouton pour initialiser les collections -->
+        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+          <div>
+            <h3 class="font-medium text-gray-900">Initialiser les collections</h3>
+            <p class="text-sm text-gray-500">Lance le script initCollections.js</p>
+          </div>
+          <button
+            id="initCollectionsBtn"
+            class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            @click="runScript('initCollections')"
+            :disabled="isLoading.initCollections"
+          >
+            <span x-show="!isLoading.initCollections">Exécuter</span>
+            <span x-show="isLoading.initCollections" class="flex items-center">
+              <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Exécution...
+            </span>
+          </button>
+        </div>
+
+        <!-- Bouton pour synchroniser les impayés -->
+        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+          <div>
+            <h3 class="font-medium text-gray-900">Synchroniser les impayés</h3>
+            <p class="text-sm text-gray-500">Lance le script syncImpayes.js</p>
+          </div>
+          <button
+            id="syncImpayesBtn"
+            class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+            @click="runScript('syncImpayes')"
+            :disabled="isLoading.syncImpayes"
+          >
+            <span x-show="!isLoading.syncImpayes">Exécuter</span>
+            <span x-show="isLoading.syncImpayes" class="flex items-center">
+              <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Exécution...
+            </span>
+          </button>
+        </div>
+        
+        <!-- Bouton pour générer le schéma complet -->
+        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+          <div>
+            <h3 class="font-medium text-gray-900">Générer le schéma complet</h3>
+            <p class="text-sm text-gray-500">Récupère et affiche le schéma complet de toutes les classes</p>
+          </div>
+          <button
+            id="generateFullSchemaBtn"
+            class="px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+            @click="generateFullSchema()"
+            :disabled="schemaGeneration.isLoadingFullSchema"
+          >
+            <span x-show="!schemaGeneration.isLoadingFullSchema">Générer schéma complet</span>
+            <span x-show="schemaGeneration.isLoadingFullSchema" class="flex items-center">
+              <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Chargement...
+            </span>
+          </button>
+        </div>
+        
+        <!-- Bouton pour générer les colonnes des impayés -->
+        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+          <div>
+            <h3 class="font-medium text-gray-900">Générer les colonnes des impayés</h3>
+            <p class="text-sm text-gray-500">Récupère et affiche les colonnes de la classe Impayes</p>
+          </div>
+          <button
+            id="generateImpayesColumnsBtn"
+            class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            @click="generateImpayesColumns()"
+            :disabled="schemaGeneration.isLoadingImpayesColumns"
+          >
+            <span x-show="!schemaGeneration.isLoadingImpayesColumns">Générer colonnes impayés</span>
+            <span x-show="schemaGeneration.isLoadingImpayesColumns" class="flex items-center">
+              <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Chargement...
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!--
+      ~ Section d'affichage des résultats du schéma
+      ~ Affiche les résultats JSON des générations de schéma
+    -->
+    <div class="bg-white shadow rounded-lg p-6 mb-8" x-show="schemaGeneration.fullSchemaResult || schemaGeneration.impayesColumnsResult">
+      <h2 class="text-xl font-semibold text-gray-800 mb-4">Résultats du schéma</h2>
+      
+      <!-- Résultat du schéma complet -->
+      <div x-show="schemaGeneration.fullSchemaResult" class="mb-6">
+        <h3 class="text-lg font-medium text-gray-900 mb-2">Schéma complet</h3>
+        <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+          <pre class="text-sm overflow-x-auto" x-text="JSON.stringify(schemaGeneration.fullSchemaResult, null, 2)"></pre>
+        </div>
+        <button
+          class="mt-2 px-3 py-1 bg-gray-200 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-300"
+          @click="navigator.clipboard.writeText(JSON.stringify(schemaGeneration.fullSchemaResult, null, 2))"
+        >
+          Copier le JSON
+        </button>
+      </div>
+      
+      <!-- Résultat des colonnes des impayés -->
+      <div x-show="schemaGeneration.impayesColumnsResult" class="mb-6">
+        <h3 class="text-lg font-medium text-gray-900 mb-2">Colonnes des impayés</h3>
+        <p class="text-sm text-gray-600 mb-2" x-text="`Nombre de colonnes: ${schemaGeneration.impayesColumnsResult.count}`"></p>
+        <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+          <pre class="text-sm overflow-x-auto" x-text="JSON.stringify(schemaGeneration.impayesColumnsResult.columns, null, 2)"></pre>
+        </div>
+        <button
+          class="mt-2 px-3 py-1 bg-gray-200 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-300"
+          @click="navigator.clipboard.writeText(JSON.stringify(schemaGeneration.impayesColumnsResult.columns, null, 2))"
+        >
+          Copier le JSON
+        </button>
+      </div>
+      
+      <button
+        class="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700"
+        @click="schemaGeneration.fullSchemaResult = null; schemaGeneration.impayesColumnsResult = null"
+      >
+        Effacer les résultats
+      </button>
+    </div>
+
+    <!--
+      ~ Section de test SFTP
+      ~ Permet de tester la connexion au serveur SFTP
+    -->
+    <div class="bg-white shadow rounded-lg p-6 mb-8">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-semibold text-gray-800">Test de connexion SFTP</h2>
+        <button
+          class="px-3 py-1 bg-gray-200 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+          @click="initSftpForm()"
+        >
+          Réinitialiser
+        </button>
+      </div>
+      
+      <p class="text-gray-600 mb-6">
+        Testez la connexion au serveur SFTP pour vérifier que les identifiants sont corrects
+        et que le serveur est accessible. Utilisez soit les identifiants du fichier .env,
+        soit entrez des identifiants personnalisés.
+      </p>
+
+      <div class="mb-4">
+        <label class="flex items-center">
+          <input
+            type="checkbox"
+            class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            x-model="sftpTest.useEnvCredentials"
+            @change="sftpTest.useEnvCredentials ? initSftpForm() : ''"
+          >
+          <span class="ml-2 text-sm text-gray-700">Utiliser les identifiants du fichier .env</span>
+        </label>
+      </div>
+
+      <!-- Formulaire pour les identifiants personnalisés -->
+      <div x-show="!sftpTest.useEnvCredentials" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform scale-95" x-transition:enter-end="opacity-100 transform scale-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 transform scale-100" x-transition:leave-end="opacity-0 transform scale-95" class="space-y-4 mb-6 mt-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label for="sftpHost" class="block text-sm font-medium text-gray-700 mb-1">Hôte SFTP</label>
+            <input
+              type="text"
+              id="sftpHost"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              x-model="sftpTest.host"
+              placeholder="serveur.adti06.com"
+            >
+          </div>
+          <div>
+            <label for="sftpPort" class="block text-sm font-medium text-gray-700 mb-1">Port</label>
+            <input
+              type="number"
+              id="sftpPort"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              x-model="sftpTest.port"
+              placeholder="2222"
+            >
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label for="sftpUsername" class="block text-sm font-medium text-gray-700 mb-1">Nom d'utilisateur</label>
+            <input
+              type="text"
+              id="sftpUsername"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              x-model="sftpTest.username"
+              placeholder="m.wegener"
+            >
+          </div>
+          <div>
+            <label for="sftpPassword" class="block text-sm font-medium text-gray-700 mb-1">Mot de passe</label>
+            <input
+              type="password"
+              id="sftpPassword"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              x-model="sftpTest.password"
+              placeholder="••••••••"
+            >
+          </div>
+        </div>
+
+        <div>
+          <label for="sftpTestPath" class="block text-sm font-medium text-gray-700 mb-1">Chemin de test</label>
+          <input
+            type="text"
+            id="sftpTestPath"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            x-model="sftpTest.testPath"
+            placeholder="/ADN/Reporting/Gco/Piece/"
+          >
+        </div>
+      </div>
+
+      <!-- Bouton de test -->
+      <button
+        class="w-full px-4 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 flex items-center justify-center"
+        @click="testSftpConnection()"
+        :disabled="sftpTest.isLoading"
+      >
+        <span x-show="!sftpTest.isLoading">Tester la connexion SFTP</span>
+        <span x-show="sftpTest.isLoading" class="flex items-center">
+          <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          Test en cours...
+        </span>
+      </button>
+    </div>
+
+    <!--
+      ~ Section de gestion des utilisateurs
+      ~ Permet de gérer les utilisateurs de l'application
+    -->
+    <div class="bg-white shadow rounded-lg p-6 mb-8">
+      <h2 class="text-xl font-semibold text-gray-800 mb-4">Gestion des utilisateurs</h2>
+      <p class="text-gray-600 mb-6">Cette section permet de gérer les utilisateurs de l'application.</p>
+
+      <!-- Formulaire de recherche et d'ajout -->
+      <div class="flex flex-col md:flex-row gap-4 mb-6">
+        <div class="flex-1">
+          <label for="userSearch" class="block text-sm font-medium text-gray-700 mb-1">Rechercher un utilisateur</label>
+          <input
+            type="text"
+            id="userSearch"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            x-model="userSearchTerm"
+            placeholder="Rechercher par nom, prénom ou email..."
+            @input.debounce.500ms="searchUsers()"
+          >
+        </div>
+        <div class="flex items-end">
+          <button
+            class="px-4 py-2 bg-green-600 text-white font-medium rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 flex items-center"
+            @click="openUserForm()"
+          >
+            <Plus class="w-4 h-4 mr-2" />
+            Ajouter un utilisateur
+          </button>
+        </div>
+      </div>
+
+      <!-- Tableau des utilisateurs -->
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nom</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rôle</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <template x-for="user in users" :key="user.objectId">
+              <tr>
+                <td class="px-6 py-4 whitespace-nowrap" x-text="user.firstName + ' ' + user.lastName"></td>
+                <td class="px-6 py-4 whitespace-nowrap" x-text="user.email"></td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span
+                    class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full"
+                    :class="user.is_admin ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'"
+                    x-text="user.is_admin ? 'Administrateur' : 'Utilisateur'"
+                  ></span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <button
+                    class="text-blue-600 hover:text-blue-900 mr-2"
+                    @click="editUser(user.objectId)"
+                  >
+                    Modifier
+                  </button>
+                  <button
+                    class="text-red-600 hover:text-red-900"
+                    @click="deleteUser(user.objectId)"
+                    :disabled="user.objectId === currentUserId"
+                  >
+                    Supprimer
+                  </button>
+                </td>
+              </tr>
+            </template>
+            <tr x-show="users.length === 0">
+              <td colspan="4" class="px-6 py-4 text-center text-gray-500">
+                Aucun utilisateur trouvé
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!--
+      ~ Section des logs
+      ~ Affiche les logs des scripts exécutés
+    -->
+    <div class="bg-white shadow rounded-lg p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-semibold text-gray-800">Logs des scripts</h2>
+        <button
+          class="px-3 py-1 bg-gray-200 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+          @click="clearLogs()"
+        >
+          Effacer les logs
+        </button>
+      </div>
+      <div
+        id="scriptLogs"
+        class="h-64 overflow-y-auto bg-gray-50 p-4 rounded-lg border border-gray-200 text-sm font-mono whitespace-pre-wrap"
+        x-html="scriptLogs"
+      >
+        <!-- Les logs seront affichés ici -->
+      </div>
+    </div>
+  </div>
+
+  
+  <!-- Modal pour la gestion des utilisateurs -->
+  <div
+    x-show="isUserFormOpen"
+    x-transition:enter="transition ease-out duration-300"
+    x-transition:enter-start="opacity-0"
+    x-transition:enter-end="opacity-100"
+    x-transition:leave="transition ease-in duration-200"
+    x-transition:leave-start="opacity-100"
+    x-transition:leave-end="opacity-0"
+    class="fixed inset-0 z-50 overflow-hidden bg-black bg-opacity-50 flex items-center justify-center p-4"
+    @click.away="isUserFormOpen = false"
+  >
+    <div
+      class="bg-white rounded-lg shadow-xl w-full max-w-md overflow-hidden"
+      @click.stop
+    >
+      <div class="p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-xl font-semibold text-gray-800" x-text="currentUser ? 'Modifier un utilisateur' : 'Ajouter un utilisateur'"></h2>
+          <button @click="isUserFormOpen = false" class="text-gray-400 hover:text-gray-600">
+            <X class="w-6 h-6" />
+          </button>
+        </div>
+
+        <form class="space-y-4" @submit.prevent="saveUser">
+          <div>
+            <label for="userFirstName" class="block text-sm font-medium text-gray-700 mb-1">Prénom *</label>
+            <input
+              type="text"
+              id="userFirstName"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              x-model="userForm.firstName"
+              required
+            >
+          </div>
+
+          <div>
+            <label for="userLastName" class="block text-sm font-medium text-gray-700 mb-1">Nom *</label>
+            <input
+              type="text"
+              id="userLastName"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              x-model="userForm.lastName"
+              required
+            >
+          </div>
+
+          <div>
+            <label for="userEmail" class="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+            <input
+              type="email"
+              id="userEmail"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              x-model="userForm.email"
+              required
+            >
+          </div>
+
+          <div>
+            <label for="userPassword" class="block text-sm font-medium text-gray-700 mb-1">
+              Mot de passe <span x-show="!currentUser" class="text-red-500">*</span>
+              <span x-show="currentUser" class="text-sm text-gray-500">(laisser vide pour ne pas changer)</span>
+            </label>
+            <input
+              type="password"
+              id="userPassword"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              x-model="userForm.password"
+              :required="!currentUser"
+            >
+          </div>
+
+          <div class="flex items-center">
+            <input
+              type="checkbox"
+              id="userIsAdmin"
+              class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              x-model="userForm.is_admin"
+            >
+            <label for="userIsAdmin" class="ml-2 block text-sm text-gray-700">
+              Administrateur
+            </label>
+          </div>
+
+          <div class="flex justify-end space-x-3 mt-6">
+            <button
+              type="button"
+              @click="isUserFormOpen = false"
+              class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              <span x-text="currentUser ? 'Mettre à jour' : 'Ajouter'"></span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+</BaseLayout>

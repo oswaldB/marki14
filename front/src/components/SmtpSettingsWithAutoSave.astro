@@ -1,0 +1,444 @@
+<!--
+  Composant SMTP avec sauvegarde automatique
+  Utilise Alpine.js watch pour détecter les modifications et sauvegarder automatiquement
+-->
+
+---
+import { Play, Save } from '@lucide/astro';
+---
+
+<div x-data="smtpSettingsWithAutoSave()" x-init="init()" class="space-y-6">
+  <!-- Indicateur de sauvegarde et de test -->
+  <div 
+    x-show="isSaving || isTesting || lastSaved"
+    x-transition
+    class="fixed top-4 right-4 bg-blue-100 border border-blue-300 rounded-md px-4 py-2 shadow-lg z-50"
+  >
+    <div x-show="isSaving" class="flex items-center space-x-2">
+      <svg class="animate-spin h-4 w-4 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+      <span>Sauvegarde en cours...</span>
+    </div>
+    <div x-show="isTesting" class="flex items-center space-x-2">
+      <svg class="animate-spin h-4 w-4 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+      <span>Test SMTP en cours...</span>
+    </div>
+    <div x-show="!isSaving && !isTesting && lastSaved" x-text="`Sauvegardé à ${lastSaved}`" class="text-green-700"></div>
+  </div>
+
+  <!-- Formulaire SMTP avec watch pour sauvegarde automatique -->
+  <form id="smtpForm" class="space-y-6" @submit.prevent="saveSmtpProfile">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <!-- Nom du profil -->
+      <div>
+        <label for="profileName" class="block text-sm font-medium text-gray-700 mb-2">
+          Nom du profil <span class="text-red-500">*</span>
+        </label>
+        <input 
+          type="text"
+          id="profileName"
+          name="profileName"
+          required
+          x-model="formData.profileName"
+          @input.debounce.500ms="queueAutoSave()"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-marki-500 focus:border-marki-500"
+          placeholder="Ex: Gmail, Outlook, SendGrid"
+        >
+      </div>
+
+      <!-- Hôte SMTP -->
+      <div>
+        <label for="smtpHost" class="block text-sm font-medium text-gray-700 mb-2">
+          Hôte SMTP <span class="text-red-500">*</span>
+        </label>
+        <input 
+          type="text"
+          id="smtpHost"
+          name="smtpHost"
+          required
+          x-model="formData.smtpHost"
+          @input.debounce.500ms="queueAutoSave()"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-marki-500 focus:border-marki-500"
+          placeholder="Ex: smtp.gmail.com"
+        >
+      </div>
+
+      <!-- Port SMTP -->
+      <div>
+        <label for="smtpPort" class="block text-sm font-medium text-gray-700 mb-2">
+          Port SMTP <span class="text-red-500">*</span>
+        </label>
+        <input 
+          type="number"
+          id="smtpPort"
+          name="smtpPort"
+          required
+          x-model="formData.smtpPort"
+          @input.debounce.500ms="queueAutoSave()"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-marki-500 focus:border-marki-500"
+          placeholder="Ex: 587"
+          min="1"
+          max="65535"
+        >
+      </div>
+
+      <!-- Sécurité -->
+      <div>
+        <label for="smtpSecurity" class="block text-sm font-medium text-gray-700 mb-2">
+          Sécurité <span class="text-red-500">*</span>
+        </label>
+        <select 
+          id="smtpSecurity"
+          name="smtpSecurity"
+          required
+          x-model="formData.smtpSecurity"
+          @change="queueAutoSave()"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-marki-500 focus:border-marki-500"
+        >
+          <option value="">Sélectionnez un type de sécurité</option>
+          <option value="none">Aucune</option>
+          <option value="tls">TLS</option>
+          <option value="ssl">SSL</option>
+        </select>
+      </div>
+
+      <!-- Nom d'utilisateur -->
+      <div>
+        <label for="smtpUsername" class="block text-sm font-medium text-gray-700 mb-2">
+          Nom d'utilisateur <span class="text-red-500">*</span>
+        </label>
+        <input 
+          type="text"
+          id="smtpUsername"
+          name="smtpUsername"
+          required
+          x-model="formData.smtpUsername"
+          @input.debounce.500ms="queueAutoSave()"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-marki-500 focus:border-marki-500"
+          placeholder="Votre nom d'utilisateur ou adresse e-mail"
+        >
+      </div>
+
+      <!-- Mot de passe -->
+      <div>
+        <label for="smtpPassword" class="block text-sm font-medium text-gray-700 mb-2">
+          Mot de passe <span class="text-red-500">*</span>
+        </label>
+        <input 
+          type="password"
+          id="smtpPassword"
+          name="smtpPassword"
+          required
+          x-model="formData.smtpPassword"
+          @input.debounce.500ms="queueAutoSave()"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-marki-500 focus:border-marki-500"
+          placeholder="Votre mot de passe"
+        >
+      </div>
+
+      <!-- E-mail de l'expéditeur -->
+      <div class="md:col-span-2">
+        <label for="fromEmail" class="block text-sm font-medium text-gray-700 mb-2">
+          E-mail de l'expéditeur <span class="text-red-500">*</span>
+        </label>
+        <input 
+          type="email"
+          id="fromEmail"
+          name="fromEmail"
+          required
+          x-model="formData.fromEmail"
+          @input.debounce.500ms="queueAutoSave()"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-marki-500 focus:border-marki-500"
+          placeholder="votre@email.com"
+        >
+      </div>
+
+      <!-- Nom de l'expéditeur -->
+      <div class="md:col-span-2">
+        <label for="fromName" class="block text-sm font-medium text-gray-700 mb-2">
+          Nom de l'expéditeur
+        </label>
+        <input 
+          type="text"
+          id="fromName"
+          name="fromName"
+          x-model="formData.fromName"
+          @input.debounce.500ms="queueAutoSave()"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-marki-500 focus:border-marki-500"
+          placeholder="Votre nom complet"
+        >
+      </div>
+    </div>
+
+    <!-- Boutons d'action -->
+    <div class="flex flex-col sm:flex-row gap-4 mt-8">
+      <button 
+        type="button"
+        @click="testSmtpConnection()"
+        :disabled="isSaving || isTesting"
+        class="flex-1 inline-flex items-center justify-center px-6 py-3 bg-marki-600 text-white rounded-md hover:bg-marki-700 transition-colors duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        <Play class="w-4 h-4 mr-2" />
+        <span x-show="!isTesting">Tester la connexion</span>
+        <span x-show="isTesting">Test en cours...</span>
+      </button>
+
+      <button 
+        type="submit"
+        :disabled="isSaving"
+        class="flex-1 inline-flex items-center justify-center px-6 py-3 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        <Save class="w-4 h-4 mr-2" />
+        <span x-show="!isSaving">Enregistrer manuellement</span>
+        <span x-show="isSaving">Enregistrement...</span>
+      </button>
+    </div>
+  </form>
+
+  <!-- Section pour afficher les résultats du test -->
+  <div x-show="testResult || isTesting" class="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+    <h3 class="font-semibold text-gray-800 mb-2">
+      <span x-show="!isTesting">Résultats du test SMTP</span>
+      <span x-show="isTesting" class="flex items-center">
+        <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-marki-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        Test SMTP en cours...
+      </span>
+    </h3>
+    <div x-show="isTesting" class="text-marki-600">
+      Veuillez patienter pendant que nous testons la connexion SMTP...
+    </div>
+    <pre x-show="testResult" x-text="JSON.stringify(testResult, null, 2)" class="text-sm text-gray-600 overflow-x-auto"></pre>
+  </div>
+</div>
+
+<script>
+  // Composant Alpine.js avec sauvegarde automatique
+  function smtpSettingsWithAutoSave() {
+    return {
+      // État initial
+      formData: {
+        profileName: '',
+        smtpHost: '',
+        smtpPort: '',
+        smtpSecurity: '',
+        smtpUsername: '',
+        smtpPassword: '',
+        fromEmail: '',
+        fromName: ''
+      },
+      isSaving: false,
+      isTesting: false,
+      testResult: null,
+      lastSaved: null,
+      saveTimeout: null,
+      currentProfileId: null,
+      
+      init() {
+        console.log('SMTP Settings with AutoSave initialized');
+        // Charger le profil existant si nous sommes en mode édition
+        if (this.$el.dataset.profileId) {
+          this.loadProfile(this.$el.dataset.profileId);
+        }
+        
+        // Watch pour détecter les modifications
+        this.$watch('formData', () => {
+          this.queueAutoSave();
+        }, { deep: true });
+      },
+      
+      queueAutoSave() {
+        // Annuler la sauvegarde précédente si elle est en attente
+        if (this.saveTimeout) {
+          clearTimeout(this.saveTimeout);
+        }
+        
+        // Planifier une nouvelle sauvegarde après 2 secondes d'inactivité
+        this.saveTimeout = setTimeout(() => {
+          this.autoSaveProfile();
+        }, 2000);
+      },
+      
+      async autoSaveProfile() {
+        if (this.isSaving) return;
+        
+        // Vérifier si le formulaire est valide avant de sauvegarder
+        if (!this.validateForm()) {
+          console.log('Formulaire invalide, sauvegarde automatique annulée');
+          return;
+        }
+        
+        this.isSaving = true;
+        
+        try {
+          const profileData = { ...this.formData };
+          
+          // Si nous avons un ID de profil, mettre à jour le profil existant
+          if (this.currentProfileId) {
+            const profileQuery = new Parse.Query('SMTPProfile');
+            const profile = await profileQuery.get(this.currentProfileId);
+            
+            // Mettre à jour les propriétés
+            profile.set('name', profileData.profileName);
+            profile.set('host', profileData.smtpHost);
+            profile.set('port', parseInt(profileData.smtpPort));
+            profile.set('useSSL', profileData.smtpSecurity === 'ssl');
+            profile.set('useTLS', profileData.smtpSecurity === 'tls');
+            profile.set('email', profileData.fromEmail);
+            profile.set('fromName', profileData.fromName);
+            profile.set('username', profileData.smtpUsername);
+            
+            // Ne pas mettre à jour le mot de passe s'il n'a pas changé
+            if (profileData.smtpPassword) {
+              profile.set('password', profileData.smtpPassword);
+            }
+            
+            await profile.save();
+            console.log('Profil SMTP mis à jour avec succès');
+          } else {
+            // Créer un nouveau profil
+            const SMTPProfile = Parse.Object.extend('SMTPProfile');
+            const newProfile = new SMTPProfile();
+            
+            newProfile.set('name', profileData.profileName);
+            newProfile.set('host', profileData.smtpHost);
+            newProfile.set('port', parseInt(profileData.smtpPort));
+            newProfile.set('useSSL', profileData.smtpSecurity === 'ssl');
+            newProfile.set('useTLS', profileData.smtpSecurity === 'tls');
+            newProfile.set('email', profileData.fromEmail);
+            newProfile.set('fromName', profileData.fromName);
+            newProfile.set('username', profileData.smtpUsername);
+            newProfile.set('password', profileData.smtpPassword);
+            newProfile.set('isActive', false);
+            newProfile.set('isArchived', false);
+            
+            const savedProfile = await newProfile.save();
+            this.currentProfileId = savedProfile.id;
+            console.log('Nouveau profil SMTP créé avec succès');
+          }
+          
+          // Mettre à jour l'horodatage de la dernière sauvegarde
+          this.lastSaved = new Date().toLocaleTimeString();
+          
+        } catch (error) {
+          console.error('Erreur lors de la sauvegarde automatique:', error);
+          // Ne pas afficher d'alerte pour ne pas déranger l'utilisateur
+        } finally {
+          this.isSaving = false;
+        }
+      },
+      
+      async saveSmtpProfile() {
+        // Sauvegarde manuelle - utilise la même logique que l'auto-save
+        await this.autoSaveProfile();
+      },
+      
+      async testSmtpConnection() {
+        if (!this.validateForm()) {
+          return;
+        }
+        
+        this.isTesting = true;
+        this.testResult = null;
+        
+        try {
+          const result = await Parse.Cloud.run('sendTestEmail', {
+            recipient: this.formData.fromEmail,
+            smtpProfile: {
+              host: this.formData.smtpHost,
+              port: this.formData.smtpPort,
+              username: this.formData.smtpUsername,
+              password: this.formData.smtpPassword,
+              email: this.formData.fromEmail,
+              useSSL: this.formData.smtpSecurity === 'ssl'
+            }
+          });
+          
+          this.testResult = result;
+          
+        } catch (error) {
+          console.error('Erreur lors du test SMTP:', error);
+        } finally {
+          this.isTesting = false;
+        }
+      },
+      
+      async loadProfile(profileId) {
+        this.isSaving = true;
+        
+        try {
+          const profileQuery = new Parse.Query('SMTPProfile');
+          const profile = await profileQuery.get(profileId);
+          
+          this.formData = {
+            profileName: profile.get('name'),
+            smtpHost: profile.get('host'),
+            smtpPort: profile.get('port').toString(),
+            smtpSecurity: profile.get('useSSL') ? 'ssl' : profile.get('useTLS') ? 'tls' : 'none',
+            smtpUsername: profile.get('username') || '',
+            smtpPassword: '', // Ne pas charger le mot de passe pour des raisons de sécurité
+            fromEmail: profile.get('email'),
+            fromName: profile.get('fromName') || ''
+          };
+          
+          this.currentProfileId = profileId;
+          this.lastSaved = new Date().toLocaleTimeString();
+          
+        } catch (error) {
+          console.error('Erreur lors du chargement du profil:', error);
+          alert('Erreur: ' + (error.message || 'Échec du chargement du profil'));
+        } finally {
+          this.isSaving = false;
+        }
+      },
+      
+      validateForm() {
+        if (!this.formData.profileName || !this.formData.smtpHost || !this.formData.smtpPort || 
+            !this.formData.smtpSecurity || !this.formData.fromEmail) {
+          alert('Veuillez remplir tous les champs obligatoires.');
+          return false;
+        }
+        
+        if (!/^[^@]+@[^@]+\.[^@]+$/.test(this.formData.fromEmail)) {
+          alert('Veuillez entrer une adresse e-mail valide.');
+          return false;
+        }
+        
+        return true;
+      },
+      
+      // Nettoyage lors de la destruction du composant
+      destroy() {
+        if (this.saveTimeout) {
+          clearTimeout(this.saveTimeout);
+        }
+      }
+    };
+  }
+  
+  // Enregistrer le composant pour qu'il soit disponible globalement
+  if (typeof Alpine !== 'undefined') {
+    Alpine.data('smtpSettingsWithAutoSave', smtpSettingsWithAutoSave);
+  }
+</script>
+
+<style>
+  /* Animations pour l'indicateur de sauvegarde */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  /* Style pour le composant */
+  .auto-save-indicator {
+    animation: fadeIn 0.3s ease-out;
+  }
+  
+</style>

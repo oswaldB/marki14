@@ -1,0 +1,202 @@
+---
+// Dashboard Page
+// Tableau de bord principal avec intégration Parse pour les produits
+
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Pebble from '../components/Pebble.astro';
+
+import { Eye } from '@lucide/astro';---
+
+<BaseLayout title="Marki Dashboard" withAuth>
+  <!-- Galets en fond -->
+  <div class="fixed inset-0 overflow-hidden -z-10">
+    <div class="absolute inset-0 bg-gradient-to-br from-gray-50 to-white"></div>
+    <!-- Galets animés - Utilisation du composant Pebble -->
+    <div class="absolute inset-0">
+      <!-- Galet 1 - Primary -->
+      <Pebble 
+        size="large"
+        color="primary"
+        opacity="low"
+        animation="float-1"
+        position="absolute top-20 left-20"
+        title="Galet Principal - Couleur Primary #007ACE"
+      />
+      
+      <!-- Galet 2 - Secondary -->
+      <Pebble 
+        size="xlarge"
+        color="secondary"
+        opacity="medium"
+        animation="float-2"
+        position="absolute top-1/2 right-1/4"
+        title="Galet Secondaire - Couleur Secondary #00BDCF"
+      />
+      
+      <!-- Galet 3 - Success -->
+      <Pebble 
+        size="large"
+        color="success"
+        opacity="low"
+        animation="float-3"
+        position="absolute bottom-20 left-1/3"
+        title="Galet Succès - Couleur Success #00CF9B"
+      />
+    </div>
+  </div>
+
+  <div class="container mx-auto px-4 py-8 relative z-10" x-data="dashboardState()">
+    <!-- Header -->
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold text-gray-900 mb-2">MARKI DASHBOARD</h1>
+      <p class="text-gray-600">Tableau de bord principal avec vos fonctionnalités et produits</p>
+    </div>
+
+    <!-- Accès rapide -->
+    <section class="mb-12">
+      <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#007ACE] mr-2">
+          <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+        </svg>
+        Accès Rapide
+      </h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <template x-for="product in purchasedProducts">
+          <div class="bg-white border border-gray-200 rounded-lg p-6 shadow-sm dashboard-card">
+            <div class="flex items-start justify-between">
+              <div>
+                <h3 class="text-lg font-medium text-gray-900 mb-2" x-text="product.name"></h3>
+                <p class="text-gray-600 text-sm mb-4">
+                  <span x-text="product.status === 'active' ? 'Abonnement actif' : 'Abonnement inactif'"></span>
+                </p>
+              </div>
+              <span 
+                class="text-xs font-medium px-2 py-1 rounded-full"
+                :class="product.status === 'active' ? 'bg-[#00CF9B] text-white' : 'bg-gray-200 text-gray-600'"
+                x-text="product.status === 'active' ? 'Actif' : 'Inactif'"
+              ></span>
+            </div>
+            <button 
+              class="bg-[#007ACE] text-white px-3 py-1 rounded text-sm hover:bg-[#006BCE] transition-colors"
+              @click="window.location.href = product.link"
+            >
+              Accéder
+            </button>
+          </div>
+        </template>
+        
+        <!-- Besoin d'aide -->
+        <div class="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+          <div class="flex items-center">
+            <div class="flex-shrink-0 mr-4">
+              <Eye class="text-[#007ACE]" />
+            </div>
+            <div>
+              <h3 class="text-lg font-medium text-gray-900 mb-2">Besoin d'aide ?</h3>
+              <p class="text-gray-600 text-sm">Consultez notre FAQ</p>
+            </div>
+          </div>
+          <button 
+            class="bg-[#007ACE] text-white px-3 py-1 rounded text-sm hover:bg-[#006BCE] transition-colors mt-4"
+            @click="window.location.href = '/faq'"
+          >
+            Voir la FAQ
+          </button>
+        </div>
+      </div>
+      
+      <!-- Message si aucun produit acheté -->
+      <template x-if="purchasedProducts.length === 0">
+        <div class="bg-white border border-gray-200 rounded-lg p-6 shadow-sm text-center mt-4">
+          <p class="text-gray-600 mb-4">📋 Vous n'avez pas encore de produits actifs.</p>
+          <p class="text-sm text-gray-500">Découvrez nos offres dans la section "Les autres services" ci-dessous.</p>
+        </div>
+      </template>
+    </section>
+    
+    <!-- Augmentez vos ventes -->
+    <section class="mb-12">
+      <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#00BDCF] mr-2">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        Les autres services
+      </h2>
+      <div class="grid grid-cols-2 gap-4">
+        <template x-for="product in nonPurchasedProducts">
+          <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm text-center">
+            <p class="font-medium mb-3" x-text="product.name"></p>
+            <button 
+              class="bg-[#007ACE] text-white px-3 py-1 rounded text-sm hover:bg-[#006BCE] transition-colors"
+              @click="window.location.href = product.link"
+            >
+              Découvrir
+            </button>
+          </div>
+        </template>
+        
+        <!-- Message si aucun produit non acheté -->
+        <template x-if="nonPurchasedProducts.length === 0">
+          <div class="col-span-2 bg-white border border-gray-200 rounded-lg p-6 shadow-sm text-center">
+            <p class="text-gray-600 mb-4">🎉 Vous avez déjà accès à tous nos services.</p>
+            <p class="text-sm text-gray-500">Revenez bientôt pour découvrir nos nouvelles offres.</p>
+          </div>
+        </template>
+      </div>
+    </section>
+    
+    <!-- Besoin d'aide section -->
+    <section class="mb-12">
+      <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+        <Eye class="text-[#007ACE] mr-2" />
+        Besoin d'Aide ?
+      </h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+          <div class="flex items-center justify-between">
+            <div>
+              <h4 class="font-medium text-gray-900">Difficulté 1</h4>
+              <p class="text-sm text-gray-600">Problème technique ou question</p>
+            </div>
+          </div>
+          <button 
+            class="bg-[#007ACE] text-white px-3 py-1 rounded text-sm hover:bg-[#006BCE] transition-colors mt-3"
+            @click="window.location.href = '/contact'"
+          >
+            Contactez-nous
+          </button>
+        </div>
+        <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+          <div class="flex items-center justify-between">
+            <div>
+              <h4 class="font-medium text-gray-900">Des idées ?</h4>
+              <p class="text-sm text-gray-600">Suggestions et améliorations</p>
+            </div>
+          </div>
+          <button 
+            class="bg-[#007ACE] text-white px-3 py-1 rounded text-sm hover:bg-[#006BCE] transition-colors mt-3"
+            @click="window.location.href = '/contact'"
+          >
+            Contactez-nous
+          </button>
+        </div>
+      </div>
+    </section>
+  </div>
+</BaseLayout>
+
+<!-- Import du script Alpine.js pour la logique du dashboard -->
+<script is:inline src="/js/pages/dashboardState.js" ></script>
+
+<style>
+  /* Styles spécifiques au dashboard */
+  .dashboard-card {
+    transition: all 0.2s ease;
+  }
+  
+  .dashboard-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  }
+</style>

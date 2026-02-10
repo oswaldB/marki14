@@ -1,0 +1,589 @@
+---// src/pages/relances/index.astro
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Boîte d'envoi des relances">
+  <div class="container mx-auto px-4 py-8" x-data="relancesState()" x-init="init()">
+    <h1 class="text-3xl font-bold text-gray-800 mb-8">Boîte d'envoi des relances</h1>
+
+    <!-- Barre de recherche et filtres -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+      <div class="flex flex-col lg:flex-row lg:items-center lg:space-x-4 space-y-4 lg:space-y-0">
+        <!-- Recherche -->
+        <div class="flex-1">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Rechercher</label>
+          <div class="relative">
+            <input
+              type="text"
+              placeholder="Rechercher par facture, dossier, payeur..."
+              class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              x-model="searchTerm"
+              @keyup.enter="performSearch()"
+            />
+            <svg class="absolute right-3 top-2.5 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Filtre de date -->
+        <div class="flex-1">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Période</label>
+          <select
+            class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            x-model="dateRange"
+            @change="performSearch()"
+          >
+            <option value="today">Aujourd'hui</option>
+            <option value="thisWeek">Cette semaine</option>
+            <option value="thisMonth">Ce mois</option>
+            <option value="custom">Personnalisé</option>
+          </select>
+        </div>
+
+        <!-- Dates personnalisées (si période personnalisée) -->
+        <div x-show="dateRange === 'custom'" class="flex flex-col lg:flex-row lg:items-end lg:space-x-2 space-y-2 lg:space-y-0">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Du</label>
+            <input
+              type="date"
+              class="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              x-model="customStartDate"
+              @change="performSearch()"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Au</label>
+            <input
+              type="date"
+              class="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              x-model="customEndDate"
+              @change="performSearch()"
+            />
+          </div>
+        </div>
+
+        <!-- Bouton de recherche -->
+        <div class="flex-shrink-0">
+          <label class="block text-sm font-medium text-gray-700 mb-1">&nbsp;</label>
+          <button
+            class="w-full px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            @click="performSearch()"
+            :disabled="isLoading"
+          >
+            <span x-show="!isLoading">Rechercher</span>
+            <span x-show="isLoading" class="flex items-center space-x-2">
+              <span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+              <span>Recherche...</span>
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Affichage des résultats -->
+    <div class="flex flex-col lg:flex-row lg:space-x-8">
+      <!-- Colonne des cartes de relances -->
+      <div class="lg:w-1/3 flex-shrink-0">
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+          <div class="p-4 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-800">Relances à envoyer (<span x-text="relances.length"></span>)</h2>
+          </div>
+
+          <!-- Liste des relances -->
+          <div x-show="isLoading" class="p-4 text-center">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <p class="mt-2 text-gray-600">Chargement des relances...</p>
+          </div>
+
+          <div x-show="error" class="p-4 text-center">
+            <div class="text-red-500 font-medium">⚠️ <span x-text="error"></span></div>
+            <button
+              class="mt-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
+              @click="performSearch()"
+            >
+              Réessayer
+            </button>
+          </div>
+
+          <div x-show="!isLoading && !error && paginatedRelances.length === 0" class="p-4 text-center">
+            <p class="text-gray-600">Aucune relance à envoyer pour cette période.</p>
+          </div>
+
+          <div x-show="!isLoading && !error && paginatedRelances.length > 0" class="divide-y divide-gray-200">
+            <template x-for="relance in paginatedRelances" :key="relance.id">
+              <div
+                class="p-4 cursor-pointer hover:bg-gray-50"
+                :class="{ 'bg-blue-50': selectedRelance && selectedRelance.id === relance.id }"
+                @click="selectRelance(relance)"
+              >
+                <div class="flex items-start space-x-3">
+                  <div class="flex-shrink-0">
+                    <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                      <span class="text-blue-600 font-semibold text-sm" x-text="relance.impaye && relance.impaye.nfacture && typeof relance.impaye.nfacture === 'string' ? relance.impaye.nfacture.substring(0, 2) : 'R'"></span>
+                    </div>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <div class="text-sm font-medium text-gray-900 truncate" x-text="relance.email_subject || 'Sans sujet'"></div>
+                    <div class="text-sm text-gray-500 mt-1">
+                      <span class="font-medium">Facture:</span> <span x-text="relance.impaye ? relance.impaye.nfacture : 'N/A'"></span>
+                    </div>
+                    <div class="text-sm text-gray-500">
+                      <span class="font-medium">À:</span> <span x-text="relance.email_to || 'N/A'"></span>
+                    </div>
+                    <div class="text-sm text-gray-500">
+                      <span class="font-medium">Date:</span> <span x-text="formatDate(relance.send_date)"></span>
+                    </div>
+                    <div x-show="relance.sequence" class="text-xs text-gray-400 mt-1">
+                      <span class="font-medium">Séquence:</span> <span x-text="relance.sequence.nom"></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </template>
+          </div>
+
+          <!-- Pagination -->
+          <div x-show="relances.length > itemsPerPage" class="p-4 border-t border-gray-200 flex items-center justify-between">
+            <button
+              class="px-3 py-1 text-sm rounded-md border border-gray-300 hover:bg-gray-50 disabled:opacity-50"
+              :disabled="currentPage === 1"
+              @click="currentPage--; performSearch()"
+            >
+              Précédent
+            </button>
+            <span class="text-sm text-gray-600">
+              Page <span x-text="currentPage"></span> sur <span x-text="totalPages"></span>
+            </span>
+            <button
+              class="px-3 py-1 text-sm rounded-md border border-gray-300 hover:bg-gray-50 disabled:opacity-50"
+              :disabled="currentPage === totalPages"
+              @click="currentPage++; performSearch()"
+            >
+              Suivant
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Colonne de détail/édition -->
+      <div class="lg:w-2/3 mt-8 lg:mt-0">
+        <template x-if="selectedRelance">
+          <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <div class="p-6">
+              <!-- En-tête -->
+              <div class="flex items-center justify-between mb-6">
+                <div>
+                  <h2 class="text-xl font-bold text-gray-800">
+                    <template x-if="isEditing">Modifier la relance</template>
+                    <template x-if="!isEditing" x-text="selectedRelance.email_subject || 'Relance sans sujet'"></template>
+                  </h2>
+                  <div class="text-sm text-gray-500 mt-1" x-text="formatDate(selectedRelance.send_date)"></div>
+                </div>
+                <div class="flex space-x-2">
+                  <template x-if="!isEditing">
+                    <button
+                      class="px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700"
+                      @click="isEditing = true"
+                    >
+                      Modifier
+                    </button>
+                  </template>
+                  <template x-if="isEditing">
+                    <button
+                      class="px-4 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700"
+                      @click="isEditing = false"
+                    >
+                      Annuler
+                    </button>
+                  </template>
+                  <button
+                    class="px-4 py-2 bg-gray-200 text-gray-700 text-sm rounded-md hover:bg-gray-300"
+                    @click="selectedRelance = null"
+                  >
+                    Fermer
+                  </button>
+                </div>
+              </div>
+
+              <!-- Contenu de la relance -->
+              <div class="space-y-6">
+                <!-- Informations de l'impayé -->
+                <div class="bg-gray-50 rounded-lg p-4">
+                  <h3 class="font-semibold text-gray-800 mb-3">Informations de l'impayé</h3>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <div class="text-gray-500">Facture</div>
+                      <div class="font-medium" x-text="selectedRelance.impaye ? selectedRelance.impaye.nfacture : 'N/A'"></div>
+                    </div>
+                    <div>
+                      <div class="text-gray-500">Dossier</div>
+                      <div class="font-medium" x-text="selectedRelance.impaye ? selectedRelance.impaye.idDossier : 'N/A'"></div>
+                    </div>
+                    <div>
+                      <div class="text-gray-500">Montant TTC</div>
+                      <div class="font-medium" x-text="formatCurrency(selectedRelance.impaye ? selectedRelance.impaye.totalttcnet : null)"></div>
+                    </div>
+                    <div>
+                      <div class="text-gray-500">Reste à payer</div>
+                      <div class="font-medium" x-text="formatCurrency(selectedRelance.impaye ? selectedRelance.impaye.resteapayer : null)"></div>
+                    </div>
+                    <div>
+                      <div class="text-gray-500">Payeur</div>
+                      <div class="font-medium" x-text="selectedRelance.impaye ? selectedRelance.impaye.payeur_nom : 'N/A'"></div>
+                    </div>
+                    <div>
+                      <div class="text-gray-500">Email payeur</div>
+                      <div class="font-medium" x-text="selectedRelance.impaye ? selectedRelance.impaye.payeur_email : 'N/A'"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Contenu du message -->
+                <div>
+                  <h3 class="font-semibold text-gray-800 mb-3">Contenu du message</h3>
+                  <template x-if="isEditing">
+                    <div class="space-y-4">
+                      <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Sujet</label>
+                        <input
+                          type="text"
+                          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          x-model="selectedRelance.email_subject"
+                        />
+                      </div>
+                      <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Destinataire</label>
+                        <input
+                          type="email"
+                          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          x-model="selectedRelance.email_to"
+                        />
+                      </div>
+                      <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Copie carbone</label>
+                        <input
+                          type="email"
+                          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          x-model="selectedRelance.email_cc"
+                        />
+                      </div>
+                      <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Corps du message</label>
+                        <textarea
+                          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 h-64"
+                          x-model="selectedRelance.email_body"
+                        ></textarea>
+                      </div>
+                      <div class="flex space-x-3">
+                        <button
+                          class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                          @click="saveRelance()"
+                        >
+                          Enregistrer les modifications
+                        </button>
+                        <button
+                          class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
+                          @click="isEditing = false"
+                        >
+                          Annuler
+                        </button>
+                      </div>
+                    </div>
+                  </template>
+                  <template x-if="!isEditing">
+                    <div class="bg-white border border-gray-200 rounded-lg p-4">
+                      <div class="mb-4">
+                        <div class="text-sm text-gray-500 mb-1">De:</div>
+                        <div class="font-medium" x-text="selectedRelance.email_sender || 'N/A'"></div>
+                      </div>
+                      <div class="mb-4">
+                        <div class="text-sm text-gray-500 mb-1">À:</div>
+                        <div class="font-medium" x-text="selectedRelance.email_to || 'N/A'"></div>
+                      </div>
+                      <div class="mb-4">
+                        <div class="text-sm text-gray-500 mb-1">Cc:</div>
+                        <div class="font-medium" x-text="selectedRelance.email_cc || 'Aucun'"></div>
+                      </div>
+                      <div class="mb-4">
+                        <div class="text-sm text-gray-500 mb-1">Sujet:</div>
+                        <div class="font-medium" x-text="selectedRelance.email_subject || 'Sans sujet'"></div>
+                      </div>
+                      <div class="border-t border-gray-200 pt-4">
+                        <div class="text-sm text-gray-500 mb-2">Corps du message:</div>
+                        <div class="prose max-w-none bg-gray-50 p-4 rounded-md overflow-auto max-h-[400px]" x-text="selectedRelance.email_body || 'Aucun contenu'"></div>
+                      </div>
+                    </div>
+                  </template>
+                </div>
+
+                <!-- Actions -->
+                <div class="bg-gray-50 rounded-lg p-4">
+                  <h3 class="font-semibold text-gray-800 mb-3">Actions</h3>
+                  <div class="flex flex-wrap gap-3">
+                    <button
+                      class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 flex items-center"
+                      @click="markAsSent()"
+                    >
+                      <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                      </svg>
+                      Marquer comme envoyée
+                    </button>
+                    <button
+                      class="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 flex items-center"
+                      @click="isEditing = true"
+                    >
+                      <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L15.232 5.232z"></path>
+                      </svg>
+                      Modifier
+                    </button>
+                    <button
+                      class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 flex items-center"
+                      @click="deleteRelance()"
+                    >
+                      <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                      </svg>
+                      Supprimer
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </template>
+        
+        <template x-if="!selectedRelance">
+          <div class="bg-white rounded-lg shadow-md p-8 text-center">
+            <div class="text-gray-400 mb-4">
+              <svg class="mx-auto h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+              </svg>
+            </div>
+            <h3 class="text-lg font-medium text-gray-800 mb-2">Sélectionnez une relance</h3>
+            <p class="text-gray-600">Cliquez sur une relance dans la colonne de gauche pour voir et modifier son contenu.</p>
+          </div>
+        </template>
+      </div>
+    </div>
+  </div>
+</BaseLayout>
+
+<script>
+  document.addEventListener('alpine:init', () => {
+    Alpine.data('relancesState', () => ({
+      // État initial
+      relances: [],
+      isLoading: false,
+      error: null,
+      searchTerm: '',
+      dateRange: 'today',
+      customStartDate: '',
+      customEndDate: '',
+      selectedRelance: null,
+      isEditing: false,
+      currentPage: 1,
+      itemsPerPage: 10,
+
+      // Initialisation
+      init() {
+        this.performSearch();
+      },
+
+      // Récupérer les relances depuis Parse
+      async performSearch() {
+        this.isLoading = true;
+        this.error = null;
+
+        try {
+          const Relances = Parse.Object.extend('Relances');
+          const query = new Parse.Query(Relances);
+
+          // Filtrer par date d'envoi
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+
+          switch (this.dateRange) {
+            case 'thisWeek':
+              const startOfWeek = new Date(today);
+              startOfWeek.setDate(today.getDate() - today.getDay()); // Dimanche
+              query.greaterThanOrEqualTo('send_date', startOfWeek);
+              break;
+            case 'thisMonth':
+              const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+              query.greaterThanOrEqualTo('send_date', startOfMonth);
+              break;
+            case 'custom':
+              if (this.customStartDate) {
+                query.greaterThanOrEqualTo('send_date', new Date(this.customStartDate));
+              }
+              if (this.customEndDate) {
+                const endDate = new Date(this.customEndDate);
+                endDate.setHours(23, 59, 59, 999);
+                query.lessThanOrEqualTo('send_date', endDate);
+              }
+              break;
+            case 'today':
+            default:
+              const tomorrow = new Date(today);
+              tomorrow.setDate(today.getDate() + 1);
+              query.greaterThanOrEqualTo('send_date', today);
+              query.lessThan('send_date', tomorrow);
+              break;
+          }
+
+          // Inclure les données de l'impayé pour l'affichage
+          query.include('impaye');
+          query.include('sequence');
+          query.include('relance');
+          query.equalTo('is_sent', false); // Seules les relances non envoyées
+          query.descending('send_date'); // Tri par date d'envoi décroissante
+
+          const results = await query.find();
+          
+          // Convertir les résultats en format utilisable
+          this.relances = results.map(relance => ({
+            id: relance.id,
+            ...relance.toJSON(),
+            send_date: relance.get('send_date')
+          }));
+
+        } catch (error) {
+          console.error('Erreur lors de la récupération des relances:', error);
+          this.error = 'Erreur lors de la récupération des relances. Veuillez réessayer.';
+          this.relances = [];
+        } finally {
+          this.isLoading = false;
+        }
+      },
+
+      // Sélectionner une relance
+      selectRelance(relance) {
+        this.selectedRelance = relance;
+        this.isEditing = false;
+      },
+
+      // Sauvegarder une relance
+      async saveRelance() {
+        if (!this.selectedRelance) return;
+
+        try {
+          const Relances = Parse.Object.extend('Relances');
+          const relance = new Relances();
+          relance.id = this.selectedRelance.id;
+
+          // Mettre à jour les champs
+          relance.set('email_subject', this.selectedRelance.email_subject);
+          relance.set('email_to', this.selectedRelance.email_to);
+          relance.set('email_cc', this.selectedRelance.email_cc);
+          relance.set('email_body', this.selectedRelance.email_body);
+
+          await relance.save();
+
+          this.isEditing = false;
+          this.performSearch();
+
+        } catch (error) {
+          console.error('Erreur lors de la mise à jour de la relance:', error);
+          alert('Erreur lors de la mise à jour de la relance');
+        }
+      },
+
+      // Marquer une relance comme envoyée
+      async markAsSent() {
+        if (!this.selectedRelance || !confirm('Êtes-vous sûr de vouloir marquer cette relance comme envoyée ?')) return;
+
+        try {
+          const Relances = Parse.Object.extend('Relances');
+          const relance = new Relances();
+          relance.id = this.selectedRelance.id;
+
+          // Marquer comme envoyée
+          relance.set('is_sent', true);
+          relance.set('actual_send_date', new Date());
+
+          await relance.save();
+
+          this.selectedRelance = null;
+          this.performSearch();
+
+        } catch (error) {
+          console.error('Erreur lors de l\'envoi de la relance:', error);
+          alert('Erreur lors de l\'envoi de la relance');
+        }
+      },
+
+      // Supprimer une relance
+      async deleteRelance() {
+        if (!this.selectedRelance || !confirm('Êtes-vous sûr de vouloir supprimer cette relance ?')) return;
+
+        try {
+          const Relances = Parse.Object.extend('Relances');
+          const relance = new Relances();
+          relance.id = this.selectedRelance.id;
+
+          await relance.destroy();
+
+          this.selectedRelance = null;
+          this.performSearch();
+
+        } catch (error) {
+          console.error('Erreur lors de la suppression de la relance:', error);
+          alert('Erreur lors de la suppression de la relance');
+        }
+      },
+
+      // Formater la date pour l'affichage
+      formatDate(date) {
+        if (!date) return '';
+        return new Date(date).toLocaleString('fr-FR', {
+          weekday: 'short',
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+      },
+
+      // Formater la devise
+      formatCurrency(value) {
+        if (value === null || value === undefined) return '';
+        return parseFloat(value).toLocaleString('fr-FR', {
+          style: 'currency',
+          currency: 'EUR'
+        });
+      },
+
+      // Calculer les relances pour la page courante
+      get paginatedRelances() {
+        const start = (this.currentPage - 1) * this.itemsPerPage;
+        const end = start + this.itemsPerPage;
+        return this.relances.slice(start, end);
+      },
+
+      // Calcul du nombre total de pages
+      get totalPages() {
+        return Math.ceil(this.relances.length / this.itemsPerPage);
+      }
+    }));
+  });
+</script>
+
+<style>
+  /* Styles spécifiques à cette page */
+  .prose {
+    line-height: 1.6;
+  }
+  
+  .prose ul,
+  .prose ol {
+    padding-left: 1.5rem;
+  }
+  
+  .prose li {
+    margin-bottom: 0.5rem;
+  }
+</style>

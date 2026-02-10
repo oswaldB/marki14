@@ -1,0 +1,121 @@
+---
+// src/components/Markdown.astro
+// Composant pour rendre le contenu Markdown
+
+interface Props {
+  content: string;
+}
+
+const { content } = Astro.props;
+---
+
+<div set:html={content} class="markdown-content"></div>
+
+<style is:global>
+  .markdown-content h1,
+  .markdown-content h2,
+  .markdown-content h3,
+  .markdown-content h4,
+  .markdown-content h5,
+  .markdown-content h6 {
+    font-weight: 600;
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+    line-height: 1.2;
+  }
+
+  .markdown-content h1 {
+    font-size: 2.25rem;
+    border-bottom: 2px solid #e5e7eb;
+    padding-bottom: 0.5rem;
+  }
+
+  .markdown-content h2 {
+    font-size: 1.875rem;
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 0.25rem;
+  }
+
+  .markdown-content h3 {
+    font-size: 1.5rem;
+  }
+
+  .markdown-content p {
+    margin-bottom: 1rem;
+    line-height: 1.6;
+  }
+
+  .markdown-content ul,
+  .markdown-content ol {
+    margin-bottom: 1rem;
+    padding-left: 2rem;
+  }
+
+  .markdown-content li {
+    margin-bottom: 0.5rem;
+  }
+
+  .markdown-content a {
+    color: #3b82f6;
+    text-decoration: underline;
+    transition: color 0.2s;
+  }
+
+  .markdown-content a:hover {
+    color: #1d4ed8;
+  }
+
+  .markdown-content code {
+    background-color: #f3f4f6;
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.875em;
+  }
+
+  .markdown-content pre {
+    background-color: #1f2937;
+    color: #f3f4f6;
+    padding: 1rem;
+    border-radius: 6px;
+    overflow-x: auto;
+    margin-bottom: 1rem;
+  }
+
+  .markdown-content pre code {
+    background: none;
+    padding: 0;
+    color: inherit;
+  }
+
+  .markdown-content blockquote {
+    border-left: 4px solid #3b82f6;
+    padding-left: 1rem;
+    margin-left: 0;
+    color: #4b5563;
+    font-style: italic;
+    margin-bottom: 1rem;
+  }
+
+  .markdown-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1rem;
+  }
+
+  .markdown-content th,
+  .markdown-content td {
+    border: 1px solid #e5e7eb;
+    padding: 0.75rem;
+    text-align: left;
+  }
+
+  .markdown-content th {
+    background-color: #f9fafb;
+    font-weight: 600;
+  }
+
+  .markdown-content tr:nth-child(even) {
+    background-color: #f9fafb;
+  }
+</style>

@@ -1,0 +1,573 @@
+---// src/pages/impayes/by-actor.astro
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Pebble from '../../components/Pebble.astro';
+import { Search, BarChart2, User, FileText, Menu, Circle, Plus, Minus, Settings, X, Download, Printer } from '@lucide/astro';
+
+
+const pageTitle = 'Impayés - Vue par Acteur';
+const pageDescription = 'Voir les impayés par acteur';
+---
+  <!-- Alpine.js Base Store -->
+<script is:inline src = '/js/stores/impayesBaseStore.js'></script>
+  <!-- Alpine.js State and Functions -->
+<script is:inline src = '/js/pages/impayesByActorState.js'></script>
+
+<!-- Base Layout with Parse initialization -->
+<BaseLayout title={pageTitle}>
+  <!-- Pebbles Background - Following Styleguide -->
+  <div class="fixed inset-0 overflow-hidden -z-10">
+    <div class="absolute inset-0 bg-gradient-to-br from-gray-50 to-white"></div>
+    <!-- Animated Pebbles - Using Pebble component -->
+    <div class="absolute inset-0">
+      <!-- Pebble 1 - Primary -->
+      <Pebble 
+        size="large"
+        color="primary"
+        opacity="low"
+        animation="float-1"
+        position="absolute top-20 left-20"
+        title="Pebble Principal - Couleur Primary #007ACE"
+      />
+      
+      <!-- Pebble 2 - Secondary -->
+      <Pebble 
+        size="xlarge"
+        color="secondary"
+        opacity="medium"
+        animation="float-2"
+        position="absolute top-1/2 right-1/4"
+        title="Pebble Secondaire - Couleur Secondary #00BDCF"
+      />
+      
+      <!-- Pebble 3 - Success -->
+      <Pebble 
+        size="large"
+        color="success"
+        opacity="low"
+        animation="float-3"
+        position="absolute bottom-20 left-1/3"
+        title="Pebble Succès - Couleur Success #00CF9B"
+      />
+    </div>
+  </div>
+  
+  <!-- Main content container -->
+  <div class="container mx-auto px-4 py-6 relative z-10" id="byActorPage"
+       x-data="impayesByActorState()"
+       x-init="init()">
+    <!-- Page Header -->
+    <header class="mb-8">
+      <h1 class="text-3xl font-bold text-gray-900 mb-2">{pageTitle}</h1>
+      <p class="text-gray-600 mb-6">{pageDescription}</p>
+      
+      <!-- Search Bar -->
+      <div class="mb-6">
+        <div class="flex flex-col sm:flex-row gap-2">
+          <div class="relative flex-1">
+            <input 
+              type="search"
+              placeholder="Rechercher..."
+              class="w-full px-4 py-2 pl-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#007ACE] focus:border-transparent"
+              x-model="searchQuery"
+              @keyup.enter="performSearch()"
+              data-testid="search-input"
+            >
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search class="w-5 h-5 text-gray-400" />
+            </div>
+          </div>
+          <button
+            @click="performSearch()"
+            class="px-6 py-2 bg-[#007ACE] text-white rounded-md hover:bg-[#006BCE] transition-colors flex items-center justify-center space-x-2"
+            :disabled="isSearching"
+            data-testid="search-button"
+          >
+            <span x-show="!isSearching">Rechercher</span>
+            <span x-show="isSearching" class="flex items-center space-x-2">
+              <span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+              <span>Recherche...</span>
+            </span>
+            <Search class="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+      
+
+    </header>
+    
+    <!-- Main Content Area -->
+    <main class="min-h-screen">
+      <!-- By Actor View - Implementation -->
+      <div class="space-y-4">
+        <!-- Loading state -->
+        <div x-show="isLoading" class="text-center py-8">
+          <div class="w-12 h-12 border-4 border-[#4597CF] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p class="text-gray-600">Chargement des acteurs...</p>
+        </div>
+        
+        <!-- Empty state -->
+        <div x-show="!isLoading && Object.keys(impayesByActor).length === 0" class="bg-white border border-gray-200 rounded-lg p-6 shadow-sm text-center">
+          <h3 class="text-lg font-medium text-gray-900 mb-2">Aucun acteur trouvé</h3>
+          <p class="text-gray-600 mb-4">Aucune facture n'est associée à des acteurs.</p>
+        </div>
+        
+        <!-- Sorting controls for actor view -->
+        <div x-show="!isLoading && Object.keys(impayesByActor).length > 0" class="mb-4">
+          <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
+            <div class="flex flex-wrap items-center justify-between gap-4">
+              <div class="flex flex-wrap gap-2">
+                <h3 class="text-sm font-medium text-gray-900 mr-4">Trier les acteurs par :</h3>
+                
+                <!-- Sort by Total Amount -->
+                <button
+                  class="px-3 py-2 text-sm rounded-md transition-colors flex items-center space-x-1"
+                  :class="actorSortBy === 'total' ? 'bg-[#007ACE] text-white hover:bg-[#006BCE]' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
+                  @click="setActorSortBy('total')"
+                  title="Trier par montant total"
+                >
+                  <BarChart2 class="w-4 h-4" />
+                  <span>Montant total</span>
+                </button>
+                
+                <!-- Sort by Name -->
+                <button
+                  class="px-3 py-2 text-sm rounded-md transition-colors flex items-center space-x-1"
+                  :class="actorSortBy === 'name' ? 'bg-[#007ACE] text-white hover:bg-[#006BCE]' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
+                  @click="setActorSortBy('name')"
+                  title="Trier par nom"
+                >
+                  <User class="w-4 h-4" />
+                  <span>Nom</span>
+                </button>
+                
+                <!-- Sort by Invoices Count -->
+                <button
+                  class="px-3 py-2 text-sm rounded-md transition-colors flex items-center space-x-1"
+                  :class="actorSortBy === 'count' ? 'bg-[#007ACE] text-white hover:bg-[#006BCE]' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
+                  @click="setActorSortBy('count')"
+                  title="Trier par nombre de factures"
+                >
+                  <FileText class="w-4 h-4" />
+                  <span>Nombre factures</span>
+                </button>
+              </div>
+              
+              <!-- Sort direction toggle -->
+              <div class="flex items-center gap-2">
+                <button
+                  class="px-3 py-2 text-sm rounded-md transition-colors flex items-center space-x-1"
+                  :class="actorSortDirection === 'desc' ? 'bg-[#007ACE] text-white hover:bg-[#006BCE]' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
+                  @click="toggleActorSortDirection()"
+                  title="Basculer la direction de tri"
+                >
+                  <Menu class="w-4 h-4" />
+                  <span x-text="actorSortDirection === 'desc' ? 'Décroissant' : 'Croissant'"></span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Actors list -->
+        <div x-show="!isLoading && Object.keys(impayesByActor).length > 0" class="space-y-4">
+          <template x-for="(actorData, actorName) in impayesByActor" :key="actorName">
+            <div class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+              <!-- Actor header -->
+              <div class="p-4 border-b border-gray-100 bg-gray-50">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center space-x-3">
+                    <div class="w-12 h-12 bg-[#4597CF] bg-opacity-10 rounded-full flex items-center justify-center">
+                      <span class="text-[#4597CF] font-semibold" x-text="actorName.charAt(0).toUpperCase()"></span>
+                    </div>
+                    <div>
+                      <h3 class="font-semibold text-gray-900" x-text="actorName"></h3>
+                      <p class="text-sm text-gray-500">
+                        <span x-text="actorData.toPay.length"></span> à régler • 
+                        <span x-text="actorData.broughtIn.length"></span> apportées
+                      </p>
+                    </div>
+                  </div>
+                  <div class="text-right">
+                    <p class="text-sm font-medium text-gray-900">Total:</p>
+                    <p class="text-sm text-[#007ACE] font-semibold" x-text="calculateGroupTotal(actorData.toPay).toLocaleString('fr-FR', {style: 'currency', currency: 'EUR'})"></p>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Actor content -->
+              <div class="p-4 space-y-4">
+                <!-- Invoices to pay (red/orange section) -->
+                <div x-show="actorData.toPay.length > 0">
+                  <div class="flex justify-between items-center mb-2">
+                    <h4 class="font-medium text-red-700 flex items-center space-x-2">
+                      <Circle class="w-4 h-4" />
+                      <span>FACTURES À RÉGLER</span>
+                      <span class="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full" x-text="actorData.toPay.length"></span>
+                    </h4>
+                    <span class="text-sm font-medium" x-text="calculateGroupTotal(actorData.toPay).toLocaleString('fr-FR', {style: 'currency', currency: 'EUR'})"></span>
+                  </div>
+                  
+                  <div class="space-y-2">
+                    <template x-for="invoice in actorData.toPay" :key="invoice.objectId">
+                      <div class="border border-red-100 rounded-md p-2 hover:bg-red-50 transition-colors">
+                        <div class="grid grid-cols-12 gap-2 items-center">
+                          <div class="col-span-4">
+                            <p class="text-sm font-medium text-gray-900" x-text="'#' + invoice.nfacture"></p>
+                            <p class="text-xs text-gray-500" x-text="formatDate(invoice.datepiece)"></p>
+                            <p class="text-xs text-gray-400" x-text="formatAddress(invoice)"></p>
+                            <p class="text-xs text-gray-400" x-show="invoice.dateDebutMission">
+                              <span>Interv: </span>
+                              <span x-text="formatInterventionDate(invoice.dateDebutMission)"></span>
+                            </p>
+                          </div>
+                          <div class="col-span-3">
+                            <p class="text-sm text-gray-600" x-text="(invoice.resteapayer || 0).toLocaleString('fr-FR', {style: 'currency', currency: 'EUR'})"></p>
+                            <p class="text-xs text-red-600" x-text="calculateDaysOverdue(invoice.datepiece) + 'j retard'"></p>
+                          </div>
+                          <div class="col-span-3">
+                            <span 
+                              class="text-xs px-2 py-1 rounded-full"
+                              :class="invoice.sequence_is_automatic ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'"
+                              x-text="invoice.sequence_name"
+                            ></span>
+                            <span x-show="invoice.sequence_is_automatic" class="text-purple-600 ml-1">
+                      <FileText class="w-4 h-4" />
+                    </span>
+                          </div>
+                          <div class="col-span-2 flex justify-end">
+                            <button 
+                              @click="openPdfViewer(invoice.objectId)"
+                              class="text-gray-400 hover:text-gray-600 text-sm"
+                              title="Voir PDF"
+                            >
+                              <FileText class="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+                
+                <!-- Brought in invoices (green/blue section) -->
+                <div x-show="actorData.broughtIn.length > 0">
+                  <div class="flex justify-between items-center mb-2">
+                    <h4 class="font-medium text-green-700 flex items-center space-x-2">
+                      <Circle class="w-4 h-4" />
+                      <span>FACTURES APPORTÉES</span>
+                      <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full" x-text="actorData.broughtIn.length"></span>
+                    </h4>
+                    <span class="text-sm font-medium" x-text="calculateGroupTotal(actorData.broughtIn).toLocaleString('fr-FR', {style: 'currency', currency: 'EUR'})"></span>
+                  </div>
+                  
+                  <div class="space-y-2">
+                    <template x-for="invoice in actorData.broughtIn" :key="invoice.objectId">
+                      <div class="border border-green-100 rounded-md p-2 hover:bg-green-50 transition-colors">
+                        <div class="grid grid-cols-12 gap-2 items-center">
+                          <div class="col-span-4">
+                            <p class="text-sm font-medium text-gray-900" x-text="'#' + invoice.nfacture"></p>
+                            <p class="text-xs text-gray-500" x-text="formatDate(invoice.datepiece)"></p>
+                            <p class="text-xs text-gray-400" x-text="formatAddress(invoice)"></p>
+                            <p class="text-xs text-gray-400" x-show="invoice.dateDebutMission">
+                              <span>Interv: </span>
+                              <span x-text="formatInterventionDate(invoice.dateDebutMission)"></span>
+                            </p>
+                          </div>
+                          <div class="col-span-3">
+                            <p class="text-sm text-gray-600" x-text="(invoice.resteapayer || 0).toLocaleString('fr-FR', {style: 'currency', currency: 'EUR'})"></p>
+                            <p class="text-xs text-green-600" x-text="calculateDaysOverdue(invoice.datepiece) + 'j retard'"></p>
+                          </div>
+                          <div class="col-span-3">
+                            <span 
+                              class="text-xs px-2 py-1 rounded-full"
+                              :class="invoice.sequence_is_automatic ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'"
+                              x-text="invoice.sequence_name"
+                            ></span>
+                            <span x-show="invoice.sequence_is_automatic" class="text-purple-600 ml-1">
+                      <FileText class="w-4 h-4" />
+                    </span>
+                          </div>
+                          <div class="col-span-2 flex justify-end">
+                            <button 
+                              @click="openPdfViewer(invoice.objectId)"
+                              class="text-gray-400 hover:text-gray-600 text-sm"
+                              title="Voir PDF"
+                            >
+                              <FileText class="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Actor footer with actions -->
+              <div class="border-t border-gray-100 px-4 py-3 bg-gray-50">
+                <div class="flex justify-end space-x-2">
+                  <button 
+                    @click="openSequenceDrawer(null)"
+                    class="px-3 py-1 bg-[#007ACE] text-white rounded-md hover:bg-[#006BCE] text-sm transition-colors flex items-center space-x-1"
+                    title="Ajouter les séquences"
+                  >
+                    <Plus class="w-4 h-4" />
+                    <span>ajouter séquences</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
+    </main>
+    
+    <!-- Sequence Management Drawer -->
+    <div 
+      x-show="$store.impayesBase.showSequenceDrawer"
+      x-transition
+      class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-end"
+      data-sequence-drawer
+    >
+      <div class="bg-white h-full w-full md:w-1/2 shadow-xl relative" data-sequence-drawer-content>
+        <div class="p-4 border-b border-gray-200 flex justify-between items-center" data-sequence-header>
+          <h3 class="text-lg font-semibold text-gray-900">
+            <template x-if="$store.impayesBase.selectedImpaye">
+              <span>Gérer la séquence - Facture #</span>
+              <span x-text="$store.impayesBase.selectedImpaye.nfacture"></span>
+            </template>
+            <template x-if="!$store.impayesBase.selectedImpaye">
+              <span>Gestion des séquences</span>
+            </template>
+          </h3>
+          <button 
+            @click="closeSequenceDrawer()"
+            class="text-gray-500 hover:text-gray-700"
+            data-sequence-close
+          >
+            <X class="w-4 h-4" />
+            Fermer
+          </button>
+        </div>
+        
+        <div class="p-4 h-[calc(100%-120px)] overflow-auto" data-sequence-content>
+          <!-- Loading state for sequences -->
+          <div x-show="$store.impayesBase.isLoadingSequences" class="text-center py-8">
+            <div class="w-8 h-8 border-2 border-[#007ACE] border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+            <p class="text-gray-600 text-sm">Chargement des séquences...</p>
+          </div>
+          
+          <!-- Content when loaded -->
+          <div x-show="!$store.impayesBase.isLoadingSequences" class="space-y-4">
+            <!-- Current sequence info (if editing a specific invoice) -->
+            <div x-show="$store.impayesBase.selectedImpaye" class="bg-gray-50 p-3 rounded-md">
+              <p class="text-sm font-medium text-gray-900 mb-2">Séquence actuelle:</p>
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                  <span 
+                    class="px-2 py-1 text-xs rounded-full"
+                    :class="$store.impayesBase.selectedImpaye && $store.impayesBase.selectedImpaye.sequence_is_automatic ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'"
+                    x-text="$store.impayesBase.selectedImpaye ? ($store.impayesBase.selectedImpaye.sequence_name || 'Aucune séquence') : 'Aucune séquence'"
+                  ></span>
+                  <span x-show="$store.impayesBase.selectedImpaye && $store.impayesBase.selectedImpaye.sequence_is_automatic" class="text-purple-600">
+                    <FileText class="w-4 h-4" />
+                  </span>
+                </div>
+                <button 
+                  x-show="$store.impayesBase.selectedImpaye && $store.impayesBase.selectedImpaye.sequence_id"
+                  @click="assignSequenceToInvoice($store.impayesBase.selectedImpaye.objectId, null)"
+                  class="text-sm text-red-600 hover:text-red-800"
+                >
+                  Retirer
+                </button>
+              </div>
+            </div>
+            
+            <!-- Create new sequence -->
+            <div class="bg-white border border-gray-200 rounded-md p-3">
+              <p class="text-sm font-medium text-gray-900 mb-2">Créer une nouvelle séquence:</p>
+              <div class="space-y-2">
+                <input 
+                  type="text"
+                  placeholder="Nom de la séquence"
+                  x-model="newSequenceName"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-[#007ACE]"
+                  @keyup.enter="createSequence(newSequenceName, false); newSequenceName = ''"
+                >
+                <div class="flex items-center space-x-2">
+                  <label class="flex items-center text-sm">
+                    <input type="checkbox" x-model="newSequenceIsAutomatic" class="mr-2">
+                    <span>Séquence automatique</span>
+                  </label>
+                  <button 
+                    @click="createSequence(newSequenceName, newSequenceIsAutomatic); newSequenceName = ''; newSequenceIsAutomatic = false"
+                    class="px-3 py-1 bg-[#00CF9B] text-white rounded-md hover:bg-[#00B887] text-sm transition-colors flex items-center space-x-1"
+                    :disabled="!newSequenceName || newSequenceName.trim() === ''"
+                  >
+                    <Minus class="w-4 h-4" />
+                    <span>Créer</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Existing sequences list -->
+            <div class="space-y-2">
+              <p class="text-sm font-medium text-gray-900">Séquences existantes:</p>
+              
+              <template x-for="sequence in $store.impayesBase.sequences" :key="sequence.id">
+                <div 
+                  class="bg-white border border-gray-200 rounded-md p-3 hover:bg-gray-50 transition-colors"
+                >
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                      <span 
+                        class="px-2 py-1 text-xs rounded-full"
+                        :class="sequence.is_automatic ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'"
+                        x-text="sequence.name"
+                      ></span>
+                      <span x-show="sequence.is_automatic" class="text-purple-600">
+                    <FileText class="w-4 h-4" />
+                  </span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                      <span class="text-xs text-gray-500" x-text="sequence.createdAt ? formatDate(sequence.createdAt) : 'Date inconnue'"></span>
+                      <button 
+                        @click.stop=""
+                        class="text-gray-400 hover:text-gray-600"
+                        title="Modifier"
+                      >
+                        <Settings class="w-4 h-4" />
+                      </button>
+                      <button 
+                        @click="$store.impayesBase.selectedImpaye ? assignSequenceToInvoice($store.impayesBase.selectedImpaye.objectId, sequence.id) : ''"
+                        class="px-3 py-1 bg-[#007ACE] text-white rounded-md hover:bg-[#006BCE] text-sm transition-colors flex items-center space-x-1"
+                        :disabled="$store.impayesBase.addingSequenceId === sequence.id"
+                      >
+                        <span x-show="$store.impayesBase.addingSequenceId !== sequence.id">Ajouter</span>
+                        <span x-show="$store.impayesBase.addingSequenceId === sequence.id">
+                          <span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </template>
+              
+              <!-- No sequence option -->
+              <div 
+                x-show="$store.impayesBase.selectedImpaye"
+                class="bg-white border border-gray-200 rounded-md p-3 hover:bg-gray-50 transition-colors cursor-pointer"
+                @click="assignSequenceToInvoice($store.impayesBase.selectedImpaye.objectId, null)"
+              >
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center space-x-2">
+                    <span class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-700">Sans séquence</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Drawer footer -->
+        <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-gray-50" data-sequence-footer>
+          <div class="flex justify-end space-x-2">
+            <button 
+              @click="closeSequenceDrawer()"
+              class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 text-sm transition-colors"
+            >
+              Annuler
+            </button>
+            <button 
+              x-show="$store.impayesBase.selectedImpaye"
+              @click="closeSequenceDrawer()"
+              class="px-4 py-2 bg-[#007ACE] text-white rounded-md hover:bg-[#006BCE] text-sm transition-colors"
+            >
+              Terminer
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- PDF Viewer Drawer -->
+    <div 
+      x-show="$store.impayesBase.showPdfDrawer"
+      x-transition
+      class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-end"
+      data-pdf-viewer-drawer
+    >
+      <div class="bg-white h-full w-full md:w-1/2 shadow-xl relative" data-pdf-viewer-content>
+        <div class="p-4 border-b border-gray-200 flex justify-between items-center" data-pdf-header>
+          <h3 class="text-lg font-semibold text-gray-900">Facture PDF</h3>
+          <button 
+            @click="closePdfViewer()"
+            class="text-gray-500 hover:text-gray-700"
+            data-pdf-close
+          >
+            <X class="w-4 h-4" />
+            Fermer
+          </button>
+        </div>
+        
+        <div class="p-4 h-[calc(100%-60px)] overflow-auto" data-pdf-display>
+          <div x-show="!$store.impayesBase.currentPdfUrl" class="text-center py-12">
+            <p class="text-gray-500">Aucun PDF disponible pour cette facture</p>
+            <p class="text-sm text-gray-400 mt-2">Facture #<span x-text="$store.impayesBase.currentInvoiceId"></span></p>
+          </div>
+          
+          <div x-show="$store.impayesBase.currentPdfUrl" class="h-full flex flex-col">
+            <div class="mb-4">
+              <h4 class="font-semibold text-gray-900">Facture PDF</h4>
+              <p class="text-sm text-gray-600">Facture #<span x-text="$store.impayesBase.currentInvoiceId"></span></p>
+            </div>
+            
+            <div class="flex-1 border border-gray-200 rounded-md overflow-hidden">
+              <iframe 
+                x-bind:src="$store.impayesBase.currentPdfUrl"
+                class="w-full h-full"
+                frameborder="0"
+                allowfullscreen
+              ></iframe>
+            </div>
+          </div>
+        </div>
+        
+        <div class="p-4 border-t border-gray-200 flex justify-end gap-2" data-pdf-controls>
+          <button 
+            x-show="$store.impayesBase.currentPdfUrl"
+            @click="window.open($store.impayesBase.currentPdfUrl, '_blank')"
+            class="px-3 py-1 bg-[#007ACE] text-white rounded-md hover:bg-[#006BCE] flex items-center space-x-1"
+          >
+            <Download class="w-4 h-4" />
+            <span>Télécharger</span>
+          </button>
+          <button 
+            x-show="$store.impayesBase.currentPdfUrl"
+            @click="window.print()"
+            class="px-3 py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 flex items-center space-x-1"
+          >
+            <Printer class="w-4 h-4" />
+            <span>Imprimer</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</BaseLayout>
+
+
+<!-- Page-specific styles -->
+<style>
+  /* Transition effects for view switching */
+  [x-transition] {
+    transition: all 0.3s ease;
+  }
+  
+  /* Ensure proper z-index for PDF viewer */
+  [x-show="$store.impayesBase.showPdfDrawer"] {
+    z-index: 1000;
+  }
+</style>

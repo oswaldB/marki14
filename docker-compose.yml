@@ -37,7 +37,6 @@ services:
       SILENT: "false"  # Désactive le mode silencieux
       PARSE_SERVER_DATABASE_URI: "mongodb://mongodb:27017/parse"
       PARSE_SERVER_MASTER_KEY: "Shaky4-Exception6"
-      PARSE_SERVER_CLOUD: "/parse-server/cloud/main.js"
       PARSE_SERVER_PUBLIC_SERVER_URL: "https://dev.parse.markidiags.com"
       PARSE_SERVER_CORS_ALLOW_ORIGIN: "https://dev.markidiags.com,http://localhost:5000"
       PARSE_SERVER_CORS_ALLOW_METHODS: "GET,POST,PUT,DELETE"
@@ -56,6 +55,8 @@ services:
       FTP_PORT: "2222"
       FTP_USERNAME: "m.wegener"
       FTP_PASSWORD: "Pomme5-Compas6"
+      # Chemin vers le code cloud Parse
+      PARSE_SERVER_CLOUD: "/parse-server/cloud/main.js"
     volumes:
       - ./parse-server/cloud:/parse-server/cloud
 
@@ -82,7 +83,7 @@ services:
       - "443:443"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile
-      - ./public:/usr/share/caddy
+      - ./front/public:/usr/share/caddy
       - caddy_data:/data
       - caddy_config:/config
 

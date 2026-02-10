@@ -1,0 +1,582 @@
+<!--
+  ~ src/pages/settings/users.astro
+  ~ Page de gestion des utilisateurs
+  ~ Permet de créer, modifier, activer/désactiver des utilisateurs et changer leur mot de passe
+-->
+
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+import { Edit, Trash2, X, Plus, Power, User, Lock } from '@lucide/astro';---
+  <!-- Script Alpine.js pour la gestion des utilisateurs -->
+  <script is:inline>
+    document.addEventListener('alpine:init', () => {
+      Alpine.data('userManagementState', () => ({
+        // État initial
+        users: [],
+        searchTerm: '',
+        currentUserId: null,
+        currentUserInfo: null,
+        isUserFormOpen: false,
+        isPasswordFormOpen: false,
+        currentUser: null,
+        userForm: {
+          firstName: '',
+          lastName: '',
+          email: '',
+          password: '',
+          is_admin: false
+        },
+        passwordForm: {
+          userId: null,
+          newPassword: '',
+          confirmPassword: ''
+        },
+
+        // Initialisation
+        async init() {
+          await this.loadUsers();
+          
+          // Charger les informations de l'utilisateur actuel
+          await this.loadCurrentUserInfo();
+        },
+        
+        // Charger les informations de l'utilisateur actuel
+        async loadCurrentUserInfo() {
+          try {
+            const currentUser = Parse.User.current();
+            if (currentUser) {
+              this.currentUserId = currentUser.id;
+              this.currentUserInfo = {
+                id: currentUser.id,
+                firstName: currentUser.get('firstName'),
+                lastName: currentUser.get('lastName'),
+                email: currentUser.get('email'),
+                is_admin: currentUser.get('is_admin') || false
+              };
+            }
+          } catch (error) {
+            console.error('Erreur lors du chargement des informations de l\'utilisateur actuel:', error);
+          }
+        },
+
+        // Charger tous les utilisateurs
+        async loadUsers() {
+          try {
+            this.users = await Parse.Cloud.run('getAllUsers');
+          } catch (error) {
+            console.error('Erreur lors du chargement des utilisateurs:', error);
+            alert('Erreur lors du chargement des utilisateurs: ' + error.message);
+          }
+        },
+
+        // Rechercher des utilisateurs
+        async searchUsers() {
+          try {
+            if (this.searchTerm.trim() === '') {
+              await this.loadUsers();
+            } else {
+              this.users = await Parse.Cloud.run('searchUsers', { searchTerm: this.searchTerm });
+            }
+          } catch (error) {
+            console.error('Erreur lors de la recherche d\'utilisateurs:', error);
+            alert('Erreur lors de la recherche d\'utilisateurs: ' + error.message);
+          }
+        },
+
+        // Ouvrir le formulaire d'utilisateur
+        openUserForm() {
+          this.resetUserForm();
+          this.currentUser = null;
+          this.isUserFormOpen = true;
+        },
+
+        // Modifier un utilisateur
+        async editUser(userId) {
+          try {
+            const user = await Parse.Cloud.run('getUserDetails', { objectId: userId });
+            this.userForm = {
+              firstName: user.firstName,
+              lastName: user.lastName,
+              email: user.email,
+              password: '',
+              is_admin: user.is_admin
+            };
+            this.currentUser = user;
+            this.isUserFormOpen = true;
+          } catch (error) {
+            console.error('Erreur lors de la récupération de l\'utilisateur:', error);
+            alert('Erreur lors de la récupération de l\'utilisateur: ' + error.message);
+          }
+        },
+
+        // Supprimer un utilisateur
+        async deleteUser(userId) {
+          if (confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')) {
+            try {
+              await Parse.Cloud.run('deleteUser', { objectId: userId });
+              await this.loadUsers();
+            } catch (error) {
+              console.error('Erreur lors de la suppression de l\'utilisateur:', error);
+              alert('Erreur lors de la suppression de l\'utilisateur: ' + error.message);
+            }
+          }
+        },
+
+        // Réinitialiser le formulaire d'utilisateur
+        resetUserForm() {
+          this.userForm = {
+            firstName: '',
+            lastName: '',
+            email: '',
+            password: '',
+            is_admin: false
+          };
+        },
+
+        // Sauvegarder un utilisateur
+        async saveUser() {
+          try {
+            // Validation
+            if (!this.userForm.firstName || !this.userForm.lastName || !this.userForm.email) {
+              alert('Veuillez remplir tous les champs obligatoires');
+              return;
+            }
+
+            const params = {
+              firstName: this.userForm.firstName,
+              lastName: this.userForm.lastName,
+              email: this.userForm.email,
+              is_admin: this.userForm.is_admin
+            };
+
+            // Ajouter le mot de passe uniquement s'il est fourni
+            if (this.userForm.password) {
+              params.password = this.userForm.password;
+            }
+
+            let result;
+            if (this.currentUser) {
+              // Mise à jour
+              params.objectId = this.currentUser.objectId;
+              result = await Parse.Cloud.run('updateUser', params);
+            } else {
+              // Création
+              if (!params.password) {
+                alert('Le mot de passe est obligatoire pour la création d\'un utilisateur');
+                return;
+              }
+              result = await Parse.Cloud.run('createUser', params);
+            }
+
+            // Recharger les utilisateurs et fermer le formulaire
+            await this.loadUsers();
+            this.isUserFormOpen = false;
+            
+          } catch (error) {
+            console.error('Erreur lors de la sauvegarde de l\'utilisateur:', error);
+            alert('Erreur lors de la sauvegarde de l\'utilisateur: ' + error.message);
+          }
+        },
+
+        // Ouvrir le formulaire de changement de mot de passe
+        openPasswordChangeForm(userId) {
+          this.passwordForm = {
+            userId: userId,
+            newPassword: '',
+            confirmPassword: ''
+          };
+          this.isPasswordFormOpen = true;
+        },
+
+        // Changer le mot de passe
+        async changePassword() {
+          try {
+            // Validation
+            if (!this.passwordForm.newPassword || !this.passwordForm.confirmPassword) {
+              alert('Veuillez remplir tous les champs');
+              return;
+            }
+
+            if (this.passwordForm.newPassword !== this.passwordForm.confirmPassword) {
+              alert('Les mots de passe ne correspondent pas');
+              return;
+            }
+
+            if (this.passwordForm.newPassword.length < 6) {
+              alert('Le mot de passe doit contenir au moins 6 caractères');
+              return;
+            }
+
+            await Parse.Cloud.run('changeUserPassword', {
+              objectId: this.passwordForm.userId,
+              newPassword: this.passwordForm.newPassword
+            });
+
+            this.isPasswordFormOpen = false;
+            alert('Mot de passe changé avec succès');
+            
+          } catch (error) {
+            console.error('Erreur lors du changement de mot de passe:', error);
+            alert('Erreur lors du changement de mot de passe: ' + error.message);
+          }
+        },
+
+        // Activer/Désactiver un utilisateur
+        async toggleUserStatus(userId, newStatus) {
+          try {
+            await Parse.Cloud.run('setUserActiveStatus', {
+              objectId: userId,
+              is_active: newStatus
+            });
+            
+            await this.loadUsers();
+            
+          } catch (error) {
+            console.error('Erreur lors de la mise à jour du statut de l\'utilisateur:', error);
+            alert('Erreur lors de la mise à jour du statut de l\'utilisateur: ' + error.message);
+          }
+        }
+      }));
+    });
+  </script>
+<BaseLayout title="Gestion des utilisateurs" currentPath="/settings/users">
+  <div class="p-4 md:p-6 lg:p-8">
+    <!-- En-tête de la page -->
+    <div class="mb-8">
+      <h1 class="text-2xl md:text-3xl font-bold text-gray-800 mb-2">Gestion des utilisateurs</h1>
+      <p class="text-gray-600">Créez, modifiez et gérez les utilisateurs de l'application</p>
+    </div>
+
+    <!-- Contenu principal -->
+    <div id="userManagementApp" x-data="userManagementState()" x-init="init()">
+      <!-- Informations de l'utilisateur courant -->
+      <div x-show="currentUserInfo" class="bg-marki-50 border border-marki-200 rounded-lg p-4 mb-6">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center">
+            <User class="w-5 h-5 text-marki-600 mr-3" />
+            <div>
+              <p class="font-medium text-gray-800">
+                Connecté en tant que : 
+                <span class="font-semibold" x-text="currentUserInfo.firstName + ' ' + currentUserInfo.lastName"></span>
+              </p>
+              <p class="text-sm text-gray-600" x-text="currentUserInfo.email"></p>
+            </div>
+          </div>
+          <div class="flex items-center">
+            <span
+              class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full"
+              :class="currentUserInfo.is_admin ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'"
+              x-text="currentUserInfo.is_admin ? 'Administrateur' : 'Utilisateur'"
+            ></span>
+            <span class="ml-2 text-sm text-gray-500">(Vous)</span>
+          </div>
+        </div>
+      </div>
+      <!-- Section de recherche et d'ajout -->
+      <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-6 mb-6">
+        <div class="flex flex-col md:flex-row gap-4 items-end">
+          <div class="flex-1">
+            <label for="userSearch" class="block text-sm font-medium text-gray-700 mb-1">Rechercher un utilisateur</label>
+            <input
+              type="text"
+              id="userSearch"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-marki-500 focus:border-marki-500"
+              x-model="searchTerm"
+              placeholder="Rechercher par nom, prénom ou email..."
+              @input.debounce.500ms="searchUsers()"
+            >
+          </div>
+          <div>
+            <button
+              class="px-4 py-2 bg-marki-600 text-white rounded-md hover:bg-marki-700 transition-colors duration-200 text-sm font-medium flex items-center"
+              @click="openUserForm()"
+            >
+              <Plus class="w-4 h-4 mr-2" />
+              Ajouter un utilisateur
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tableau des utilisateurs -->
+      <div class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nom</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rôle</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              <template x-for="user in users" :key="user.objectId">
+                <tr>
+                  <td class="px-6 py-4 whitespace-nowrap" x-text="user.firstName + ' ' + user.lastName"></td>
+                  <td class="px-6 py-4 whitespace-nowrap" x-text="user.email"></td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span
+                      class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full"
+                      :class="user.is_admin ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'"
+                      x-text="user.is_admin ? 'Administrateur' : 'Utilisateur'"
+                    ></span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span
+                      class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full"
+                      :class="user.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
+                      x-text="user.is_active ? 'Actif' : 'Désactivé'"
+                    ></span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <div class="flex items-center space-x-2">
+                      <!-- Indicateur "Vous" pour l'utilisateur courant -->
+                      <span
+                        x-show="user.objectId === currentUserId"
+                        class="text-marki-600 font-medium text-xs mr-2"
+                        title="C'est vous"
+                      >
+                        (Vous)
+                      </span>
+                      <button
+                        class="text-blue-600 hover:text-blue-900"
+                        @click="editUser(user.objectId)"
+                        title="Modifier"
+                      >
+                        <Edit class="w-4 h-4" />
+                      </button>
+                      <button
+                        class="text-green-600 hover:text-green-900"
+                        @click="toggleUserStatus(user.objectId, !user.is_active)"
+                        :title="user.is_active ? 'Désactiver' : 'Activer'"
+                        :disabled="user.objectId === currentUserId"
+                      >
+                        <Power class="w-4 h-4" />
+                      </button>
+                      <button
+                        class="text-yellow-600 hover:text-yellow-900"
+                        @click="openPasswordChangeForm(user.objectId)"
+                        title="Changer le mot de passe"
+                      >
+                        <Lock class="w-4 h-4" />
+                      </button>
+                      <button
+                        class="text-red-600 hover:text-red-900"
+                        @click="deleteUser(user.objectId)"
+                        :disabled="user.objectId === currentUserId"
+                        title="Supprimer"
+                      >
+                        <Trash2 class="w-4 h-4" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </template>
+              <tr x-show="users.length === 0">
+                <td colspan="5" class="px-6 py-4 text-center text-gray-500">
+                  Aucun utilisateur trouvé
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal pour la gestion des utilisateurs -->
+  <div
+    x-show="isUserFormOpen"
+    x-transition:enter="transition ease-out duration-300"
+    x-transition:enter-start="opacity-0"
+    x-transition:enter-end="opacity-100"
+    x-transition:leave="transition ease-in duration-200"
+    x-transition:leave-start="opacity-100"
+    x-transition:leave-end="opacity-0"
+    class="fixed inset-0 z-50 overflow-hidden bg-black bg-opacity-50 flex items-center justify-center p-4"
+    @click.away="isUserFormOpen = false"
+  >
+    <div
+      class="bg-white rounded-lg shadow-xl w-full max-w-md overflow-hidden"
+      @click.stop
+    >
+      <div class="p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-xl font-semibold text-gray-800" x-text="currentUser ? 'Modifier un utilisateur' : 'Ajouter un utilisateur'"></h2>
+          <button @click="isUserFormOpen = false" class="text-gray-400 hover:text-gray-600">
+            <X class="w-6 h-6" />
+          </button>
+        </div>
+
+        <form class="space-y-4" @submit.prevent="saveUser">
+          <div>
+            <label for="userFirstName" class="block text-sm font-medium text-gray-700 mb-1">Prénom *</label>
+            <input
+              type="text"
+              id="userFirstName"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-marki-500 focus:border-marki-500"
+              x-model="userForm.firstName"
+              required
+            >
+          </div>
+
+          <div>
+            <label for="userLastName" class="block text-sm font-medium text-gray-700 mb-1">Nom *</label>
+            <input
+              type="text"
+              id="userLastName"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-marki-500 focus:border-marki-500"
+              x-model="userForm.lastName"
+              required
+            >
+          </div>
+
+          <div>
+            <label for="userEmail" class="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+            <input
+              type="email"
+              id="userEmail"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-marki-500 focus:border-marki-500"
+              x-model="userForm.email"
+              required
+            >
+          </div>
+
+          <div>
+            <label for="userPassword" class="block text-sm font-medium text-gray-700 mb-1">
+              Mot de passe <span x-show="!currentUser" class="text-red-500">*</span>
+              <span x-show="currentUser" class="text-sm text-gray-500">(laisser vide pour ne pas changer)</span>
+            </label>
+            <input
+              type="password"
+              id="userPassword"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-marki-500 focus:border-marki-500"
+              x-model="userForm.password"
+              :required="!currentUser"
+            >
+          </div>
+
+          <div class="flex items-center">
+            <input
+              type="checkbox"
+              id="userIsAdmin"
+              class="h-4 w-4 text-marki-600 focus:ring-marki-500 border-gray-300 rounded"
+              x-model="userForm.is_admin"
+            >
+            <label for="userIsAdmin" class="ml-2 block text-sm text-gray-700">
+              Administrateur
+            </label>
+          </div>
+
+          <div class="flex justify-end space-x-3 mt-6">
+            <button
+              type="button"
+              @click="isUserFormOpen = false"
+              class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              class="px-4 py-2 bg-marki-600 text-white rounded-md hover:bg-marki-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-marki-500"
+            >
+              <span x-text="currentUser ? 'Mettre à jour' : 'Ajouter'"></span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal pour le changement de mot de passe -->
+  <div
+    x-show="isPasswordFormOpen"
+    x-transition:enter="transition ease-out duration-300"
+    x-transition:enter-start="opacity-0"
+    x-transition:enter-end="opacity-100"
+    x-transition:leave="transition ease-in duration-200"
+    x-transition:leave-start="opacity-100"
+    x-transition:leave-end="opacity-0"
+    class="fixed inset-0 z-50 overflow-hidden bg-black bg-opacity-50 flex items-center justify-center p-4"
+    @click.away="isPasswordFormOpen = false"
+  >
+    <div
+      class="bg-white rounded-lg shadow-xl w-full max-w-md overflow-hidden"
+      @click.stop
+    >
+      <div class="p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-xl font-semibold text-gray-800">Changer le mot de passe</h2>
+          <button @click="isPasswordFormOpen = false" class="text-gray-400 hover:text-gray-600">
+            <X class="w-6 h-6" />
+          </button>
+        </div>
+
+        <form class="space-y-4" @submit.prevent="changePassword">
+          <div>
+            <label for="newPassword" class="block text-sm font-medium text-gray-700 mb-1">Nouveau mot de passe *</label>
+            <input
+              type="password"
+              id="newPassword"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-marki-500 focus:border-marki-500"
+              x-model="passwordForm.newPassword"
+              required
+            >
+          </div>
+
+          <div>
+            <label for="confirmPassword" class="block text-sm font-medium text-gray-700 mb-1">Confirmer le mot de passe *</label>
+            <input
+              type="password"
+              id="confirmPassword"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-marki-500 focus:border-marki-500"
+              x-model="passwordForm.confirmPassword"
+              required
+            >
+          </div>
+
+          <div class="flex justify-end space-x-3 mt-6">
+            <button
+              type="button"
+              @click="isPasswordFormOpen = false"
+              class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              class="px-4 py-2 bg-marki-600 text-white rounded-md hover:bg-marki-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-marki-500"
+            >
+              Changer le mot de passe
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+
+</BaseLayout>
+
+<style>
+  /* Styles spécifiques à la page de gestion des utilisateurs */
+  .user-table {
+    width: 100%;
+  }
+  
+  /* Animation pour les boutons */
+  button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .user-table {
+      overflow-x: auto;
+    }
+  }
+</style>

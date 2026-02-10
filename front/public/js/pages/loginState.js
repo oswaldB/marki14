@@ -1,0 +1,81 @@
+// Gestion d'état pour la page de login avec Alpine.js
+document.addEventListener('alpine:init', () => {
+  Alpine.data('loginState', () => ({
+    username: '',
+    password: '',
+    remember: false,
+    isLoading: false,
+    error: '',
+    
+    // Validation du formulaire
+    validateForm() {
+      if (!this.username) return 'Identifiant obligatoire';
+      if (!this.password) return 'Mot de passe obligatoire';
+      return '';
+    },
+    
+    // Gestion des erreurs Parse
+    getErrorMessage(code) {
+      const messages = {
+        101: 'Identifiant ou mot de passe incorrect',
+        200: 'Session expirée',
+        201: 'Mot de passe requis',
+        202: 'Nom d\'utilisateur requis',
+        default: 'Erreur de connexion'
+      };
+      return messages[code] || messages.default;
+    },
+    
+    // Gestion du login
+    async handleLogin() {
+      const validationError = this.validateForm();
+      if (validationError) {
+        this.error = validationError;
+        return;
+      }
+      
+      this.isLoading = true;
+      this.error = '';
+      
+      try {
+        // Initialiser Parse si nécessaire
+        if (typeof Parse === 'undefined') {
+          throw new Error('Parse SDK non chargé');
+        }
+        
+        // Connexion avec Parse
+        const user = await Parse.User.logIn(this.username, this.password);
+        
+        // Gestion de la session selon l'option "Se souvenir de moi"
+        const sessionToken = user.getSessionToken();
+        
+        if (this.remember) {
+          // Session persistante - stockage en localStorage
+          localStorage.setItem('parseSessionToken', sessionToken);
+          console.log('🔐 Session persistante stockée en localStorage');
+        } else {
+          // Session temporaire - stockage en sessionStorage
+          sessionStorage.setItem('parseSessionToken', sessionToken);
+          console.log('🔐 Session temporaire stockée en sessionStorage');
+        }
+        
+        console.log('🔐 Connexion réussie:', user.getUsername());
+        
+        // Redirection vers le dashboard
+        window.location.href = '/dashboard';
+        
+      } catch (error) {
+        console.error('❌ Erreur de connexion:', error);
+        this.error = this.getErrorMessage(error.code || 'default');
+      } finally {
+        this.isLoading = false;
+      }
+    },
+    
+    // Pour les tests: remplir avec les credentials par défaut
+    fillWithTestCredentials() {
+      this.username = 'oswald';
+      this.password = 'coucou';
+    }
+  }));
+});

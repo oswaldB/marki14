@@ -1,0 +1,90 @@
+---
+// src/pages/settings/index.astro
+// Page principale des paramètres - affiche une grid de tous les paramètres disponibles
+
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+import { Mail, Users, ChevronRight, User } from '@lucide/astro';---
+
+<BaseLayout title="Paramètres" currentPath="/settings/">
+  <div class="p-4 md:p-6 lg:p-8">
+    <!-- En-tête de la page -->
+    <div class="mb-8">
+      <h1 class="text-2xl md:text-3xl font-bold text-gray-800 mb-2">Paramètres</h1>
+      <p class="text-gray-600">Gérez les paramètres de votre application</p>
+    </div>
+
+    <!-- Grid des paramètres -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      
+      <!-- Carte pour la gestion des utilisateurs -->
+      <div class="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
+        <div class="p-6">
+          <div class="flex items-center mb-4">
+            <div class="w-12 h-12 bg-marki-100 rounded-lg flex items-center justify-center mr-4">
+              <Users class="w-6 h-6 text-marki-600" />
+            </div>
+            <h3 class="text-lg font-semibold text-gray-800">Gestion des utilisateurs</h3>
+          </div>
+          <p class="text-gray-600 text-sm mb-4">Créez, modifiez et gérez les utilisateurs de l'application.</p>
+          <a 
+            href="/settings/users"
+            class="inline-flex items-center px-4 py-2 bg-marki-600 text-white rounded-md hover:bg-marki-700 transition-colors duration-200 text-sm font-medium"
+          >
+            Gérer les utilisateurs
+            <ChevronRight class="w-4 h-4 ml-2" />
+          </a>
+        </div>
+      </div>
+
+      <!-- Carte pour les profils SMTP -->
+      <div class="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
+        <div class="p-6">
+          <div class="flex items-center mb-4">
+            <div class="w-12 h-12 bg-marki-100 rounded-lg flex items-center justify-center mr-4">
+              <Mail class="w-6 h-6 text-marki-600" />
+            </div>
+            <h3 class="text-lg font-semibold text-gray-800">Profil SMTP</h3>
+          </div>
+          <p class="text-gray-600 text-sm mb-4">Configurez et gérez vos profils SMTP pour l'envoi d'e-mails.</p>
+          <a 
+            href="/settings/profil-smtp"
+            class="inline-flex items-center px-4 py-2 bg-marki-600 text-white rounded-md hover:bg-marki-700 transition-colors duration-200 text-sm font-medium"
+          >
+            Gérer les profils SMTP
+            <ChevronRight class="w-4 h-4 ml-2" />
+          </a>
+        </div>
+      </div>
+
+
+    </div>
+  </div>
+
+
+</BaseLayout>
+
+<style>
+  /* Styles spécifiques à la page des paramètres */
+  .settings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+  }
+  
+  /* Animation pour les cartes */
+  .settings-card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  }
+  
+  .settings-card:hover {
+    transform: translateY(-2px);
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .settings-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
