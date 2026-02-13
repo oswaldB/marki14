@@ -132,9 +132,6 @@ public/
     │   │   ├── list.js         # Module liste des produits
     │   │   ├── filter.js       # Module filtrage
     │   │   └── sort.js         # Module tri
-    │   └── utils/              # Utilitaires globaux
-    │       ├── helpers.js      # Fonctions utilitaires
-    │       └── constants.js     # Constantes globales
 ```
 
 ### Nomenclature
