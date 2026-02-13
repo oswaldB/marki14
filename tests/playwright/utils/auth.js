@@ -47,7 +47,7 @@ class AuthUtils {
     
     // Navigate to login page
     console.log('🌐 Navigating to login page...');
-    await page.goto('https://dev.markidiags.com/login'); // Use full URL to avoid baseURL issues
+    await page.goto('http://localhost:5000/login'); // Use localhost URL for development
     console.log('✅ Login page loaded');
     
     // Fill login form - using Alpine.js x-model bound elements

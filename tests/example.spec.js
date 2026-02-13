@@ -10,7 +10,7 @@ test('Manual login test', async ({ browser }) => {
   const context = await AuthUtils.login(browser, false); // false = not admin
   const page = await context.newPage();
   
-  await page.goto('/dashboard');
+  await page.goto('http://localhost:5000/dashboard');
   await expect(page).toHaveURL('/dashboard');
   
   await context.close();
@@ -18,7 +18,7 @@ test('Manual login test', async ({ browser }) => {
 
 // Test login process
 test('Login process test', async ({ page }) => {
-  await page.goto('https://dev.markidiags.com/login', { waitUntil: 'domcontentloaded' });
+  await page.goto('http://localhost:5000/login', { waitUntil: 'domcontentloaded' });
   
   // Fill login form
   await page.fill('#username', 'oswald');
