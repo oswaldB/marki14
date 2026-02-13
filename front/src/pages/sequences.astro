@@ -1,0 +1,124 @@
+--- 
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const title = "Liste des Séquences";
+const withAuth = true;
+const currentPath = "/sequences";
+const Alpinefile = "/js/pages/sequencesState.js";
+---
+
+<BaseLayout title={title} withAuth={withAuth} currentPath={currentPath} Alpinefile={Alpinefile}>
+  <div class="flex-1 p-6 md:p-8">
+    <h1 class="text-2xl font-bold text-gray-800 mb-6">Liste des Séquences</h1>
+    
+    <!-- Indicateur de chargement -->
+    <div id="loadingIndicator" x-show="isLoading" x-cloak>
+      <div class="flex items-center justify-center h-32">
+        <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+        <span class="ml-3 text-gray-600">Chargement des séquences...</span>
+      </div>
+    </div>
+    
+    <!-- Message d'erreur -->
+    <div id="errorMessage" x-show="error" x-cloak>
+      <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+        <strong class="font-bold">Erreur!</strong>
+        <span class="block sm:inline"> Impossible de charger les séquences</span>
+        <button @click="fetchSequences" class="ml-4 bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-3 rounded text-sm">
+          Réessayer
+        </button>
+      </div>
+    </div>
+    
+    <!-- Tableau des séquences -->
+    <div id="sequencesTable" x-show="!isLoading && !error" x-cloak>
+      <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Nom
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Statut
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Peuplement
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Relances
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Action
+              </th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <template x-for="sequence in sequences" :key="sequence.id">
+              <tr class="hover:bg-gray-50 cursor-pointer" @click="redirectToSequenceDetail(sequence.id, sequence.typePeuplement)">
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900" x-text="sequence.nom"></td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <span x-text="sequence.statut ? 'Actif' : 'Inactif'" :class="sequence.statut ? 'text-green-600' : 'text-red-600'"></span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="sequence.typePeuplement"></td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="sequence.relancesCount"></td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <a href="#" class="text-blue-600 hover:text-blue-900" @click.prevent="redirectToSequenceDetail(sequence.id, sequence.typePeuplement)">
+                    Voir détails
+                  </a>
+                </td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</BaseLayout>
+
+<script is:inline>
+  // Initialisation Alpine.js pour la page
+  document.addEventListener('alpine:init', () => {
+    Alpine.data('sequencesPage', () => ({
+      sequences: [],
+      isLoading: true,
+      error: null,
+      
+      init() {
+        this.fetchSequences();
+      },
+      
+      async fetchSequences() {
+        this.isLoading = true;
+        this.error = null;
+        
+        try {
+          console.log('Récupération des séquences depuis Parse...');
+          // Appel à la fonction qui sera définie dans sequencesState.js
+          if (typeof window.fetchSequences === 'function') {
+            this.sequences = await window.fetchSequences();
+            console.log('Séquences chargées:', this.sequences);
+          } else {
+            console.error('La fonction fetchSequences n\'est pas définie');
+            this.error = 'Impossible de charger les séquences';
+          }
+        } catch (error) {
+          console.error('Erreur lors de la récupération des séquences:', error);
+          this.error = 'Impossible de charger les séquences';
+        } finally {
+          this.isLoading = false;
+        }
+      },
+      
+      redirectToSequenceDetail(id, type) {
+        console.log('Redirection vers la séquence:', id, type);
+        // Appel à la fonction qui sera définie dans sequencesState.js
+        if (typeof window.redirectToSequenceDetail === 'function') {
+          window.redirectToSequenceDetail(id, type);
+        } else {
+          console.error('La fonction redirectToSequenceDetail n\'est pas définie');
+        }
+      }
+    }));
+  });
+</script>
