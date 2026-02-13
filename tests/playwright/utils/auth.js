@@ -46,20 +46,26 @@ class AuthUtils {
     const page = await context.newPage();
     
     // Navigate to login page
-    await page.goto('/login'); // Use relative URL with baseURL from config
+    console.log('🌐 Navigating to login page...');
+    await page.goto('https://dev.markidiags.com/login'); // Use full URL to avoid baseURL issues
+    console.log('✅ Login page loaded');
     
     // Fill login form - using Alpine.js x-model bound elements
+    console.log('📝 Filling login form with credentials:', credentials.username);
     await page.fill('#username', credentials.username);
     await page.fill('#password', credentials.password);
+    console.log('✅ Form filled');
     
     // Click login button
+    console.log('🔘 Attempting to click login button...');
     await page.click('button[type="submit"]:has-text("Se connecter")');
+    console.log('✅ Login button clicked');
     
     // Wait for navigation to complete
     await page.waitForURL('**/dashboard');
     
     // Verify successful login by checking for dashboard content
-    await page.waitForSelector('text=Dashboard');
+    await page.waitForSelector('text=Dashboard', { timeout: 10000 });
     
     console.log(`Successfully logged in as ${credentials.username} (admin: ${isAdmin})`);
     

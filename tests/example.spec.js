@@ -18,7 +18,7 @@ test('Manual login test', async ({ browser }) => {
 
 // Test login process
 test('Login process test', async ({ page }) => {
-  await page.goto('/login', { waitUntil: 'domcontentloaded' });
+  await page.goto('https://dev.markidiags.com/login', { waitUntil: 'domcontentloaded' });
   
   // Fill login form
   await page.fill('#username', 'oswald');
