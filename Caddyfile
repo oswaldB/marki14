@@ -17,19 +17,7 @@ api.marki-parse.localhost {
 
 
 dev.parse.markidiags.com {
-    reverse_proxy parse-server:1337 {
-        header_up Host {host}
-        header_down -Access-Control-Allow-Origin
-        header_down -Access-Control-Allow-Methods
-        header_down -Access-Control-Allow-Headers
-        header_down -Access-Control-Allow-Credentials
-    }
-    header {
-        Access-Control-Allow-Origin "*"
-        Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
-        Access-Control-Allow-Headers "Content-Type, Authorization"
-        Access-Control-Allow-Credentials "true"
-    }
+    reverse_proxy parse-server:1337 
 }
 
 dev.parse.dashboard.markidiags.com {
