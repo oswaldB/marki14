@@ -8,42 +8,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import { Eye } from '@lucide/astro';---
 
 <BaseLayout title="Marki Dashboard" withAuth>
-  <!-- Galets en fond -->
-  <div class="fixed inset-0 overflow-hidden -z-10">
-    <div class="absolute inset-0 bg-gradient-to-br from-gray-50 to-white"></div>
-    <!-- Galets animés - Utilisation du composant Pebble -->
-    <div class="absolute inset-0">
-      <!-- Galet 1 - Primary -->
-      <Pebble 
-        size="large"
-        color="primary"
-        opacity="low"
-        animation="float-1"
-        position="absolute top-20 left-20"
-        title="Galet Principal - Couleur Primary #007ACE"
-      />
-      
-      <!-- Galet 2 - Secondary -->
-      <Pebble 
-        size="xlarge"
-        color="secondary"
-        opacity="medium"
-        animation="float-2"
-        position="absolute top-1/2 right-1/4"
-        title="Galet Secondaire - Couleur Secondary #00BDCF"
-      />
-      
-      <!-- Galet 3 - Success -->
-      <Pebble 
-        size="large"
-        color="success"
-        opacity="low"
-        animation="float-3"
-        position="absolute bottom-20 left-1/3"
-        title="Galet Succès - Couleur Success #00CF9B"
-      />
-    </div>
-  </div>
+
 
   <div class="container mx-auto px-4 py-8 relative z-10" x-data="dashboardState()">
     <!-- Header -->

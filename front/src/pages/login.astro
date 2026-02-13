@@ -5,13 +5,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 <!-- Import du script Alpine.js pour la logique de connexion -->
 <script is:inline src="/js/pages/loginState.js" ></script>
 <BaseLayout title="Connexion" hideSidebar={true}>
-  <!-- Galets animés en arrière-plan -->
-  <div class="fixed inset-0 overflow-hidden -z-10">
-    <Pebble size="large" color="primary" opacity="low" animation="float-1" position="absolute top-20 left-10" />
-    <Pebble size="medium" color="secondary" opacity="medium" animation="float-2" position="absolute top-40 right-20" />
-    <Pebble size="small" color="success" opacity="high" animation="float-3" position="absolute bottom-32 left-24" />
-    <Pebble size="xlarge" color="info" opacity="low" animation="float-1" position="absolute bottom-10 right-10" />
-  </div>
+
   
   <div class="min-h-screen bg-bg-light flex items-center justify-center p-4 sm:p-6 md:p-8" x-data="loginState">
     <div class="max-w-md w-full bg-white shadow-sm rounded-lg p-6 sm:p-8 border border-border">
