@@ -26,19 +26,19 @@ import DockComponent from '../components/DockComponent.astro';
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
     [x-cloak] { display: none !important; }
   </style>
-  <!-- Approche Hybride: Parse pour Auth + Fastify pour Cloud Functions -->
-  <script is:inline src="https://unpkg.com/parse@5.3.0/dist/parse.min.js"></script>
+  <!-- Approche REST: Parse Auth via Axios + Fastify pour Cloud Functions -->
+  <script is:inline src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <script is:inline>
-    // Configuration Hybride: Parse (Auth) + Fastify (Cloud Functions)
+    // Configuration REST: Parse Auth (Axios) + Fastify (Cloud Functions)
     if (typeof window !== 'undefined') {
-      // 1. Configurer Parse UNIQUEMENT pour l'authentification
-      const appId = 'marki';
-      const jsKey = 'Careless7-Gore4-Guileless0-Jogger5-Clubbed9';
-      const serverUrl = 'https://dev.parse.markidiags.com';
-      
-      Parse.initialize(appId, jsKey);
-      Parse.serverURL = serverUrl;
-      console.log('✅ Parse SDK initialisé pour AUTH:', serverUrl);
+      // 1. Configurer Parse Auth via REST API
+      window.PARSE_AUTH_CONFIG = {
+        appId: 'marki',
+        restApiKey: 'Careless7-Gore4-Guileless0-Jogger5-Clubbed9',
+        serverUrl: 'https://dev.parse.markidiags.com/parse',
+        masterKey: null // Non utilisé côté client
+      };
+      console.log('✅ Parse REST configuré pour AUTH:', window.PARSE_AUTH_CONFIG.serverUrl);
       
       // 2. Configurer Fastify pour les Cloud Functions
       window.FASTIFY_API_BASE = 'https://dev.api.markidiags.com/api';
@@ -50,6 +50,28 @@ import DockComponent from '../components/DockComponent.astro';
       }).catch(error => {
         console.error('❌ Erreur de chargement de l\'adaptateur Fastify:', error);
       });
+      
+      // 4. Fonctions utilitaires Parse REST
+      window.ParseRest = {
+        async becomeSession(sessionToken) {
+          try {
+            const response = await axios.get(`${window.PARSE_AUTH_CONFIG.serverUrl}/users/me`, {
+              headers: {
+                'X-Parse-Application-Id': window.PARSE_AUTH_CONFIG.appId,
+                'X-Parse-REST-API-Key': window.PARSE_AUTH_CONFIG.restApiKey,
+                'X-Parse-Session-Token': sessionToken
+              }
+            });
+            return {
+              user: response.data,
+              sessionToken: sessionToken // Le token reste le même pour REST
+            };
+          } catch (error) {
+            console.error('❌ Erreur Parse REST becomeSession:', error.response?.data || error.message);
+            throw error;
+          }
+        }
+      };
     }
   </script>
 </head>
