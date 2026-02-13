@@ -7,7 +7,11 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
 import { Eye } from '@lucide/astro';---
 
-<BaseLayout title="Marki Dashboard" withAuth>
+<BaseLayout 
+  title="Marki Dashboard" 
+  withAuth 
+  Alpinefile="/js/pages/dashboardState.js"
+>
 
 
   <div class="container mx-auto px-4 py-8 relative z-10" x-data="dashboardState()">
@@ -150,9 +154,6 @@ import { Eye } from '@lucide/astro';---
     </section>
   </div>
 </BaseLayout>
-
-<!-- Import du script Alpine.js pour la logique du dashboard -->
-<script is:inline src="/js/pages/dashboardState.js" ></script>
 
 <style>
   /* Styles spécifiques au dashboard */

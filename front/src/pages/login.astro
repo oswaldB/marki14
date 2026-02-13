@@ -2,9 +2,11 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 
 ---
-<!-- Import du script Alpine.js pour la logique de connexion -->
-<script is:inline src="/js/pages/loginState.js" ></script>
-<BaseLayout title="Connexion" hideSidebar={true}>
+<BaseLayout 
+  title="Connexion" 
+  hideSidebar={true}
+  Alpinefile="/js/pages/loginState.js"
+>
 
   
   <div class="min-h-screen bg-bg-light flex items-center justify-center p-4 sm:p-6 md:p-8" x-data="loginState">
