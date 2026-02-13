@@ -1,0 +1,24 @@
+<!--
+  Page: sequences.astro
+  Description: Page pour afficher la liste des séquences
+  Date: 2026-02-11
+  Author: Oswald
+-->
+
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+---
+
+<BaseLayout>
+  <div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold text-gray-900 mb-8">Liste des Séquences</h1>
+    
+    <!-- Contenu principal sera ajouté ici -->
+    <div id="sequences-container">
+      <!-- Le contenu sera chargé dynamiquement par Alpine.js -->
+    </div>
+  </div>
+  
+  <!-- Scripts Alpine.js -->
+  <script src="/js/pages/sequences/sequences-main.js" defer></script>
+</BaseLayout>
