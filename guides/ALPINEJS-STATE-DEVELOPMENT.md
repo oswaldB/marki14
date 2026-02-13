@@ -112,27 +112,49 @@ document.addEventListener('alpine:init', () => {
 <a name="modularisation"></a>
 ## 4. Modularisation du State
 
-Lorsque votre fichier state devient trop gros, il est temps de le découper en modules.
+Lorsque votre fichier state devient trop gros (généralement au-delà de 200-300 lignes), il est temps de le découper en modules pour améliorer la maintenabilité et l'organisation du code.
 
 ### Structure Recommandée
+
+Pour une application avec plusieurs pages, nous recommandons une organisation par page :
 
 ```
 public/
 └── js/
-    └── states/
-        ├── state-main.js       # Point d'entrée principal
-        ├── user.js             # Module utilisateur
-        ├── cart.js             # Module panier
-        ├── products.js         # Module produits
-        └── ui.js               # Module UI
+    ├── states/
+    │   ├── dashboard/
+    │   │   ├── state-main.js   # Point d'entrée pour la page dashboard
+    │   │   ├── stats.js        # Module statistiques
+    │   │   ├── charts.js       # Module graphiques
+    │   │   └── filters.js     # Module filtres
+    │   ├── products/
+    │   │   ├── state-main.js   # Point d'entrée pour la page produits
+    │   │   ├── list.js         # Module liste des produits
+    │   │   ├── filter.js       # Module filtrage
+    │   │   └── sort.js         # Module tri
+    │   ├── shared/
+    │   │   ├── user.js         # Module utilisateur partagé
+    │   │   ├── ui.js           # Module UI partagé
+    │   │   └── api.js          # Module API partagé
+    │   └── utils/              # Utilitaires globaux
+    │       ├── helpers.js      # Fonctions utilitaires
+    │       └── constants.js     # Constantes globales
 ```
+
+### Nomenclature
+
+- **Dossier par page** : Chaque page a son propre dossier dans `states/` (ex: `dashboard/`, `products/`)
+- **Fichier principal** : `state-main.js` - Point d'entrée qui fusionne tous les modules de la page
+- **Modules spécifiques** : Fichiers nommés selon leur fonctionnalité (ex: `stats.js`, `filters.js`)
+- **Modules partagés** : Dans le dossier `shared/` pour le code réutilisable entre pages
+- **Nommage** : Utilisez des noms courts et descriptifs en minuscules avec des tirets si nécessaire
 
 ### Création de Modules Individuels
 
-#### user.js
+#### Module partagé: user.js
 
 ```javascript
-// public/js/states/user.js
+// public/js/states/shared/user.js
 export function createUserModule() {
   return {
     user: JSON.parse(localStorage.getItem('user')) || null,
@@ -166,10 +188,10 @@ export function createUserModule() {
 }
 ```
 
-#### cart.js
+#### Module spécifique à une page: cart.js
 
 ```javascript
-// public/js/states/cart.js
+// public/js/states/products/cart.js
 export function createCartModule() {
   return {
     items: JSON.parse(localStorage.getItem('cart')) || [],
@@ -219,10 +241,10 @@ export function createCartModule() {
 }
 ```
 
-#### ui.js
+#### Module partagé: ui.js
 
 ```javascript
-// public/js/states/ui.js
+// public/js/states/shared/ui.js
 export function createUiModule() {
   return {
     modal: null,
@@ -259,29 +281,29 @@ export function createUiModule() {
 ### Approche 1: Fusion Simple
 
 ```javascript
-// public/js/states/state-main.js
-import { createUserModule } from './user';
+// public/js/states/products/state-main.js
+import { createUserModule } from '../../shared/user';
 import { createCartModule } from './cart';
-import { createUiModule } from './ui';
+import { createUiModule } from '../../shared/ui';
 
 document.addEventListener('alpine:init', () => {
   // Créer le state principal en fusionnant tous les modules
-  Alpine.state('app', {
+  Alpine.state('products', {
     // Fusionner tous les modules
     ...createUserModule(),
     ...createCartModule(),
     ...createUiModule(),
     
-    // Vous pouvez ajouter des propriétés/méthodes spécifiques au state principal ici
-    initialized: true,
+    // Vous pouvez ajouter des propriétés/méthodes spécifiques à la page produits ici
+    pageTitle: 'Nos Produits',
     
     init() {
-      console.log('State principal initialisé');
+      console.log('State de la page produits initialisé');
       
       // Configuration des dépendances entre modules
       this.$watch('items', () => {
         if (this.itemCount > 0) {
-          this.showToast(`Panier mis à jour: ${this.itemCount} articles`);
+          this.showToast(`Panier: ${this.itemCount} articles`);
         }
       }, { deep: true });
     }
