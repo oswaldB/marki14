@@ -170,7 +170,7 @@ Lorsque votre fichier state devient trop gros, il est temps de le découper en m
 ```
 public/
 └── js/
-    └── stores/
+    └── states/
         ├── state-main.js       # Point d'entrée principal
         ├── user.js             # Module utilisateur
         ├── cart.js             # Module panier
@@ -310,24 +310,24 @@ export function createUiModule() {
 ### Approche 1: Fusion Simple
 
 ```javascript
-// public/js/stores/state-main.js
+// public/js/states/state-main.js
 import { createUserModule } from './user';
 import { createCartModule } from './cart';
 import { createUiModule } from './ui';
 
 document.addEventListener('alpine:init', () => {
-  // Créer le store principal en fusionnant tous les modules
+  // Créer le state principal en fusionnant tous les modules
   Alpine.store('app', {
     // Fusionner tous les modules
     ...createUserModule(),
     ...createCartModule(),
     ...createUiModule(),
     
-    // Vous pouvez ajouter des propriétés/méthodes spécifiques au store principal ici
+    // Vous pouvez ajouter des propriétés/méthodes spécifiques au state principal ici
     initialized: true,
     
     init() {
-      console.log('Store principal initialisé');
+      console.log('State principal initialisé');
       
       // Configuration des dépendances entre modules
       this.$watch('items', () => {
@@ -342,10 +342,10 @@ document.addEventListener('alpine:init', () => {
 
 ### Approche 2: Fusion avec Namespace
 
-Si vous préférez garder les modules séparés dans le store :
+Si vous préférez garder les modules séparés dans le state :
 
 ```javascript
-// public/js/stores/state-main.js
+// public/js/states/state-main.js
 import { createUserModule } from './user';
 import { createCartModule } from './cart';
 import { createUiModule } from './ui';
@@ -371,40 +371,41 @@ document.addEventListener('alpine:init', () => {
 // $store.app.ui.showToast(...)
 ```
 
-### Approche 3: Stores Séparés avec Communication
+### Approche 3: Modules Séparés avec Communication
 
 ```javascript
-// public/js/stores/state-main.js
+// public/js/states/state-main.js
 import { createUserModule } from './user';
 import { createCartModule } from './cart';
 import { createUiModule } from './ui';
 
 document.addEventListener('alpine:init', () => {
-  // Créer des stores séparés
-  const userStore = createUserModule();
-  const cartStore = createCartModule();
-  const uiStore = createUiModule();
+  // Créer les modules
+  const userModule = createUserModule();
+  const cartModule = createCartModule();
+  const uiModule = createUiModule();
   
-  // Initialiser les stores
-  Alpine.store('user', userStore);
-  Alpine.store('cart', cartStore);
-  Alpine.store('ui', uiStore);
-  
-  // Configurer la communication entre stores
-  cartStore.$watch('items', () => {
-    if (cartStore.itemCount > 0) {
-      uiStore.showToast(`Panier mis à jour: ${cartStore.itemCount} articles`);
-    }
-  }, { deep: true });
-  
-  // Vous pouvez aussi créer un store principal pour les fonctionnalités globales
+  // Initialiser le state principal en fusionnant les modules
   Alpine.store('app', {
+    ...userModule,
+    ...cartModule,
+    ...uiModule,
+    
     version: '1.0.0',
     
+    // Configurer la communication entre modules
+    init() {
+      this.$watch('items', () => {
+        if (this.itemCount > 0) {
+          this.showToast(`Panier mis à jour: ${this.itemCount} articles`);
+        }
+      }, { deep: true });
+    },
+    
     reset() {
-      userStore.logout();
-      cartStore.clear();
-      uiStore.hideModal();
+      this.logout();
+      this.clear();
+      this.hideModal();
     }
   });
 });
@@ -437,6 +438,7 @@ public/
 - Utilisez des noms descriptifs pour les modules: `user.js`, `cart.js`, `ui.js`
 - Pour les fonctions de création, utilisez le préfixe `create`: `createUserModule()`
 - Le fichier principal doit s'appeler `state-main.js` pour une identification facile
+- Tout est géré comme du state, pas de stores séparés
 
 ### 3. Gestion des Dépendances
 
@@ -790,4 +792,4 @@ Le développement d'un système de state management avec Alpine.js suit ces prin
 4. **Gérez les dépendances** entre modules avec soin
 5. **Documentez votre état** avec JSDoc pour une meilleure maintenabilité
 
-Cette approche vous permet de scalaire votre application Alpine.js tout en gardant un code organisé et maintenable, même pour des applications complexes.
+Cette approche vous permet de scalaire votre application Alpine.js tout en gardant un code organisé et maintenable, même pour des applications complexes. Tout est géré comme du state, sans utilisation de stores séparés.
