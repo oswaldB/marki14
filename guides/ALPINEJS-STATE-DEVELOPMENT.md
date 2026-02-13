@@ -29,7 +29,7 @@ Alpine.js offre plusieurs approches pour gérer l'état global de votre applicat
 Créez un fichier `state.js` dans votre projet :
 
 ```javascript
-// public/js/stores/state.js
+// public/js/states/state.js
 document.addEventListener('alpine:init', () => {
   Alpine.store('app', {
     // State
@@ -125,7 +125,7 @@ public/
 #### user.js
 
 ```javascript
-// public/js/stores/user.js
+// public/js/states/user.js
 export function createUserModule() {
   return {
     user: JSON.parse(localStorage.getItem('user')) || null,
@@ -162,7 +162,7 @@ export function createUserModule() {
 #### cart.js
 
 ```javascript
-// public/js/stores/cart.js
+// public/js/states/cart.js
 export function createCartModule() {
   return {
     items: JSON.parse(localStorage.getItem('cart')) || [],
@@ -215,7 +215,7 @@ export function createCartModule() {
 #### ui.js
 
 ```javascript
-// public/js/stores/ui.js
+// public/js/states/ui.js
 export function createUiModule() {
   return {
     modal: null,
@@ -468,7 +468,7 @@ Alpine.store('app', {
 ```
 public/
 └── js/
-    └── stores/
+    └── states/
         ├── state-main.js       # Point d'entrée
         ├── user.js             # Module utilisateur
         ├── cart.js             # Module panier
