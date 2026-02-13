@@ -320,7 +320,7 @@ import { createCartModule } from './cart';
 import { createUiModule } from './ui';
 
 document.addEventListener('alpine:init', () => {
-  Alpine.store('app', {
+  Alpine.state('app', {
     user: createUserModule(),
     cart: createCartModule(),
     ui: createUiModule(),
@@ -355,7 +355,7 @@ document.addEventListener('alpine:init', () => {
   const uiModule = createUiModule();
   
   // Initialiser le state principal en fusionnant les modules
-  Alpine.store('app', {
+  Alpine.state('app', {
     ...userModule,
     ...cartModule,
     ...uiModule,
@@ -465,7 +465,7 @@ export function createUserModule() {
 
 ```javascript
 // Dans un module
-Alpine.store('app', {
+Alpine.state('app', {
   searchQuery: '',
   searchResults: [],
   
