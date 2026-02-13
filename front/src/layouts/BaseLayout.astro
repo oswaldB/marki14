@@ -5,9 +5,10 @@ interface Props {
   title: string;
   withAuth?: boolean;
   currentPath?: string;
-  hideSidebar?: boolean;}
+  hideSidebar?: boolean;
+  Alpinefile?: string;}
 
-const { title, withAuth = false, currentPath = '', hideSidebar = false } = Astro.props;
+const { title, withAuth = false, currentPath = '', hideSidebar = false, Alpinefile } = Astro.props;
 
 // Debug: Log the props to ensure they're being passed correctly
 console.log('BaseLayout props:', { title, withAuth, currentPath, hideSidebar });
