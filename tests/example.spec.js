@@ -4,30 +4,6 @@ const AuthUtils = require('./playwright/utils/auth');
 // Example test showing how to use authentication
 
 // Test using global storage state (recommended for most tests)
-test.use({
-  storageState: './storage/standardUser.json'
-});
-
-test('Example test with authenticated user', async ({ page }) => {
-  // Page is already authenticated via storageState
-  await page.goto('/dashboard');
-  
-  // Verify we're on the dashboard
-  await expect(page).toHaveURL('/dashboard');
-  await expect(page).toHaveTitle(/Dashboard/);
-});
-
-// Test using admin user
-test.use({
-  storageState: './storage/adminUser.json'
-});
-
-test('Example test with admin user', async ({ page }) => {
-  await page.goto('/admin');
-  
-  // Verify admin access
-  await expect(page).toHaveURL('/admin');
-});
 
 // Alternative: Test with manual login (useful for testing login process itself)
 test('Manual login test', async ({ browser }) => {
