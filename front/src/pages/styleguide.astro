@@ -569,67 +569,7 @@ import { CheckCircle2, Eye } from '@lucide/astro';---
         </div>
       </div>
 
-      <!-- Composant Pebble -->
-      <div class="mb-8">
-        <h3 class="text-xl font-medium text-gray-900 mb-4">Composant Pebble</h3>
-        <div class="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
-          <h4 class="text-lg font-medium text-gray-900 mb-3">Démonstration du composant</h4>
-          
-          <div class="flex flex-wrap gap-8 mb-6">
-            <!-- Exemple 1: Taille small -->
-            <div class="flex flex-col items-center">
-              <Pebble size="small" color="primary" opacity="high" animation="float-1" />
-              <span class="text-xs text-gray-600 mt-2">size="small"</span>
-            </div>
-            
-            <!-- Exemple 2: Taille medium -->
-            <div class="flex flex-col items-center">
-              <Pebble size="medium" color="secondary" opacity="medium" animation="float-2" />
-              <span class="text-xs text-gray-600 mt-2">size="medium"</span>
-            </div>
-            
-            <!-- Exemple 3: Taille large -->
-            <div class="flex flex-col items-center">
-              <Pebble size="large" color="success" opacity="low" animation="float-3" />
-              <span class="text-xs text-gray-600 mt-2">size="large"</span>
-            </div>
-            
-            <!-- Exemple 4: Taille xlarge -->
-            <div class="flex flex-col items-center">
-              <Pebble size="xlarge" color="info" opacity="medium" animation="float-1" />
-              <span class="text-xs text-gray-600 mt-2">size="xlarge"</span>
-            </div>
-          </div>
-          
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <h5 class="font-medium text-gray-900 mb-2">Props disponibles:</h5>
-              <ul class="text-sm text-gray-600 space-y-1">
-                <li>• <code>size</code>: small, medium, large, xlarge</li>
-                <li>• <code>color</code>: primary, secondary, success, info, accent, deep</li>
-                <li>• <code>opacity</code>: low, medium, high</li>
-                <li>• <code>animation</code>: float-1, float-2, float-3</li>
-                <li>• <code>position</code>: classe de positionnement CSS</li>
-                <li>• <code>title</code>: texte de l'infobulle</li>
-                <li>• <code>isAnimating</code>: booléen pour contrôler l'animation</li>
-              </ul>
-            </div>
-            
-            <div>
-              <h5 class="font-medium text-gray-900 mb-2">Exemple d'utilisation:</h5>
-              <pre class="bg-gray-100 p-3 rounded text-xs overflow-x-auto"><code>{`<Pebble
-  size="large"
-  color="primary"
-  opacity="medium"
-  animation="float-1"
-  position="absolute top-20 left-20"
-  title="Mon galet personnalisé"
-  isAnimating={true}
-/>`}</code></pre>
-            </div>
-          </div>
-        </div>
-      </div>
+
 
       <!-- Icônes Lucide -->
       <div class="mb-8">
