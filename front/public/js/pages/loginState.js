@@ -9,6 +9,7 @@ document.addEventListener('alpine:init', () => {
     
     // Validation du formulaire
     validateForm() {
+      console.log('Validation du formulaire de connexion');
       if (!this.username) return 'Identifiant obligatoire';
       if (!this.password) return 'Mot de passe obligatoire';
       return '';
@@ -16,6 +17,7 @@ document.addEventListener('alpine:init', () => {
     
     // Gestion des erreurs Parse
     getErrorMessage(code) {
+      console.log('Récupération du message d\'erreur pour le code:', code);
       const messages = {
         101: 'Identifiant ou mot de passe incorrect',
         200: 'Session expirée',
@@ -28,6 +30,7 @@ document.addEventListener('alpine:init', () => {
     
     // Gestion du login
     async handleLogin() {
+      console.log('Tentative de connexion avec:', this.username);
       const validationError = this.validateForm();
       if (validationError) {
         this.error = validationError;
@@ -43,6 +46,7 @@ document.addEventListener('alpine:init', () => {
           throw new Error('Parse REST non configuré');
         }
         
+        console.log('Connexion à Parse REST API...');
         // Connexion avec Parse REST API
         const response = await axios.post(
           `${window.PARSE_AUTH_CONFIG.serverUrl}/login`,
@@ -89,6 +93,7 @@ document.addEventListener('alpine:init', () => {
     
     // Pour les tests: remplir avec les credentials par défaut
     fillWithTestCredentials() {
+      console.log('Remplissage avec les credentials de test');
       this.username = 'oswald';
       this.password = 'coucou';
     }

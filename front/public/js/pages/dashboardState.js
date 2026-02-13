@@ -18,6 +18,7 @@ if (typeof document !== 'undefined') {
    * Initialisation du composant
    */
   init() {
+    console.log('Initialisation du composant dashboard');
     // Parse REST est déjà configuré dans BaseLayout, pas besoin de le reconfigurer
     
     // Charger les produits depuis Parse
