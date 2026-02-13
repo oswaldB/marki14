@@ -1,0 +1,260 @@
+--- 
+// front/src/pages/sequences.astro 
+import BaseLayout from "../layouts/BaseLayout.astro"; 
+import "../../public/js/pages/sequencesState.js"; 
+--- 
+
+<BaseLayout>
+  <div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold text-gray-900 mb-8">Liste des Séquences</h1>
+    
+    <!-- Loading indicator -->
+    <div id="loading" class="fixed inset-0 flex items-center justify-center bg-gray-100 bg-opacity-75 z-50" style="display: none;">
+      <div class="bg-white p-6 rounded-lg shadow-lg">
+        <div class="flex items-center">
+          <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-[#007ACE]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <span class="text-gray-700">Chargement des séquences...</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Error message -->
+    <div id="error" class="bg-red-50 border border-red-200 rounded-md p-4 mb-6" style="display: none;">
+      <div class="flex">
+        <div class="flex-shrink-0">
+          <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+          </svg>
+        </div>
+        <div class="ml-3">
+          <p class="text-sm font-medium text-red-800">Erreur</p>
+          <p class="text-sm text-red-700" id="error-message">Impossible de charger les séquences</p>
+        </div>
+      </div>
+      <button id="retry-button" class="mt-4 bg-[#007ACE] text-white px-4 py-2 rounded-md hover:bg-[#006BCE] transition-colors">
+        Réessayer
+      </button>
+    </div>
+    
+    <!-- Sequences table -->
+    <div id="sequences-table" class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Nom
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Statut
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Peuplement
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Relances
+              </th>
+              <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Action
+              </th>
+            </tr>
+          </thead>
+          <tbody id="sequences-body" class="bg-white divide-y divide-gray-200">
+            <!-- Sequences will be populated here by Alpine.js -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    // Initialize Alpine.js state when the page loads
+    document.addEventListener('DOMContentLoaded', function() {
+      // Check if Alpine is loaded
+      if (typeof Alpine !== 'undefined') {
+        // Initialize the sequences state
+        window.sequencesState = {
+          sequences: [],
+          isLoading: true,
+          error: null,
+          
+          async init() {
+            await this.fetchSequences();
+          },
+          
+          async fetchSequences() {
+            this.isLoading = true;
+            this.error = null;
+            
+            try {
+              console.log('Fetching sequences from Parse...');
+              
+              // Fetch sequences from Parse
+              const response = await fetch('https://dev.parse.markidiags.com/classes/Sequences', {
+                headers: {
+                  'X-Parse-Application-Id': 'marki',
+                  'X-Parse-Master-Key': 'Shaky4-Exception6'
+                }
+              });
+              
+              if (!response.ok) {
+                throw new Error('Failed to fetch sequences');
+              }
+              
+              const data = await response.json();
+              console.log('Sequences data:', data);
+              
+              // Process sequences and fetch relances count for each
+              const sequencesWithRelances = await Promise.all(
+                data.results.map(async (sequence) => {
+                  const relancesCount = await this.fetchRelancesCount(sequence.objectId);
+                  return {
+                    id: sequence.objectId,
+                    nom: sequence.nom,
+                    statut: sequence.isActif,
+                    typePeuplement: sequence.isAuto ? 'automatique' : 'manuel',
+                    relancesCount: relancesCount
+                  };
+                })
+              );
+              
+              this.sequences = sequencesWithRelances;
+              console.log('Processed sequences:', this.sequences);
+              
+            } catch (error) {
+              console.error('Error fetching sequences:', error);
+              this.error = error.message || 'Impossible de charger les séquences';
+            } finally {
+              this.isLoading = false;
+              this.updateUI();
+            }
+          },
+          
+          async fetchRelancesCount(sequenceId) {
+            try {
+              console.log(`Fetching relances count for sequence ${sequenceId}`);
+              
+              const response = await fetch(`https://dev.parse.markidiags.com/classes/Impayes?where={"sequence":{"__type":"Pointer","className":"Sequences","objectId":"${sequenceId}"}}&count=1`, {
+                headers: {
+                  'X-Parse-Application-Id': 'marki',
+                  'X-Parse-Master-Key': 'Shaky4-Exception6'
+                }
+              });
+              
+              if (!response.ok) {
+                throw new Error('Failed to fetch relances count');
+              }
+              
+              const data = await response.json();
+              console.log(`Relances count for sequence ${sequenceId}:`, data.count);
+              return data.count || 0;
+              
+            } catch (error) {
+              console.error(`Error fetching relances count for sequence ${sequenceId}:`, error);
+              return 0;
+            }
+          },
+          
+          redirectToSequenceDetail(sequenceId, type) {
+            console.log(`Redirecting to sequence detail: ${sequenceId}, type: ${type}`);
+            if (type === 'manuel') {
+              window.location.href = `/sequences/manuelle/?id=${sequenceId}`;
+            } else {
+              window.location.href = `/sequences/auto/?id=${sequenceId}`;
+            }
+          },
+          
+          updateUI() {
+            const loadingElement = document.getElementById('loading');
+            const errorElement = document.getElementById('error');
+            const tableElement = document.getElementById('sequences-table');
+            const sequencesBody = document.getElementById('sequences-body');
+            const retryButton = document.getElementById('retry-button');
+            const errorMessage = document.getElementById('error-message');
+            
+            // Show/hide loading indicator
+            if (loadingElement) {
+              loadingElement.style.display = this.isLoading ? 'flex' : 'none';
+            }
+            
+            // Show/hide error message
+            if (errorElement) {
+              if (this.error) {
+                errorMessage.textContent = this.error;
+                errorElement.style.display = 'block';
+                tableElement.style.display = 'none';
+              } else {
+                errorElement.style.display = 'none';
+                tableElement.style.display = 'block';
+              }
+            }
+            
+            // Retry button
+            if (retryButton) {
+              retryButton.onclick = () => {
+                this.fetchSequences();
+              };
+            }
+            
+            // Populate table
+            if (sequencesBody) {
+              sequencesBody.innerHTML = '';
+              
+              if (this.sequences.length === 0 && !this.isLoading) {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                  <td colspan="5" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
+                    Aucune séquence trouvée
+                  </td>
+                `;
+                sequencesBody.appendChild(row);
+              } else {
+                this.sequences.forEach(sequence => {
+                  const row = document.createElement('tr');
+                  row.className = 'hover:bg-gray-50 cursor-pointer';
+                  row.onclick = () => this.redirectToSequenceDetail(sequence.id, sequence.typePeuplement);
+                  
+                  row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      ${sequence.nom}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${sequence.statut ? 'bg-[#00CF9B] text-white' : 'bg-gray-200 text-gray-800'}">
+                        ${sequence.statut ? 'Actif' : 'Inactif'}
+                      </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      ${sequence.typePeuplement}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      ${sequence.relancesCount}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <button class="text-[#007ACE] hover:text-[#006BCE]">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M12 20h9"/>
+                          <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                        </svg>
+                      </button>
+                    </td>
+                  `;
+                  
+                  sequencesBody.appendChild(row);
+                });
+              }
+            }
+          }
+        };
+        
+        // Initialize the state
+        window.sequencesState.init();
+        
+      } else {
+        console.error('Alpine.js is not loaded');
+      }
+    });
+  </script>
+</BaseLayout>
