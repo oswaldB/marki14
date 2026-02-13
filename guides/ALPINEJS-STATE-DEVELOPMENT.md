@@ -419,7 +419,7 @@ document.addEventListener('alpine:init', () => {
 ```
 public/
 └── js/
-    ├── stores/
+    ├── states/
     │   ├── state-main.js       # Point d'entrée principal
     │   ├── user.js             # Module utilisateur
     │   ├── cart.js             # Module panier
@@ -445,13 +445,12 @@ public/
 ```javascript
 // Dans state-main.js
 document.addEventListener('alpine:init', () => {
-  const user = Alpine.store('user');
-  const cart = Alpine.store('cart');
+  const app = Alpine.store('app');
   
   // Exemple: vider le panier lors de la déconnexion
-  user.$watch('user', (newUser, oldUser) => {
+  app.$watch('user', (newUser, oldUser) => {
     if (!newUser && oldUser) {
-      cart.clear();
+      app.clear();
     }
   });
 });
