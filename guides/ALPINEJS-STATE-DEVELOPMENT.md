@@ -322,25 +322,30 @@ document.addEventListener('alpine:init', () => {
 public/
 └── js/
     ├── states/
-    │   ├── state-main.js       # Point d'entrée principal
-    │   ├── user.js             # Module utilisateur
-    │   ├── cart.js             # Module panier
-    │   ├── products.js         # Module produits
-    │   ├── ui.js               # Module UI
-    │   └── utils/              # Utilitaires partagés
-    │       ├── api.js           # Fonctions API
-    │       └── helpers.js       # Fonctions utilitaires
-    └── components/             # Composants Alpine.js
-        ├── counter.js
-        └── modal.js
+    │   ├── dashboard/
+    │   │   ├── state-main.js   # Point d'entrée pour la page
+    │   │   ├── stats.js        # Module spécifique
+    │   │   └── charts.js       # Module spécifique
+    │   ├── products/
+    │   │   ├── state-main.js   # Point d'entrée pour la page
+    │   │   ├── list.js         # Module spécifique
+    │   │   └── filter.js       # Module spécifique
+    │   ├── shared/
+    │   │   ├── user.js         # Module partagé
+    │   │   ├── ui.js           # Module partagé
+    │   │   └── api.js          # Module partagé
+    │   └── utils/
+    │       ├── helpers.js      # Utilitaires
+    │       └── constants.js     # Constantes
 ```
 
 ### 2. Nommage des Modules
 
-- Utilisez des noms descriptifs pour les modules: `user.js`, `cart.js`, `ui.js`
-- Pour les fonctions de création, utilisez le préfixe `create`: `createUserModule()`
-- Le fichier principal doit s'appeler `state-main.js` pour une identification facile
-- Tout est géré comme du state
+- **Dossiers** : Noms des pages en minuscules (ex: `dashboard/`, `products/`)
+- **Fichiers** : Noms descriptifs en minuscules (ex: `stats.js`, `filter.js`)
+- **Fonctions** : Préfixe `create` pour les fonctions de module (ex: `createUserModule()`)
+- **Fichier principal** : Toujours `state-main.js` pour chaque page
+- **Modules partagés** : Dans le dossier `shared/` pour le code réutilisable
 
 ### 3. Gestion des Dépendances
 
@@ -429,11 +434,14 @@ Alpine.state('app', {
 public/
 └── js/
     └── states/
-        ├── state-main.js       # Point d'entrée
-        ├── user.js             # Module utilisateur
-        ├── cart.js             # Module panier
-        ├── products.js         # Module produits
-        └── ui.js               # Module UI
+        ├── dashboard/
+        │   ├── state-main.js   # Point d'entrée pour la page dashboard
+        │   ├── stats.js        # Module statistiques
+        │   └── charts.js       # Module graphiques
+        ├── shared/
+        │   ├── user.js         # Module utilisateur partagé
+        │   ├── ui.js           # Module UI partagé
+        │   └── api.js          # Module API partagé
 ```
 
 ### user.js
