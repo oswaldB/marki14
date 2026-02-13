@@ -1,6 +1,6 @@
 /**
  * État Alpine.js pour la page dashboard
- * Gère la récupération des produits depuis Parse et l'état du dashboard
+ * Gère la récupération des produits depuis Parse REST et l'état du dashboard
  */
 
 // Vérifier que le code s'exécute côté client uniquement
@@ -18,14 +18,14 @@ if (typeof document !== 'undefined') {
    * Initialisation du composant
    */
   init() {
-    // Parse est déjà initialisé dans BaseLayout, pas besoin de le réinitialiser
+    // Parse REST est déjà configuré dans BaseLayout, pas besoin de le reconfigurer
     
     // Charger les produits depuis Parse
     this.loadProducts();
   },
   
   /**
-   * Charge les produits depuis Parse
+   * Charge les produits depuis Parse REST API
    */
   async loadProducts() {
     try {
@@ -58,16 +58,16 @@ if (typeof document !== 'undefined') {
       
       const results = response.data.results;
       
-      console.log('✅ Produits chargés depuis Parse:', results.length);
+      console.log('✅ Produits chargés depuis Parse REST:', results.length);
       
       // Mettre à jour le statut des produits
       results.forEach((product) => {
-        const productId = product.id;
-        const productStatus = product.get('status');
-        const productName = product.get('name') || `Fonctionnalité ${productId}`;
-        const productType = product.get('type') || 'subscription';
-        const productLink = product.get('link') || `/feature${productId}`;
-        const isPurchased = product.get('isPurchased') || false;
+        const productId = product.objectId;
+        const productStatus = product.status || 'inactive';
+        const productName = product.name || `Fonctionnalité ${productId}`;
+        const productType = product.type || 'subscription';
+        const productLink = product.link || `/feature${productId}`;
+        const isPurchased = product.isPurchased || false;
         
         console.log(`📦 Produit ${productId}: ${productName}, isPurchased: ${isPurchased}`);
         
