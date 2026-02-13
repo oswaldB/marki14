@@ -1,0 +1,33 @@
+# Playwright test artifacts
+storage/
+*.json
+
+# Node modules
+node_modules/
+
+# Playwright cache
+.playwright/
+
+# Test results
+test-results/
+playwright-report/
+
+# Debug logs
+debug.log
+
+# Environment files
+.env
+.env.*
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Coverage reports
+coverage/
+nyc_output/
+
+# Storage state files (contain session data)
+!storage/.gitkeep
