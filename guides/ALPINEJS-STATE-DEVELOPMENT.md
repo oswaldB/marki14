@@ -17,7 +17,7 @@ Ce guide explique comment développer un système de state management avec Alpin
 
 Dans notre approche, chaque page de l'application a son propre state dédié. Alpine.js nous permet de gérer l'état de manière modulaire :
 
-- **Alpine.store()** : Pour créer un state global accessible dans toute l'application
+- **Alpine.state()** : Pour créer un state global accessible dans toute l'application
 - **Fichiers JS modulaires** : Pour organiser le code par page et par fonctionnalité
 - **Un state par page** : Chaque page a son propre state, modularisé si nécessaire
 
@@ -31,7 +31,7 @@ Créez un fichier `state.js` dédié à une page spécifique :
 ```javascript
 // public/js/states/dashboard-state.js
 document.addEventListener('alpine:init', () => {
-  Alpine.store('dashboard', {
+  Alpine.state('dashboard', {
     // State spécifique à la page dashboard
     stats: null,
     loading: false,
@@ -70,7 +70,7 @@ document.addEventListener('alpine:init', () => {
 ```javascript
 // public/js/states/products-state.js
 document.addEventListener('alpine:init', () => {
-  Alpine.store('products', {
+  Alpine.state('products', {
     // State spécifique aux produits
     products: [],
     filter: '',
@@ -114,15 +114,15 @@ document.addEventListener('alpine:init', () => {
 ```html
 <div x-data>
   <!-- Accès direct -->
-  <p>Count: <span x-text="$store.app.count"></span></p>
+  <p>Count: <span x-text="$state.app.count"></span></p>
   
   <!-- Avec réactivité -->
-  <button @click="$store.app.increment()">Increment</button>
-  <button @click="$store.app.decrement()">Decrement</button>
+  <button @click="$state.app.increment()">Increment</button>
+  <button @click="$state.app.decrement()">Decrement</button>
   
   <!-- Utilisation dans des expressions -->
-  <div x-show="$store.app.isAuthenticated">
-    Welcome, <span x-text="$store.app.user?.name"></span>!
+  <div x-show="$state.app.isAuthenticated">
+    Welcome, <span x-text="$state.app.user?.name"></span>!
   </div>
 </div>
 ```
@@ -286,7 +286,7 @@ import { createUiModule } from './ui';
 
 document.addEventListener('alpine:init', () => {
   // Créer le state principal en fusionnant tous les modules
-  Alpine.store('app', {
+  Alpine.state('app', {
     // Fusionner tous les modules
     ...createUserModule(),
     ...createCartModule(),
@@ -335,9 +335,9 @@ document.addEventListener('alpine:init', () => {
 });
 
 // Utilisation dans les composants:
-// $store.app.user.login(...)
-// $store.app.cart.addItem(...)
-// $store.app.ui.showToast(...)
+// $state.app.user.login(...)
+// $state.app.cart.addItem(...)
+// $state.app.ui.showToast(...)
 ```
 
 ### Approche 3: Modules Séparés avec Communication
@@ -414,7 +414,7 @@ public/
 ```javascript
 // Dans state-main.js
 document.addEventListener('alpine:init', () => {
-  const app = Alpine.store('app');
+  const app = Alpine.state('app');
   
   // Exemple: vider le panier lors de la déconnexion
   app.$watch('user', (newUser, oldUser) => {
@@ -637,8 +637,8 @@ document.addEventListener('alpine:init', () => {
   const cartModule = createCartModule();
   const uiModule = createUiModule();
   
-  // Initialiser le store principal en fusionnant les modules
-  Alpine.store('app', {
+  // Initialiser le state principal en fusionnant les modules
+  Alpine.state('app', {
     ...userModule,
     ...cartModule,
     ...uiModule,
