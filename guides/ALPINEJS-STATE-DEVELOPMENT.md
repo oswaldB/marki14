@@ -309,76 +309,7 @@ document.addEventListener('alpine:init', () => {
 });
 ```
 
-### Approche 2: Fusion avec Namespace
 
-Si vous préférez garder les modules séparés dans le state :
-
-```javascript
-// public/js/states/state-main.js
-import { createUserModule } from './user';
-import { createCartModule } from './cart';
-import { createUiModule } from './ui';
-
-document.addEventListener('alpine:init', () => {
-  Alpine.state('app', {
-    user: createUserModule(),
-    cart: createCartModule(),
-    ui: createUiModule(),
-    
-    // Méthodes globales
-    resetApp() {
-      this.user.logout();
-      this.cart.clear();
-      this.ui.hideModal();
-    }
-  });
-});
-
-// Utilisation dans les composants:
-// $state.app.user.login(...)
-// $state.app.cart.addItem(...)
-// $state.app.ui.showToast(...)
-```
-
-### Approche 3: Modules Séparés avec Communication
-
-```javascript
-// public/js/states/state-main.js
-import { createUserModule } from './user';
-import { createCartModule } from './cart';
-import { createUiModule } from './ui';
-
-document.addEventListener('alpine:init', () => {
-  // Créer les modules
-  const userModule = createUserModule();
-  const cartModule = createCartModule();
-  const uiModule = createUiModule();
-  
-  // Initialiser le state principal en fusionnant les modules
-  Alpine.state('app', {
-    ...userModule,
-    ...cartModule,
-    ...uiModule,
-    
-    version: '1.0.0',
-    
-    // Configurer la communication entre modules
-    init() {
-      this.$watch('items', () => {
-        if (this.itemCount > 0) {
-          this.showToast(`Panier mis à jour: ${this.itemCount} articles`);
-        }
-      }, { deep: true });
-    },
-    
-    reset() {
-      this.logout();
-      this.clear();
-      this.hideModal();
-    }
-  });
-});
-```
 
 <a name="bonnes-pratiques"></a>
 ## 6. Bonnes Pratiques
