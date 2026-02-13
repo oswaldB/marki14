@@ -26,10 +26,10 @@ import DockComponent from '../components/DockComponent.astro';
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
     [x-cloak] { display: none !important; }
   </style>
-  <!-- Approche REST: Parse Auth via Axios + Fastify pour Cloud Functions -->
+  <!-- Approche REST: Parse Auth via Axios -->
   <script is:inline src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <script is:inline>
-    // Configuration REST: Parse Auth (Axios) + Fastify (Cloud Functions)
+    // Configuration REST: Parse Auth (Axios)
     if (typeof window !== 'undefined') {
       // 1. Configurer Parse Auth via REST API
       window.PARSE_AUTH_CONFIG = {
@@ -40,18 +40,7 @@ import DockComponent from '../components/DockComponent.astro';
       };
       console.log('✅ Parse REST configuré pour AUTH:', window.PARSE_AUTH_CONFIG.serverUrl);
       
-      // 2. Configurer Fastify pour les Cloud Functions
-      window.FASTIFY_API_BASE = 'https://dev.api.markidiags.com/api';
-      console.log('✅ Fastify API configurée pour CLOUD:', window.FASTIFY_API_BASE);
-      
-      // 3. Charger l'adaptateur Fastify
-      import('/js/api/fastifyAdapter.js').then(module => {
-        console.log('✅ Adaptateur Fastify chargé - Cloud Functions redirigées');
-      }).catch(error => {
-        console.error('❌ Erreur de chargement de l\'adaptateur Fastify:', error);
-      });
-      
-      // 4. Fonctions utilitaires Parse REST
+      // 2. Fonctions utilitaires Parse REST
       window.ParseRest = {
         async becomeSession(sessionToken) {
           try {
