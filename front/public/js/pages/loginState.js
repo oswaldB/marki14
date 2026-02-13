@@ -38,17 +38,31 @@ document.addEventListener('alpine:init', () => {
       this.error = '';
       
       try {
-        // Initialiser Parse si nécessaire
-        if (typeof Parse === 'undefined') {
-          throw new Error('Parse SDK non chargé');
+        // Vérifier que Parse REST est disponible
+        if (typeof window.ParseRest === 'undefined' || !window.PARSE_AUTH_CONFIG) {
+          throw new Error('Parse REST non configuré');
         }
         
-        // Connexion avec Parse
-        const user = await Parse.User.logIn(this.username, this.password);
+        // Connexion avec Parse REST API
+        const response = await axios.post(
+          `${window.PARSE_AUTH_CONFIG.serverUrl}/login`,
+          {
+            username: this.username,
+            password: this.password
+          },
+          {
+            headers: {
+              'X-Parse-Application-Id': window.PARSE_AUTH_CONFIG.appId,
+              'X-Parse-REST-API-Key': window.PARSE_AUTH_CONFIG.restApiKey,
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+        
+        const user = response.data;
+        const sessionToken = user.sessionToken;
         
         // Gestion de la session selon l'option "Se souvenir de moi"
-        const sessionToken = user.getSessionToken();
-        
         if (this.remember) {
           // Session persistante - stockage en localStorage
           localStorage.setItem('parseSessionToken', sessionToken);
@@ -59,14 +73,15 @@ document.addEventListener('alpine:init', () => {
           console.log('🔐 Session temporaire stockée en sessionStorage');
         }
         
-        console.log('🔐 Connexion réussie:', user.getUsername());
+        console.log('🔐 Connexion réussie:', user.username);
         
         // Redirection vers le dashboard
         window.location.href = '/dashboard';
         
       } catch (error) {
         console.error('❌ Erreur de connexion:', error);
-        this.error = this.getErrorMessage(error.code || 'default');
+        const errorCode = error.response?.data?.code || 'default';
+        this.error = this.getErrorMessage(errorCode);
       } finally {
         this.isLoading = false;
       }

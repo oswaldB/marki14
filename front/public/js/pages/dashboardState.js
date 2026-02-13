@@ -35,10 +35,28 @@ if (typeof document !== 'undefined') {
       this.purchasedProducts = [];
       this.nonPurchasedProducts = [];
       
-      // Récupérer les produits depuis Parse
-      const Products = Parse.Object.extend('Products');
-      const query = new Parse.Query(Products);
-      const results = await query.find();
+      // Vérifier que Parse REST est disponible
+      if (typeof window.ParseRest === 'undefined' || !window.PARSE_AUTH_CONFIG) {
+        throw new Error('Parse REST non configuré');
+      }
+      
+      // Récupérer le token de session
+      const sessionToken = sessionStorage.getItem('parseSessionToken') || localStorage.getItem('parseSessionToken');
+      
+      if (!sessionToken) {
+        throw new Error('Aucun token de session trouvé');
+      }
+      
+      // Récupérer les produits depuis Parse REST API
+      const response = await axios.get(`${window.PARSE_AUTH_CONFIG.serverUrl}/classes/Products`, {
+        headers: {
+          'X-Parse-Application-Id': window.PARSE_AUTH_CONFIG.appId,
+          'X-Parse-REST-API-Key': window.PARSE_AUTH_CONFIG.restApiKey,
+          'X-Parse-Session-Token': sessionToken
+        }
+      });
+      
+      const results = response.data.results;
       
       console.log('✅ Produits chargés depuis Parse:', results.length);
       
