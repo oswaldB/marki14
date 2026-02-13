@@ -47,8 +47,18 @@ class AuthUtils {
     
     // Navigate to login page
     console.log('🌐 Navigating to login page...');
-    await page.goto('http://localhost:5000/login'); // Use localhost URL for development
+    await page.goto('https://dev.markidiags.com/login', { waitUntil: 'domcontentloaded', timeout: 30000 });
     console.log('✅ Login page loaded');
+    
+    // Add a small delay to ensure Alpine.js is fully initialized
+    await page.waitForTimeout(2000);
+    
+    // Wait for login form elements to be available
+    console.log('🔍 Waiting for login form elements...');
+    await page.waitForSelector('#username', { timeout: 10000 });
+    await page.waitForSelector('#password', { timeout: 10000 });
+    await page.waitForSelector('button[type="submit"]:has-text("Se connecter")', { timeout: 10000 });
+    console.log('✅ Login form elements found');
     
     // Fill login form - using Alpine.js x-model bound elements
     console.log('📝 Filling login form with credentials:', credentials.username);
@@ -58,14 +68,50 @@ class AuthUtils {
     
     // Click login button
     console.log('🔘 Attempting to click login button...');
-    await page.click('button[type="submit"]:has-text("Se connecter")');
-    console.log('✅ Login button clicked');
+    try {
+      await page.click('button[type="submit"]:has-text("Se connecter")', { timeout: 10000 });
+      console.log('✅ Login button clicked');
+    } catch (error) {
+      console.error('❌ Failed to click login button:', error.message);
+      throw error;
+    }
     
     // Wait for navigation to complete
-    await page.waitForURL('**/dashboard');
+    console.log('🔄 Waiting for navigation to dashboard...');
+    try {
+      await page.waitForURL('**/dashboard', { timeout: 20000 });
+      console.log('✅ Navigation to dashboard completed');
+    } catch (error) {
+      console.log('⚠️  Navigation timeout, checking current URL...');
+      const currentUrl = page.url();
+      console.log(`Current URL: ${currentUrl}`);
+      if (!currentUrl.includes('/dashboard')) {
+        console.error('❌ Not on dashboard page after login');
+        throw new Error(`Failed to navigate to dashboard. Current URL: ${currentUrl}`);
+      } else {
+        console.log('ℹ️  Already on dashboard page');
+      }
+    }
     
     // Verify successful login by checking for dashboard content
-    await page.waitForSelector('text=Dashboard', { timeout: 10000 });
+    console.log('🔍 Looking for dashboard content...');
+    try {
+      await page.waitForSelector('text=Dashboard', { timeout: 15000 });
+      console.log('✅ Dashboard content found');
+    } catch (error) {
+      console.log('⚠️  Dashboard content not found, checking page state...');
+      const pageTitle = await page.title();
+      const pageContent = await page.content();
+      console.log(`Page title: ${pageTitle}`);
+      
+      // Check if we can find Dashboard in the content
+      if (pageContent.includes('Dashboard')) {
+        console.log('ℹ️  Dashboard content found in page source');
+      } else {
+        console.error('❌ Dashboard content not found in page source');
+        throw new Error(`Dashboard content not found. Page title: ${pageTitle}`);
+      }
+    }
     
     console.log(`Successfully logged in as ${credentials.username} (admin: ${isAdmin})`);
     

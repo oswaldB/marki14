@@ -10,7 +10,7 @@ test('Manual login test', async ({ browser }) => {
   const context = await AuthUtils.login(browser, false); // false = not admin
   const page = await context.newPage();
   
-  await page.goto('http://localhost:5000/dashboard');
+  await page.goto('https://dev.markidiags.com/dashboard', { waitUntil: 'domcontentloaded', timeout: 30000 });
   await expect(page).toHaveURL('/dashboard');
   
   await context.close();
@@ -18,14 +18,22 @@ test('Manual login test', async ({ browser }) => {
 
 // Test login process
 test('Login process test', async ({ page }) => {
-  await page.goto('http://localhost:5000/login', { waitUntil: 'domcontentloaded' });
+  await page.goto('https://dev.markidiags.com/login', { waitUntil: 'domcontentloaded', timeout: 30000 });
+  
+  // Add a small delay to ensure Alpine.js is fully initialized
+  await page.waitForTimeout(2000);
+  
+  // Wait for login form elements
+  await page.waitForSelector('#username', { timeout: 10000 });
+  await page.waitForSelector('#password', { timeout: 10000 });
+  await page.waitForSelector('button[type="submit"]:has-text("Se connecter")', { timeout: 10000 });
   
   // Fill login form
   await page.fill('#username', 'oswald');
   await page.fill('#password', 'coucou');
   
   // Submit form
-  await page.click('button[type="submit"]:has-text("Se connecter")');
+  await page.click('button[type="submit"]:has-text("Se connecter")', { timeout: 10000 });
   
   // Verify successful login
   await expect(page).toHaveURL('/dashboard');
