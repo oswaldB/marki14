@@ -48,18 +48,18 @@ class AuthUtils {
     // Navigate to login page
     await page.goto('/login'); // Base URL is configured in playwright.config.js
     
-    // Fill login form
-    await page.fill('input[name="username"]', credentials.username);
-    await page.fill('input[name="password"]', credentials.password);
+    // Fill login form - using Alpine.js x-model bound elements
+    await page.fill('#username', credentials.username);
+    await page.fill('#password', credentials.password);
     
     // Click login button
-    await page.click('button[type="submit"]');
+    await page.click('button[type="submit"]:has-text("Se connecter")');
     
-    // Wait for navigation to complete (adjust selector as needed)
+    // Wait for navigation to complete
     await page.waitForURL('**/dashboard');
     
-    // Verify successful login by checking for logout button or user info
-    await page.waitForSelector('text=Logout');
+    // Verify successful login by checking for dashboard content
+    await page.waitForSelector('text=Dashboard');
     
     console.log(`Successfully logged in as ${credentials.username} (admin: ${isAdmin})`);
     

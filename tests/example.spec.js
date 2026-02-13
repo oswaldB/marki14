@@ -45,13 +45,13 @@ test('Login process test', async ({ page }) => {
   await page.goto('/login');
   
   // Fill login form
-  await page.fill('input[name="username"]', 'oswald');
-  await page.fill('input[name="password"]', 'coucou');
+  await page.fill('#username', 'oswald');
+  await page.fill('#password', 'coucou');
   
   // Submit form
-  await page.click('button[type="submit"]');
+  await page.click('button[type="submit"]:has-text("Se connecter")');
   
   // Verify successful login
   await expect(page).toHaveURL('/dashboard');
-  await expect(page.locator('text=Logout')).toBeVisible();
+  await expect(page.locator('text=Dashboard')).toBeVisible();
 });
