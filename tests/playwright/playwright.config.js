@@ -49,7 +49,7 @@ module.exports = defineConfig({
   ],
   
   // Global setup and teardown
-  globalSetup: './tests/playwright/utils/global-setup.js',
+  globalSetup: './utils/global-setup.js',
   
   // Projects for different browsers
   projects: [

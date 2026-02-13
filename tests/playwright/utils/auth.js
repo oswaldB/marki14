@@ -46,7 +46,7 @@ class AuthUtils {
     const page = await context.newPage();
     
     // Navigate to login page
-    await page.goto('/login'); // Base URL is configured in playwright.config.js
+    await page.goto('https://dev.markidiags.com/login'); // Use full URL
     
     // Fill login form - using Alpine.js x-model bound elements
     await page.fill('#username', credentials.username);
