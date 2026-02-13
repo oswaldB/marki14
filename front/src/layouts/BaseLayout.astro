@@ -86,14 +86,14 @@ import DockComponent from '../components/DockComponent.astro';
       
       if (authEnabled) {
         window.addEventListener('DOMContentLoaded', async () => {
-          // Attendre que Parse SDK soit complètement initialisé (pour AUTH)
+          // Attendre que Parse REST soit complètement initialisé (pour AUTH)
           await new Promise(resolve => {
-            if (typeof Parse !== 'undefined' && Parse.serverURL) {
+            if (typeof window.ParseRest !== 'undefined' && window.PARSE_AUTH_CONFIG) {
               resolve();
             } else {
-              const checkParse = setInterval(() => {
-                if (typeof Parse !== 'undefined' && Parse.serverURL) {
-                  clearInterval(checkParse);
+              const checkParseRest = setInterval(() => {
+                if (typeof window.ParseRest !== 'undefined' && window.PARSE_AUTH_CONFIG) {
+                  clearInterval(checkParseRest);
                   resolve();
                 }
               }, 50);
@@ -105,20 +105,21 @@ import DockComponent from '../components/DockComponent.astro';
 
           if (sessionToken) {
             try {
-              // Restaurer la session avec le token (Parse gère l'auth)
-              const user = await Parse.User.become(sessionToken);
-              const newToken = user.getSessionToken();
+              // Restaurer la session avec le token (Parse REST)
+              const result = await window.ParseRest.becomeSession(sessionToken);
+              const user = result.user;
+              const newToken = result.sessionToken; // Pour REST, le token ne change pas
               
               // Re-sauvegarder le token dans le bon stockage selon l'origine
               if (isPersistent) {
                 localStorage.setItem('parseSessionToken', newToken);
-                console.log('✅ Session persistante restaurée (Parse Auth)');
+                console.log('✅ Session persistante restaurée (Parse REST Auth)');
               } else {
                 sessionStorage.setItem('parseSessionToken', newToken);
-                console.log('✅ Session temporaire restaurée (Parse Auth)');
+                console.log('✅ Session temporaire restaurée (Parse REST Auth)');
               }
             } catch (error) {
-              console.error('❌ Token invalide (Parse Auth):', error);
+              console.error('❌ Token invalide (Parse REST Auth):', error);
               // Supprimer le token invalide des deux stockages
               sessionStorage.removeItem('parseSessionToken');
               localStorage.removeItem('parseSessionToken');
