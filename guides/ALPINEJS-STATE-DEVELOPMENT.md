@@ -320,15 +320,13 @@ public/
     │   ├── dashboard/
     │   │   ├── state-main.js   # Point d'entrée pour la page
     │   │   ├── stats.js        # Module spécifique
-    │   │   └── charts.js       # Module spécifique
+    │   │   ├── charts.js       # Module spécifique
+    │   │   └── user.js        # Module utilisateur
     │   ├── products/
     │   │   ├── state-main.js   # Point d'entrée pour la page
     │   │   ├── list.js         # Module spécifique
-    │   │   └── filter.js       # Module spécifique
-    │   ├── shared/
-    │   │   ├── user.js         # Module partagé
-    │   │   ├── ui.js           # Module partagé
-    │   │   └── api.js          # Module partagé
+    │   │   ├── filter.js       # Module spécifique
+    │   │   └── cart.js        # Module panier
     │   └── utils/
     │       ├── helpers.js      # Utilitaires
     │       └── constants.js     # Constantes
@@ -340,7 +338,7 @@ public/
 - **Fichiers** : Noms descriptifs en minuscules (ex: `stats.js`, `filter.js`)
 - **Fonctions** : Préfixe `create` pour les fonctions de module (ex: `createUserModule()`)
 - **Fichier principal** : Toujours `state-main.js` pour chaque page
-- **Modules partagés** : Dans le dossier `shared/` pour le code réutilisable
+- **Réutilisation** : Importez les modules d'autres pages si nécessaire (ex: `../dashboard/user.js`)
 
 ### 3. Gestion des Dépendances
 
@@ -432,11 +430,8 @@ public/
         ├── dashboard/
         │   ├── state-main.js   # Point d'entrée pour la page dashboard
         │   ├── stats.js        # Module statistiques
-        │   └── charts.js       # Module graphiques
-        ├── shared/
-        │   ├── user.js         # Module utilisateur partagé
-        │   ├── ui.js           # Module UI partagé
-        │   └── api.js          # Module API partagé
+        │   ├── charts.js       # Module graphiques
+        │   └── user.js        # Module utilisateur
 ```
 
 ### user.js
