@@ -324,9 +324,6 @@ public/
     │   │   ├── list.js         # Module spécifique
     │   │   ├── filter.js       # Module spécifique
     │   │   └── cart.js        # Module panier
-    │   └── utils/
-    │       ├── helpers.js      # Utilitaires
-    │       └── constants.js     # Constantes
 ```
 
 ### 2. Nommage des Modules
