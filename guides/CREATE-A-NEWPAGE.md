@@ -14,7 +14,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 <BaseLayout 
   title="Titre de la Page"
   withAuth={true|false}  // true si la page nécessite une authentification
-  hideSidebar={true|false}  // true pour masquer la sidebar
+  hideSidebar={true|false}  // true pour masquer la sidebar - toujours mettre à false sauf demande explicite.
   Alpinefile="/js/chemin/vers/votre/composant.js"  // optionnel: chemin vers votre composant Alpine.js
 >
   <!-- Contenu de votre page ici -->
