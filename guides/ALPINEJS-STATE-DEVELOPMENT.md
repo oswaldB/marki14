@@ -6,7 +6,7 @@ Ce guide explique comment développer un système de state management avec Alpin
 
 1. [Introduction au State Management avec Alpine.js](#introduction)
 2. [Création d'un State de Base](#state-de-base)
-3. [Utilisation du State dans les Composants](#utilisation-dans-composants)
+3. [Utilisation du State](#utilisation-state)
 4. [Modularisation du State](#modularisation)
 5. [Fusion des Modules](#fusion-des-modules)
 6. [Bonnes Pratiques](#bonnes-pratiques)
@@ -77,46 +77,7 @@ document.addEventListener('alpine:init', () => {
 });
 ```
 
-### State avec Persistance
 
-```javascript
-// public/js/stores/state.js
-Alpine.store('settings', {
-  theme: localStorage.getItem('theme') || 'light',
-  language: localStorage.getItem('language') || 'fr',
-  
-  init() {
-    // Charger l'état initial
-    this.loadFromLocalStorage();
-    
-    // Écouter les changements pour persister
-    this.$watch('theme', (value) => {
-      localStorage.setItem('theme', value);
-      this.applyTheme();
-    });
-    
-    this.$watch('language', (value) => {
-      localStorage.setItem('language', value);
-    });
-  },
-  
-  loadFromLocalStorage() {
-    const savedTheme = localStorage.getItem('theme');
-    const savedLanguage = localStorage.getItem('language');
-    
-    if (savedTheme) this.theme = savedTheme;
-    if (savedLanguage) this.language = savedLanguage;
-  },
-  
-  applyTheme() {
-    document.documentElement.setAttribute('data-theme', this.theme);
-  },
-  
-  toggleTheme() {
-    this.theme = this.theme === 'light' ? 'dark' : 'light';
-  }
-});
-```
 
 <a name="utilisation-dans-composants"></a>
 ## 3. Utilisation du State dans les Composants
@@ -139,26 +100,7 @@ Alpine.store('settings', {
 </div>
 ```
 
-### Utilisation avec Alpine.data()
 
-```javascript
-// public/js/components/counter.js
-Alpine.data('counter', () => ({
-  localCount: 0,
-  
-  incrementBoth() {
-    this.localCount++;
-    this.$store.app.increment(); // Accès au store global
-  }
-}));
-
-<!-- Utilisation dans le HTML -->
-<div x-data="counter">
-  <p>Local: <span x-text="localCount"></span></p>
-  <p>Global: <span x-text="$store.app.count"></span></p>
-  <button @click="incrementBoth()">Increment Both</button>
-</div>
-```
 
 <a name="modularisation"></a>
 ## 4. Modularisation du State
@@ -496,19 +438,19 @@ export function createUserModule() {
 
 ```javascript
 // Dans un module
-Alpine.store('search', {
-  query: '',
-  results: [],
+Alpine.store('app', {
+  searchQuery: '',
+  searchResults: [],
   
   init() {
-    this.$watch('query', this.debouncedSearch);
+    this.$watch('searchQuery', this.debouncedSearch);
   },
   
   debouncedSearch: _.debounce(function(query) {
     if (query.length > 2) {
       this.search(query);
     } else {
-      this.results = [];
+      this.searchResults = [];
     }
   }, 300),
   
