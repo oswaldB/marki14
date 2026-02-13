@@ -1,11 +1,11 @@
 # Guide: Développement d'un State Alpine.js avec Modularisation
 
-Ce guide explique comment développer un système de state management avec Alpine.js et comment le modulariser lorsque le fichier devient trop volumineux.
+Ce guide explique comment développer un système de state management avec Alpine.js pour des applications multi-pages, avec un state dédié par page, et comment le modulariser lorsque le fichier devient trop volumineux.
 
 ## Table des matières
 
 1. [Introduction au State Management avec Alpine.js](#introduction)
-2. [Création d'un State de Base](#state-de-base)
+2. [Création d'un State de Base pour une Page](#state-de-base)
 3. [Utilisation du State](#utilisation-state)
 4. [Modularisation du State](#modularisation)
 5. [Fusion des Modules](#fusion-des-modules)
@@ -15,63 +15,90 @@ Ce guide explique comment développer un système de state management avec Alpin
 <a name="introduction"></a>
 ## 1. Introduction au State Management avec Alpine.js
 
-Alpine.js offre plusieurs approches pour gérer l'état global de votre application :
+Dans notre approche, chaque page de l'application a son propre state dédié. Alpine.js nous permet de gérer l'état de manière modulaire :
 
-- **Alpine.store()** : Le système intégré pour le state management global
-- **Alpine.data()** : Pour des composants réutilisables avec leur propre état
-- **Fichiers JS modulaires** : Pour une organisation avancée
+- **Alpine.store()** : Pour créer un state global accessible dans toute l'application
+- **Fichiers JS modulaires** : Pour organiser le code par page et par fonctionnalité
+- **Un state par page** : Chaque page a son propre state, modularisé si nécessaire
 
 <a name="state-de-base"></a>
-## 2. Création d'un State de Base
+## 2. Création d'un State de Base pour une Page
 
-### State Simple
+### State Simple pour une Page
 
-Créez un fichier `state.js` dans votre projet :
+Créez un fichier `state.js` dédié à une page spécifique :
 
 ```javascript
-// public/js/states/state.js
+// public/js/states/dashboard-state.js
 document.addEventListener('alpine:init', () => {
-  Alpine.store('app', {
-    // State
-    count: 0,
-    user: null,
-    items: [],
+  Alpine.store('dashboard', {
+    // State spécifique à la page dashboard
+    stats: null,
+    loading: false,
+    error: null,
     
     // Getters (computed properties)
-    get isAuthenticated() {
-      return !!this.user;
+    get hasData() {
+      return this.stats !== null;
     },
     
-    get itemCount() {
-      return this.items.length;
+    // Actions spécifiques à la page
+    async loadStats() {
+      this.loading = true;
+      this.error = null;
+      
+      try {
+        const response = await fetch('/api/dashboard/stats');
+        this.stats = await response.json();
+      } catch (error) {
+        console.error('Failed to load stats:', error);
+        this.error = 'Failed to load statistics';
+      } finally {
+        this.loading = false;
+      }
+    },
+    
+    refresh() {
+      this.loadStats();
+    }
+  });
+});
+```
+
+### State pour une Page de Produits
+
+```javascript
+// public/js/states/products-state.js
+document.addEventListener('alpine:init', () => {
+  Alpine.store('products', {
+    // State spécifique aux produits
+    products: [],
+    filter: '',
+    loading: false,
+    
+    // Getters
+    get filteredProducts() {
+      if (!this.filter) return this.products;
+      return this.products.filter(p => 
+        p.name.toLowerCase().includes(this.filter.toLowerCase())
+      );
     },
     
     // Actions
-    increment() {
-      this.count++;
-    },
-    
-    decrement() {
-      this.count--;
-    },
-    
-    login(userData) {
-      this.user = userData;
-      localStorage.setItem('user', JSON.stringify(userData));
-    },
-    
-    logout() {
-      this.user = null;
-      localStorage.removeItem('user');
-    },
-    
-    async fetchItems() {
+    async loadProducts() {
+      this.loading = true;
       try {
-        const response = await fetch('/api/items');
-        this.items = await response.json();
+        const response = await fetch('/api/products');
+        this.products = await response.json();
       } catch (error) {
-        console.error('Failed to fetch items:', error);
+        console.error('Failed to load products:', error);
+      } finally {
+        this.loading = false;
       }
+    },
+    
+    setFilter(filter) {
+      this.filter = filter;
     }
   });
 });
