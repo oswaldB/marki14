@@ -132,10 +132,6 @@ public/
     │   │   ├── list.js         # Module liste des produits
     │   │   ├── filter.js       # Module filtrage
     │   │   └── sort.js         # Module tri
-    │   ├── shared/
-    │   │   ├── user.js         # Module utilisateur partagé
-    │   │   ├── ui.js           # Module UI partagé
-    │   │   └── api.js          # Module API partagé
     │   └── utils/              # Utilitaires globaux
     │       ├── helpers.js      # Fonctions utilitaires
     │       └── constants.js     # Constantes globales
@@ -146,15 +142,14 @@ public/
 - **Dossier par page** : Chaque page a son propre dossier dans `states/` (ex: `dashboard/`, `products/`)
 - **Fichier principal** : `state-main.js` - Point d'entrée qui fusionne tous les modules de la page
 - **Modules spécifiques** : Fichiers nommés selon leur fonctionnalité (ex: `stats.js`, `filters.js`)
-- **Modules partagés** : Dans le dossier `shared/` pour le code réutilisable entre pages
 - **Nommage** : Utilisez des noms courts et descriptifs en minuscules avec des tirets si nécessaire
 
 ### Création de Modules Individuels
 
-#### Module partagé: user.js
+#### Module utilisateur: user.js
 
 ```javascript
-// public/js/states/shared/user.js
+// public/js/states/dashboard/user.js
 export function createUserModule() {
   return {
     user: JSON.parse(localStorage.getItem('user')) || null,
@@ -188,7 +183,7 @@ export function createUserModule() {
 }
 ```
 
-#### Module spécifique à une page: cart.js
+#### Module panier: cart.js
 
 ```javascript
 // public/js/states/products/cart.js
@@ -241,10 +236,10 @@ export function createCartModule() {
 }
 ```
 
-#### Module partagé: ui.js
+#### Module UI: ui.js
 
 ```javascript
-// public/js/states/shared/ui.js
+// public/js/states/dashboard/ui.js
 export function createUiModule() {
   return {
     modal: null,
@@ -282,9 +277,9 @@ export function createUiModule() {
 
 ```javascript
 // public/js/states/products/state-main.js
-import { createUserModule } from '../../shared/user';
+import { createUserModule } from '../dashboard/user';
 import { createCartModule } from './cart';
-import { createUiModule } from '../../shared/ui';
+import { createUiModule } from '../dashboard/ui';
 
 document.addEventListener('alpine:init', () => {
   // Créer le state principal en fusionnant tous les modules
