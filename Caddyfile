@@ -30,7 +30,7 @@ dev.markidiags.com {
 }
 
 dev.api.markidiags.com {
-    reverse_proxy host.docker.internal:3000  # Port par défaut pour Fastify (accès à l'hôte depuis Docker)
+    reverse_proxy 192.168.1.239:3000  # Port par défaut pour Fastify (accès à l'hôte depuis Docker)
 }
 
 n8n.stedzstudio.com {
