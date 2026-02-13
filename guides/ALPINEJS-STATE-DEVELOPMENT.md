@@ -6,11 +6,10 @@ Ce guide explique comment développer un système de state management avec Alpin
 
 1. [Introduction au State Management avec Alpine.js](#introduction)
 2. [Création d'un State de Base pour une Page](#state-de-base)
-3. [Utilisation du State](#utilisation-state)
-4. [Modularisation du State](#modularisation)
-5. [Fusion des Modules](#fusion-des-modules)
-6. [Bonnes Pratiques](#bonnes-pratiques)
-7. [Exemple Complet](#exemple-complet)
+3. [Modularisation du State](#modularisation)
+4. [Fusion des Modules](#fusion-des-modules)
+5. [Bonnes Pratiques](#bonnes-pratiques)
+6. [Exemple Complet](#exemple-complet)
 
 <a name="introduction"></a>
 ## 1. Introduction au State Management avec Alpine.js
@@ -106,26 +105,7 @@ document.addEventListener('alpine:init', () => {
 
 
 
-<a name="utilisation-dans-composants"></a>
-## 3. Utilisation du State dans les Composants
 
-### Accéder au State
-
-```html
-<div x-data>
-  <!-- Accès direct -->
-  <p>Count: <span x-text="$state.app.count"></span></p>
-  
-  <!-- Avec réactivité -->
-  <button @click="$state.app.increment()">Increment</button>
-  <button @click="$state.app.decrement()">Decrement</button>
-  
-  <!-- Utilisation dans des expressions -->
-  <div x-show="$state.app.isAuthenticated">
-    Welcome, <span x-text="$state.app.user?.name"></span>!
-  </div>
-</div>
-```
 
 
 
