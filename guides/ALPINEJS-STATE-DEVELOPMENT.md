@@ -407,7 +407,7 @@ public/
 - Utilisez des noms descriptifs pour les modules: `user.js`, `cart.js`, `ui.js`
 - Pour les fonctions de création, utilisez le préfixe `create`: `createUserModule()`
 - Le fichier principal doit s'appeler `state-main.js` pour une identification facile
-- Tout est géré comme du state, pas de stores séparés
+- Tout est géré comme du state
 
 ### 3. Gestion des Dépendances
 
@@ -675,8 +675,8 @@ document.addEventListener('alpine:init', () => {
     }
   });
   
-  // Initialiser le store
-  Alpine.store('app').init();
+  // Initialiser le state
+  Alpine.state('app').init();
 });
 ```
 
@@ -686,48 +686,48 @@ document.addEventListener('alpine:init', () => {
 <!-- Header avec état global -->
 <div x-data>
   <header>
-    <h1 x-text="$store.app.appName"></h1>
+    <h1 x-text="$state.app.appName"></h1>
     
-    <div class="cart-indicator" @click="$store.app.showModal('cart')">
-      🛒 <span x-text="$store.app.itemCount"></span>
+    <div class="cart-indicator" @click="$state.app.showModal('cart')">
+      🛒 <span x-text="$state.app.itemCount"></span>
     </div>
     
-    <template x-if="$store.app.isAuthenticated">
-      <span x-text="$store.app.user.name"></span>
-      <button @click="$store.app.logout()">Déconnexion</button>
+    <template x-if="$state.app.isAuthenticated">
+      <span x-text="$state.app.user.name"></span>
+      <button @click="$state.app.logout()">Déconnexion</button>
     </template>
     
-    <template x-if="!$store.app.isAuthenticated">
-      <button @click="$store.app.showModal('login')">Connexion</button>
+    <template x-if="!$state.app.isAuthenticated">
+      <button @click="$state.app.showModal('login')">Connexion</button>
     </template>
   </header>
   
   <!-- Modal Panier -->
-  <div x-show="$store.app.modal === 'cart'" @click.away="$store.app.hideModal()">
+  <div x-show="$state.app.modal === 'cart'" @click.away="$state.app.hideModal()">
     <div class="modal">
       <h2>Votre Panier</h2>
       
-      <template x-for="item in $store.app.items" :key="item.id">
+      <template x-for="item in $state.app.items" :key="item.id">
         <div class="cart-item">
           <span x-text="item.name"></span>
           <span x-text="item.price.toFixed(2) + ' €'"></span>
           <input 
             type="number" 
             x-model="item.quantity" 
-            @change="$store.app.updateQuantity(item.id, $event.target.value)" 
+            @change="$state.app.updateQuantity(item.id, $event.target.value)" 
             min="1"
           >
         </div>
       </template>
       
       <div class="cart-total">
-        Total: <span x-text="$store.app.total.toFixed(2) + ' €'"></span>
+        Total: <span x-text="$state.app.total.toFixed(2) + ' €'"></span>
       </div>
       
       <button 
         @click="checkout()"
-        :disabled="!$store.app.itemCount"
-        x-bind:class="!$store.app.itemCount ? 'disabled' : ''"
+        :disabled="!$state.app.itemCount"
+        x-bind:class="!$state.app.itemCount ? 'disabled' : ''"
       >
         Payer
       </button>
@@ -736,7 +736,7 @@ document.addEventListener('alpine:init', () => {
   
   <!-- Toasts -->
   <div class="toast-container">
-    <template x-for="toast in $store.app.toasts" :key="toast.id">
+    <template x-for="toast in $state.app.toasts" :key="toast.id">
       <div class="toast" :class="toast.type">
         <span x-text="toast.message"></span>
       </div>
@@ -744,7 +744,7 @@ document.addEventListener('alpine:init', () => {
   </div>
   
   <!-- Loader global -->
-  <div x-show="$store.app.loading" class="loader-overlay">
+  <div x-show="$state.app.loading" class="loader-overlay">
     <div class="loader"></div>
   </div>
 </div>
@@ -760,4 +760,4 @@ Le développement d'un système de state management avec Alpine.js suit ces prin
 4. **Gérez les dépendances** entre modules avec soin
 5. **Documentez votre état** avec JSDoc pour une meilleure maintenabilité
 
-Cette approche vous permet de scalaire votre application Alpine.js tout en gardant un code organisé et maintenable, même pour des applications complexes. Tout est géré comme du state, sans utilisation de stores séparés.
+Cette approche vous permet de scalaire votre application Alpine.js tout en gardant un code organisé et maintenable, même pour des applications complexes.
