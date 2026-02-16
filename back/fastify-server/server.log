@@ -1,0 +1,25 @@
+{"level":30,"time":1771026045801,"pid":1404242,"hostname":"oswald-Surface-Pro-7","msg":"Server listening at http://0.0.0.0:3000"}
+Fastify server listening on port 3000
+API available at: http://localhost:3000/api
+Try: http://localhost:3000/api/health
+Try: http://localhost:3000/api/test
+{"level":30,"time":1771026085793,"pid":1404242,"hostname":"oswald-Surface-Pro-7","reqId":"req-1","req":{"method":"GET","url":"/api/health","hostname":"localhost:3000","remoteAddress":"127.0.0.1","remotePort":40122},"msg":"incoming request"}
+{"level":30,"time":1771026085809,"pid":1404242,"hostname":"oswald-Surface-Pro-7","reqId":"req-1","res":{"statusCode":200},"responseTime":15.029646039009094,"msg":"request completed"}
+{"level":30,"time":1771026308255,"pid":1404242,"hostname":"oswald-Surface-Pro-7","reqId":"req-2","req":{"method":"POST","url":"/","hostname":"81.158.171.230:3000","remoteAddress":"87.120.191.67","remotePort":48952},"msg":"incoming request"}
+{"level":30,"time":1771026308257,"pid":1404242,"hostname":"oswald-Surface-Pro-7","reqId":"req-2","msg":"Route POST:/ not found"}
+{"level":30,"time":1771026308258,"pid":1404242,"hostname":"oswald-Surface-Pro-7","reqId":"req-2","res":{"statusCode":404},"responseTime":2.3426129817962646,"msg":"request completed"}
+{"level":30,"time":1771028114167,"pid":1404242,"hostname":"oswald-Surface-Pro-7","reqId":"req-3","req":{"method":"GET","url":"/","remoteAddress":"147.185.132.13","remotePort":55183},"msg":"incoming request"}
+{"level":30,"time":1771028114168,"pid":1404242,"hostname":"oswald-Surface-Pro-7","reqId":"req-3","msg":"Route GET:/ not found"}
+{"level":30,"time":1771028114169,"pid":1404242,"hostname":"oswald-Surface-Pro-7","reqId":"req-3","res":{"statusCode":404},"responseTime":1.078144907951355,"msg":"request completed"}
+{"level":30,"time":1771031377343,"pid":1404242,"hostname":"oswald-Surface-Pro-7","reqId":"req-4","req":{"method":"POST","url":"/","hostname":"81.158.171.230:3000","remoteAddress":"87.120.191.67","remotePort":47684},"msg":"incoming request"}
+{"level":30,"time":1771031377343,"pid":1404242,"hostname":"oswald-Surface-Pro-7","reqId":"req-4","msg":"Route POST:/ not found"}
+{"level":30,"time":1771031377344,"pid":1404242,"hostname":"oswald-Surface-Pro-7","reqId":"req-4","res":{"statusCode":404},"responseTime":1.0234230756759644,"msg":"request completed"}
+{"level":30,"time":1771031868321,"pid":1404242,"hostname":"oswald-Surface-Pro-7","reqId":"req-5","req":{"method":"GET","url":"/","hostname":"81.158.171.230:3000","remoteAddress":"64.62.156.192","remotePort":64870},"msg":"incoming request"}
+{"level":30,"time":1771031868322,"pid":1404242,"hostname":"oswald-Surface-Pro-7","reqId":"req-5","msg":"Route GET:/ not found"}
+{"level":30,"time":1771031868322,"pid":1404242,"hostname":"oswald-Surface-Pro-7","reqId":"req-5","res":{"statusCode":404},"responseTime":0.880079984664917,"msg":"request completed"}
+{"level":30,"time":1771031901559,"pid":1404242,"hostname":"oswald-Surface-Pro-7","reqId":"req-6","req":{"method":"GET","url":"/favicon.ico","hostname":"81.158.171.230:3000","remoteAddress":"64.62.156.197","remotePort":54995},"msg":"incoming request"}
+{"level":30,"time":1771031901559,"pid":1404242,"hostname":"oswald-Surface-Pro-7","reqId":"req-6","msg":"Route GET:/favicon.ico not found"}
+{"level":30,"time":1771031901560,"pid":1404242,"hostname":"oswald-Surface-Pro-7","reqId":"req-6","res":{"statusCode":404},"responseTime":1.1267699003219604,"msg":"request completed"}
+{"level":30,"time":1771035449720,"pid":1404242,"hostname":"oswald-Surface-Pro-7","reqId":"req-7","req":{"method":"GET","url":"/","hostname":"81.158.171.230:3000","remoteAddress":"20.65.194.56","remotePort":38956},"msg":"incoming request"}
+{"level":30,"time":1771035449721,"pid":1404242,"hostname":"oswald-Surface-Pro-7","reqId":"req-7","msg":"Route GET:/ not found"}
+{"level":30,"time":1771035449722,"pid":1404242,"hostname":"oswald-Surface-Pro-7","reqId":"req-7","res":{"statusCode":404},"responseTime":1.1400320529937744,"msg":"request completed"}

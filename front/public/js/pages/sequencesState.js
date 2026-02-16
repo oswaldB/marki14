@@ -10,6 +10,8 @@ if (typeof document !== 'undefined') {
       sequences: [],
       isLoading: true,
       error: null,
+      deactivationSuccess: null,
+      deactivationError: null,
 
       // Cycle de vie
       init() {
@@ -33,6 +35,37 @@ if (typeof document !== 'undefined') {
         } finally {
           this.isLoading = false;
           console.log('Fin de la récupération des séquences');
+        }
+      },
+
+      // Méthode pour désactiver une séquence
+      async deactivateSequence(sequenceId, event) {
+        console.log(`Début de la désactivation de la séquence ${sequenceId}`);
+        
+        // Réinitialiser les messages
+        this.deactivationSuccess = null;
+        this.deactivationError = null;
+        
+        try {
+          // Appel à la fonction de désactivation
+          const result = await deactivateSequence(sequenceId);
+          
+          if (result.success) {
+            if (result.cancelledCount > 0) {
+              this.deactivationSuccess = `${result.cancelledCount} relance(s) annulée(s) avec succès.`;
+            } else {
+              this.deactivationSuccess = 'Séquence désactivée avec succès. Aucune relance à annuler.';
+            }
+            
+            // Rafraîchir la liste des séquences
+            await this.fetchSequences();
+          } else {
+            this.deactivationError = result.error || 'Erreur lors de la désactivation de la séquence.';
+          }
+          
+        } catch (error) {
+          console.error(`Erreur lors de la désactivation de la séquence ${sequenceId}:`, error);
+          this.deactivationError = error.message || 'Erreur lors de la désactivation de la séquence.';
         }
       }
     }));

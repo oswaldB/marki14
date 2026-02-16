@@ -125,4 +125,5 @@ if (typeof window !== 'undefined') {
   window.fetchSequences = fetchSequences;
   window.fetchRelancesCount = fetchRelancesCount;
   window.redirectToSequenceDetail = redirectToSequenceDetail;
+  window.deactivateSequence = deactivateSequence;
 }
