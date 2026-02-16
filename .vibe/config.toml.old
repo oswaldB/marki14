@@ -1,0 +1,12 @@
+[[mcp_servers]]
+name = "fetch_server"
+transport = "stdio"
+command = "npx"
+args = ["-y", "@executeautomation/playwright-mcp-server"]
+
+[[mcp_servers]]
+name = "parse-mcp-server"
+transport = "stdio"
+command = "npx"
+args = ["@asaje/parse-mcp-server"]
+env = { "PARSE_SERVER_URL"= "https://dev.parse.markidiags.com","PARSE_APP_ID"= "marki", "PARSE_MASTER_KEY"= "Shaky4-Exception6"}/
