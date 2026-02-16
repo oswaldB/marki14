@@ -29,7 +29,7 @@ process_webhook() {
     
     # Exécution de la commande vibe
     echo "Exécution de la commande: vibe -p "
-    vibe -p "Met à jour ta todo avec task pour faire : --- $action. Et executes la todo ensuite. Si tu as exectué les prérequis, crée un fichier prerequie-timestamp.md" --output streaming
+    vibe -p "$action" --output streaming
     sleep 10
     vibe -p "commit"
     
