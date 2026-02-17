@@ -45,10 +45,17 @@ app.addHook('onSend', async (request, reply) => {
 // Plugin pour le support JSON
 app.register(fastifySensible)
 
-// Route de santé (seule route disponible)
+// Import and register email history routes
+import { getEmailHistory, getFieldDiff } from './routes/emailHistory.js'
+
+// Route de santé
 app.get('/api/health', async (request, reply) => {
   return { status: 'healthy', timestamp: new Date().toISOString() }
 })
+
+// Email History Routes
+app.get('/api/emails/:emailId/history', getEmailHistory)
+app.get('/api/history/:historyId/diff/:field', getFieldDiff)
 
 // Démarrage du serveur
 const start = async () => {
