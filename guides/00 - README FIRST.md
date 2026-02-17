@@ -55,6 +55,10 @@ fastify.get('/api/custom-endpoint', async (request, reply) => {
   return { message: 'Réponse personnalisée' };
 });
 ```
+**Exemple** :
+```javascript
+// Exemple d'utilisation Parse REST api pour le login pas besoin de fastify.
+```
 
 ### 3. Interdiction de construire des composants Astro
 
