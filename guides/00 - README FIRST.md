@@ -28,7 +28,7 @@ Les guides suivants sont disponibles dans ce répertoire :
 
 **Justification** : Cette structure favorise une organisation claire par fonctionnalité plutôt que par type de code, évitant ainsi la création de silos de code utilitaire déconnectés du contexte métier.
 
-### 2. Utilisation de Parse REST via Axios
+### 3. Utilisation de Parse REST via Axios
 
 **Règle** : Si vous devez interagir avec Parse, utilisez uniquement l'API REST via Axios. L'utilisation du SDK JavaScript de Parse est strictement interdite.
 
@@ -46,7 +46,7 @@ const response = await axios.get('https://votre-serveur.parse.com/parse/classes/
 });
 ```
 
-### 8. Utilisation de Fastify
+### 4. Utilisation de Fastify
 
 **Règle** : Fastify ne doit être utilisé que si Parse REST via Axios ne peut pas répondre aux besoins du projet. Privilégiez toujours Parse REST avant d'envisager Fastify.
 
@@ -66,13 +66,13 @@ fastify.get('/api/custom-endpoint', async (request, reply) => {
 // Exemple d'utilisation Parse REST api pour le login pas besoin de fastify.
 ```
 
-### 3. Interdiction de construire des composants Astro
+### 5. Interdiction de construire des composants Astro
 
 **Règle** : Il est interdit de créer des composants Astro (`*.astro` dans `src/components/`). Utilisez uniquement des pages Astro (`*.astro` dans `src/pages/`).
 
 **Justification** : Les composants Astro peuvent introduire des complexités inutiles et des problèmes de maintenance. Les pages Astro sont suffisantes pour structurer l'application.
 
-### 4. Utilisation exclusive des icônes Font Awesome
+### 6. Utilisation exclusive des icônes Font Awesome
 
 **Règle** : Utilisez uniquement les icônes de la bibliothèque Font Awesome via CDN. Aucune autre bibliothèque d'icônes (y compris Lucide) n'est autorisée.
 
@@ -87,7 +87,7 @@ fastify.get('/api/custom-endpoint', async (request, reply) => {
 
 **Interdiction spécifique** : L'utilisation de Lucide ou de toute autre bibliothèque d'icônes est strictement interdite. Utilisez uniquement Font Awesome avec les classes CSS comme décrit dans le guide [FONT_AWESOME_GUIDE.md](FONT_AWESOME_GUIDE.md).
 
-### 5. Interdiction du CSS personnalisé
+### 7. Interdiction du CSS personnalisé
 
 **Règle** : Il est strictement interdit d'écrire du CSS personnalisé. Utilisez uniquement les classes utilitaires de Tailwind CSS.
 
@@ -100,13 +100,13 @@ fastify.get('/api/custom-endpoint', async (request, reply) => {
 </button>
 ```
 
-### 6. Interdiction des tests
+### 8. Interdiction des tests
 
 **Règle** : Aucun test n'est autorisé dans ce projet. Cela inclut les tests unitaires, les tests d'intégration, les tests end-to-end, etc.
 
 **Justification** : Les tests peuvent ralentir le processus de développement et introduire des complexités supplémentaires. Concentrez-vous sur la qualité du code et des revues de code.
 
-### 7. Journalisation des interactions Alpine.js
+### 9. Journalisation des interactions Alpine.js
 
 **Règle** : Chaque fonction et chaque interaction dans Alpine.js doit donner lieu à un `console.log` pour faciliter le débogage. Les logs doivent être explicites et inclure des informations contextuelles.
 

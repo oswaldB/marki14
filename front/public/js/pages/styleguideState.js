@@ -5,7 +5,8 @@
 // Vérifier que le code s'exécute côté client uniquement
 if (typeof document !== 'undefined') {
   document.addEventListener('alpine:init', () => {
-    Alpine.data('styleguideState', () => ({
+    if (typeof Alpine !== 'undefined' && typeof Alpine.data === 'function') {
+      Alpine.data('styleguideState', () => ({
       
       // État des galets animés
       isAnimating: true,
@@ -23,9 +24,21 @@ if (typeof document !== 'undefined') {
       // Cycle de vie
       init() {
         console.log('Composant Styleguide Alpine.js initialisé');
+        
+        // Vérifications supplémentaires
+        if (typeof this.isAnimating === 'undefined') {
+          this.isAnimating = true;
+        }
+        if (typeof this.pebbleCount === 'undefined') {
+          this.pebbleCount = 8;
+        }
+        
         console.log('Nombre de galets:', this.pebbleCount);
         console.log('Animation initiale:', this.isAnimating ? 'activée' : 'désactivée');
       }
     }));
+  } else {
+    console.error('Alpine.js non disponible pour le styleguide');
+  }
   });
 }

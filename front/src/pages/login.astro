@@ -1,0 +1,102 @@
+--- 
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Connexion"
+  withAuth={false}
+  Alpinefile="/js/states/login-state.js"
+>
+  <div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full space-y-8">
+      <div class="text-center">
+        <img class="mx-auto h-12 w-auto" src="/marki-logo.png" alt="Marki" />
+        <h2 class="mt-6 text-3xl font-extrabold text-gray-900">
+          Connectez-vous à votre compte
+        </h2>
+      </div>
+      
+      <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10" x-data="loginState()">
+        <form class="space-y-6" @submit.prevent="login()">
+          <div>
+            <label for="username" class="block text-sm font-medium text-gray-700">
+              Identifiant
+            </label>
+            <div class="mt-1">
+              <input
+                id="username"
+                name="username"
+                type="text"
+                required
+                x-model="username"
+                class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-[#007ACE] focus:border-[#007ACE] sm:text-sm"
+              >
+            </div>
+          </div>
+          
+          <div>
+            <label for="password" class="block text-sm font-medium text-gray-700">
+              Mot de passe
+            </label>
+            <div class="mt-1">
+              <input
+                id="password"
+                name="password"
+                type="password"
+                required
+                x-model="password"
+                class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-[#007ACE] focus:border-[#007ACE] sm:text-sm"
+              >
+            </div>
+          </div>
+          
+          <div class="flex items-center justify-between">
+            <div class="flex items-center">
+              <input
+                id="remember-me"
+                name="remember-me"
+                type="checkbox"
+                x-model="rememberMe"
+                class="h-4 w-4 text-[#007ACE] focus:ring-[#007ACE] border-gray-300 rounded"
+              >
+              <label for="remember-me" class="ml-2 block text-sm text-gray-900">
+                Se souvenir de moi
+              </label>
+            </div>
+            
+            <div class="text-sm">
+              <a href="/forgot-password" class="font-medium text-[#007ACE] hover:text-[#006BCE]">
+                Mot de passe oublié ?
+              </a>
+            </div>
+          </div>
+          
+          <div>
+            <button
+              type="submit"
+              :disabled="loading"
+              class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#007ACE] hover:bg-[#006BCE] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#007ACE] disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <span x-show="!loading">Connexion</span>
+              <span x-show="loading" class="flex items-center">
+                <i class="fas fa-spinner fa-spin mr-2"></i>
+                Connexion en cours...
+              </span>
+            </button>
+          </div>
+          
+          <div x-show="error" class="bg-red-50 border-l-4 border-red-500 p-4">
+            <div class="flex">
+              <div class="flex-shrink-0">
+                <i class="fas fa-exclamation-circle text-red-400"></i>
+              </div>
+              <div class="ml-3">
+                <p class="text-sm text-red-700" x-text="error"></p>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</BaseLayout>

@@ -109,6 +109,78 @@ document.addEventListener('alpine:init', () => {
 
 
 
+<a name="state-de-base"></a>
+## 3. Création d'un State de Base pour une Page (suite)
+
+### State pour une Page Complexe
+
+Pour les pages plus complexes, vous pouvez étendre le state de base avec des fonctionnalités supplémentaires :
+
+```javascript
+// public/js/states/complex-page-state.js
+document.addEventListener('alpine:init', () => {
+  Alpine.state('complexPage', {
+    // État initial
+    data: null,
+    filters: {
+      status: 'all',
+      dateRange: 'month'
+    },
+    pagination: {
+      currentPage: 1,
+      itemsPerPage: 10
+    },
+    
+    // Getters
+    get filteredData() {
+      if (!this.data) return [];
+      
+      return this.data.filter(item => {
+        if (this.filters.status !== 'all' && item.status !== this.filters.status) {
+          return false;
+        }
+        
+        // Ajoutez d'autres filtres ici
+        return true;
+      });
+    },
+    
+    get paginatedData() {
+      const start = (this.pagination.currentPage - 1) * this.pagination.itemsPerPage;
+      return this.filteredData.slice(start, start + this.pagination.itemsPerPage);
+    },
+    
+    // Actions
+    async loadData() {
+      this.data = null;
+      try {
+        const response = await fetch('/api/complex-data');
+        this.data = await response.json();
+      } catch (error) {
+        console.error('Failed to load data:', error);
+      }
+    },
+    
+    setFilter(filterName, value) {
+      this.filters[filterName] = value;
+      this.pagination.currentPage = 1; // Réinitialiser à la première page
+    },
+    
+    nextPage() {
+      if (this.pagination.currentPage * this.pagination.itemsPerPage < this.filteredData.length) {
+        this.pagination.currentPage++;
+      }
+    },
+    
+    prevPage() {
+      if (this.pagination.currentPage > 1) {
+        this.pagination.currentPage--;
+      }
+    }
+  });
+});
+```
+
 <a name="modularisation"></a>
 ## 4. Modularisation du State
 

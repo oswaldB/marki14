@@ -118,6 +118,19 @@ import SideMenu from '../components/SideMenu.astro';
                 sessionStorage.setItem('parseSessionToken', newToken);
                 console.log('✅ Session temporaire restaurée (Parse REST Auth)');
               }
+              
+              // Gestion de la redirection
+              const currentPath = window.location.pathname;
+              const redirectParam = new URLSearchParams(window.location.search).get('redirect');
+              
+              if (redirectParam && redirectParam !== currentPath) {
+                console.log('✅ Redirection vers URL paramétrée:', redirectParam);
+                window.location.href = redirectParam;
+              } else if (currentPath === '/login') {
+                console.log('✅ Redirection vers dashboard par défaut');
+                window.location.href = '/dashboard';
+              }
+              
             } catch (error) {
               console.error('❌ Token invalide (Parse REST Auth):', error);
               // Supprimer le token invalide des deux stockages
@@ -138,7 +151,7 @@ import SideMenu from '../components/SideMenu.astro';
   
   <!-- Script Alpine.js conditionnel -->
   {Alpinefile && (
-    <script is:inline type="module" src={Alpinefile}></script>
+    <script is:inline src={Alpinefile}></script>
   )}
   
   <!-- Chargement des states Alpine.js - supprimé le chargement dynamique problématique -->

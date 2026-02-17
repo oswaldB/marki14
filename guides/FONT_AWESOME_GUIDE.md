@@ -17,6 +17,12 @@ Font Awesome est chargé dans `front/src/layouts/BaseLayout.astro` via CDN:
 />
 ```
 
+## Règles Importantes
+
+### Interdiction de Lucide et autres bibliothèques
+
+⚠️ **ATTENTION** : L'utilisation de Lucide ou de toute autre bibliothèque d'icônes est **strictement interdite**. Seule Font Awesome est autorisée dans ce projet. Consultez [STYLEGUIDE.md](STYLEGUIDE.md) pour plus de détails sur cette règle.
+
 ## Comment utiliser Font Awesome
 
 ### 1. Utilisation basique dans les composants

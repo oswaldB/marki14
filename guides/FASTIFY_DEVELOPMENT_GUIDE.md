@@ -1,5 +1,7 @@
 # Guide de Développement Fastify pour Marki-Parse
 
+⚠️ **AVERTISSEMENT IMPORTANT** : Fastify ne doit être utilisé que sur demande explicite. Consultez [FASTIFY_VS_PARSE_GUIDE.md](FASTIFY_VS_PARSE_GUIDE.md) pour les critères de décision avant de développer avec Fastify.
+
 Ce guide explique comment développer avec Fastify dans le projet Marki-Parse, en suivant une approche simple et pragmatique.
 
 ## Principes de Développement
