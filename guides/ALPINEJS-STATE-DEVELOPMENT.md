@@ -134,6 +134,8 @@ public/
     │   │   └── sort.js         # Module tri
 ```
 
+**Important** : Il n'existe pas et ne doit pas exister de dossier `utils/` dans `public/js/states/`. Les utilitaires doivent être placés directement dans les modules spécifiques ou dans un emplacement dédié en dehors de la structure des states.
+
 ### Nomenclature
 
 - **Dossier par page** : Chaque page a son propre dossier dans `states/` (ex: `dashboard/`, `products/`)
@@ -325,6 +327,8 @@ public/
     │   │   ├── filter.js       # Module spécifique
     │   │   └── cart.js        # Module panier
 ```
+
+**Important** : Il n'existe pas et ne doit pas exister de dossier `utils/` dans `public/js/`. Cela s'applique à toute la structure `public/js/`, y compris `public/js/states/`. Les fonctions utilitaires doivent être intégrées directement dans les modules spécifiques ou placées dans un emplacement dédié en dehors de la structure des states.
 
 ### 2. Nommage des Modules
 

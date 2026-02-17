@@ -7,7 +7,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   withAuth={false}
   Alpinefile="/js/states/login/state-main.js"
 >
-  <div class="container mx-auto px-4 py-8 max-w-md" x-data="$state.login">
+  <div class="container mx-auto px-4 py-8 max-w-md" x-data="loginState()">
     <!-- Card de connexion avec ombre cohérente -->
     <div class="bg-white border border-gray-200 rounded-lg p-6 shadow-md">
       <div class="text-center mb-6">

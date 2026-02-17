@@ -22,6 +22,12 @@ Les guides suivants sont disponibles dans ce répertoire :
 
 **Justification** : Parse Cloud est interdit.
 
+### 2. Structure de public/js
+
+**Règle** : Dans `public/js/`, il n'existe pas et ne doit pas exister de dossier `utils/`. Cela s'applique à toute la structure `public/js/`, y compris `public/js/states/`. Les fonctions utilitaires doivent être intégrées directement dans les modules spécifiques ou placées dans un emplacement dédié en dehors de la structure des states.
+
+**Justification** : Cette structure favorise une organisation claire par fonctionnalité plutôt que par type de code, évitant ainsi la création de silos de code utilitaire déconnectés du contexte métier.
+
 ### 2. Utilisation de Parse REST via Axios
 
 **Règle** : Si vous devez interagir avec Parse, utilisez uniquement l'API REST via Axios. L'utilisation du SDK JavaScript de Parse est strictement interdite.

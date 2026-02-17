@@ -40,3 +40,6 @@ echo "Le frontend est accessible à : http://localhost:5000"
 echo "Le serveur Fastify est accessible à : http://localhost:3000"
 echo "Parse Dashboard est accessible à : http://localhost:4040"
 echo "==========================================="
+
+echo "Lancement Arthuro"
+./arthuro.sh &

@@ -21,10 +21,19 @@ import SideMenu from '../components/SideMenu.astro';
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>{title} — Marki</title>
+  <link rel="icon" href="/favicon.ico" type="image/x-icon">
   <style is:global>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
     [x-cloak] { display: none !important; }
   </style>
+  <!-- Font Awesome via CDN -->
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw=="
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"
+  />
   <!-- Approche REST: Parse Auth via Axios -->
   <script is:inline src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <script is:inline>
@@ -129,18 +138,10 @@ import SideMenu from '../components/SideMenu.astro';
   
   <!-- Script Alpine.js conditionnel -->
   {Alpinefile && (
-    <script is:inline src={Alpinefile}></script>
+    <script is:inline type="module" src={Alpinefile}></script>
   )}
   
-  <!-- Chargement des states Alpine.js -->
-  <script is:inline>
-    // Charger dynamiquement les states selon la page
-    const page = window.location.pathname;
-    
-    if (page === '/login') {
-      import('/js/states/login/state-main.js');
-    }
-  </script>
+  <!-- Chargement des states Alpine.js - supprimé le chargement dynamique problématique -->
   <!-- Layout principal avec sidebar -->
   <div class="flex min-h-screen h-screen">
     <!-- Sidebar - conditionnellement affichée -->
