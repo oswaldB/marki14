@@ -111,7 +111,7 @@ Erreur lors du login: Identifiants invalides
 ### Frontend
 
 - `alpinejs@3.x.x` - Gestion d'état réactive
-- `@lucide/astro` - Icônes
+- `@fortawesome/astro-fontawesome` - Icônes
 - `axios` - Requêtes HTTP (pour l'API proxy)
 
 ### Backend

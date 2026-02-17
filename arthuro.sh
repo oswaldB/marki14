@@ -50,12 +50,16 @@ process_webhook() {
     npm run check > "../$test_astro_file"
     sleep 10
     cd ..
-    vibe -p "lit $test_astro_file et corrige les erreurs." 
+    vibe -p "lit $test_astro_file. Lit les guides dsns guides/ et cree un plan de correction si besoin dans specs/fix-error.md" 
     sleep 10
-    cd ..  
-    echo "Exécution de tests console log"
-    vibe -p "lit le @console error catcher.md et ensuite utilise le sur toutes les pages concernées par les modifications. Corrige les erreurs jusqu'à ne plus en avoir."
+    vibe -p "execute le plan specs/fix-error.md, si absent ou vide stop."
+    rm specs/fix-error.md
+     echo "Exécution de tests console log"
+    vibe -p "lit le @console error catcher.md et ensuite utilise le sur toutes les pages concernées par les modifications. lit les guides dqns guides/ et cree un plan de correcrtion dans fix-fwebconsole-error.md."
     sleep 10
+    vibe -p "suit le plan de correction fix-webcobsole-error.md"
+    sleep 10
+    rm fix-webconsole-error.md
     vibe -p "commit"
     
     # Vérification du statut de la commande
@@ -84,3 +88,4 @@ while true; do
     # Attente d'une minute avant le prochain appel
     sleep 10
  done
+

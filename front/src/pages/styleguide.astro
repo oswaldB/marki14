@@ -6,8 +6,9 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 
-
-import { CheckCircle2, Eye } from '@lucide/astro';---
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { faCheckCircle, faEye } from '@fortawesome/free-solid-svg-icons';
+---
 
 <BaseLayout title="Styleguide">
 
@@ -24,7 +25,7 @@ import { CheckCircle2, Eye } from '@lucide/astro';---
     <section class="mb-12">
       <div class="bg-white border border-gray-200 rounded-lg p-6 shadow-sm mb-8">
         <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-          <Eye class="text-[#007ACE] mr-2" />
+          <FontAwesomeIcon icon={faEye} class="text-[#007ACE] mr-2" />
           Galets Animés en Arrière-plan
         </h2>
         <p class="text-gray-600 mb-4">
@@ -634,7 +635,7 @@ import { CheckCircle2, Eye } from '@lucide/astro';---
           </div>
 
           <div class="flex flex-col items-center">
-            <CheckCircle2 class="text-[#007ACE] mb-2" />
+            <FontAwesomeIcon icon={faCheckCircle} class="text-[#007ACE] mb-2" />
             <span class="text-xs text-gray-600">Lightning</span>
           </div>
         </div>

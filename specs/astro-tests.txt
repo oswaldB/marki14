@@ -1,0 +1,24 @@
+
+> boomerang-frontend@1.0.0 check
+> astro check
+
+15:05:18 [@astrojs/node] Enabling sessions with filesystem storage
+15:05:18 [content] Syncing content
+15:05:18 [content] Synced content
+15:05:18 [types] Generated 35ms
+15:05:18 [check] Getting diagnostics for Astro files in /home/oswald/Desktop/marki14/front...
+[96msrc/components/SideMenu.astro[0m:[93m9[0m:[93m7[0m - [93mwarning[0m[90m ts(6133): [0m'currentPath' is declared but its value is never read.
+
+[7m9[0m const { currentPath = '' } = Astro.props;
+[7m [0m [93m      ~~~~~~~~~~~~~~~~~~~~[0m
+
+[96msrc/layouts/BaseLayout.astro[0m:[93m99[0m:[93m21[0m - [93mwarning[0m[90m ts(6133): [0m'user' is declared but its value is never read.
+
+[7m99[0m               const user = result.user;
+[7m  [0m [93m                    ~~~~[0m
+
+Result (5 files): 
+- 0 errors
+- 0 warnings
+- 2 hints
+

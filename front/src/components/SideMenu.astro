@@ -2,14 +2,12 @@
 // src/components/SideMenu.astro
 // Composant de menu latéral simplifié avec HTML statique
 
-interface Props {
-  currentPath?: string;
-}
-
-const { currentPath = '' } = Astro.props;
-
-// Import des icônes Lucide
-import { FileText, ListOrdered, Mail, Settings, List, Users, LayoutGrid, User, AlertTriangle, BarChart2, Menu as MenuIcon, ChevronDown, X, Filter, Inbox, FileText as Description, LayoutDashboard, BanknoteX, HandCoins, Send } from '@lucide/astro';
+// Import des icônes Font Awesome
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { 
+  faHome, faCog, faExclamationTriangle, faList, faUsers, faUser, 
+  faChevronDown, faListOl, faPaperPlane, faTh, faDollarSign
+} from '@fortawesome/free-solid-svg-icons';
 ---
 
 <script is:inline>
@@ -57,7 +55,7 @@ import { FileText, ListOrdered, Mail, Settings, List, Users, LayoutGrid, User, A
         class="p-2 rounded-full hover:bg-gray-100 text-gray-600 transition-all duration-200 transform hover:scale-105"
         title="Dashboard"
       >
-        <LayoutDashboard class="" />
+        <FontAwesomeIcon icon={faHome} class="" />
       </a>
       
       <!-- Impayés parent -->
@@ -67,7 +65,7 @@ import { FileText, ListOrdered, Mail, Settings, List, Users, LayoutGrid, User, A
           title="Impayés"
           @click="toggleImpayes()"
         >
-          <BanknoteX class="" />
+          <FontAwesomeIcon icon={faExclamationTriangle} class="" />
         </button>
       </div>
       
@@ -77,7 +75,7 @@ import { FileText, ListOrdered, Mail, Settings, List, Users, LayoutGrid, User, A
         class="p-2 rounded-full hover:bg-gray-100 text-gray-600 transition-all duration-200 transform hover:scale-105"
         title="Commissions"
       >
-        <HandCoins class="" />
+        <FontAwesomeIcon icon={faDollarSign} class="" />
       </a>
       
       <!-- Paramètres -->
@@ -86,7 +84,7 @@ import { FileText, ListOrdered, Mail, Settings, List, Users, LayoutGrid, User, A
         class="p-2 rounded-full hover:bg-gray-100 text-gray-600 transition-all duration-200 transform hover:scale-105"
         title="Paramètres"
       >
-        <Settings class="" />
+        <FontAwesomeIcon icon={faCog} class="" />
       </a>
     </div>
   </div>
@@ -107,10 +105,10 @@ import { FileText, ListOrdered, Mail, Settings, List, Users, LayoutGrid, User, A
               @click="toggleImpayes()"
             >
               <div class="flex items-center gap-3">
-                <BanknoteX class="" />
+                <FontAwesomeIcon icon={faExclamationTriangle} class="" />
                 <span class="font-medium">Impayés</span>
               </div>
-              <ChevronDown class="transition-transform" :class="{ 'rotate-180': isImpayesOpen }" />
+              <FontAwesomeIcon icon={faChevronDown} class="transition-transform" :class="{ 'rotate-180': isImpayesOpen }" />
             </button>
             <ul class="ml-4 mt-1 space-y-1" x-show="isImpayesOpen" x-transition>
               <li>
@@ -118,7 +116,7 @@ import { FileText, ListOrdered, Mail, Settings, List, Users, LayoutGrid, User, A
                   href="/impayes/list"
                   class="flex items-center gap-3 rounded-md px-3 py-2 hover:bg-gray-100 text-gray-600 transition-all duration-150 text-sm"
                 >
-                  <List class="text-base" />
+                  <FontAwesomeIcon icon={faList} class="text-base" />
                   <span class="text-sm">Vue Factures</span>
                 </a>
               </li>
@@ -127,7 +125,7 @@ import { FileText, ListOrdered, Mail, Settings, List, Users, LayoutGrid, User, A
                   href="/impayes/"
                   class="flex items-center gap-3 rounded-md px-3 py-2 hover:bg-gray-100 text-gray-600 transition-all duration-150 text-sm"
                 >
-                  <Users class="text-base" />
+                  <FontAwesomeIcon icon={faUsers} class="text-base" />
                   <span class="text-sm">Groupé par payeur</span>
                 </a>
               </li>
@@ -136,7 +134,7 @@ import { FileText, ListOrdered, Mail, Settings, List, Users, LayoutGrid, User, A
                   href="/impayes/sequence"
                   class="flex items-center gap-3 rounded-md px-3 py-2 hover:bg-gray-100 text-gray-600 transition-all duration-150 text-sm"
                 >
-                  <LayoutGrid class="text-base" />
+                  <FontAwesomeIcon icon={faTh} class="text-base" />
                   <span class="text-sm">Vue Séquence</span>
                 </a>
               </li>
@@ -145,7 +143,7 @@ import { FileText, ListOrdered, Mail, Settings, List, Users, LayoutGrid, User, A
                   href="/impayes/by-actor"
                   class="flex items-center gap-3 rounded-md px-3 py-2 hover:bg-gray-100 text-gray-600 transition-all duration-150 text-sm"
                 >
-                  <User class="text-base" />
+                  <FontAwesomeIcon icon={faUser} class="text-base" />
                   <span class="text-sm">Vue par Acteur</span>
                 </a>
               </li>
@@ -154,7 +152,7 @@ import { FileText, ListOrdered, Mail, Settings, List, Users, LayoutGrid, User, A
                   href="/impayes/to-fix"
                   class="flex items-center gap-3 rounded-md px-3 py-2 hover:bg-gray-100 text-gray-600 transition-all duration-150 text-sm"
                 >
-                  <AlertTriangle class="text-base" />
+                  <FontAwesomeIcon icon={faExclamationTriangle} class="text-base" />
                   <span class="text-sm">À réparer</span>
                 </a>
               </li>
@@ -168,7 +166,7 @@ import { FileText, ListOrdered, Mail, Settings, List, Users, LayoutGrid, User, A
             href="/sequences"
             class="flex items-center gap-3 rounded-md px-3 py-2.5 hover:bg-gray-100 text-gray-600 transition-all duration-200 font-medium"
           >
-            <ListOrdered class="" />
+            <FontAwesomeIcon icon={faListOl} class="" />
             <span>Séquences</span>
           </a>
         </li>
@@ -178,7 +176,7 @@ import { FileText, ListOrdered, Mail, Settings, List, Users, LayoutGrid, User, A
             href="/relances"
             class="flex items-center gap-3 rounded-md px-3 py-2.5 hover:bg-gray-100 text-gray-600 transition-all duration-200 font-medium"
           >
-            <Send class="" />
+            <FontAwesomeIcon icon={faPaperPlane} class="" />
             <span>Relances</span>
           </a>
         </li>
@@ -200,7 +198,7 @@ import { FileText, ListOrdered, Mail, Settings, List, Users, LayoutGrid, User, A
         class="flex flex-col items-center justify-center p-2 rounded-lg hover:bg-gray-100 text-gray-600 transition-all duration-200 min-w-[60px]"
         title="Dashboard"
       >
-        <LayoutDashboard class="text-lg mb-1" />
+        <FontAwesomeIcon icon={faHome} class="text-lg mb-1" />
         <span class="text-xs font-medium">Dashboard</span>
       </a>
       
@@ -209,7 +207,7 @@ import { FileText, ListOrdered, Mail, Settings, List, Users, LayoutGrid, User, A
         class="flex flex-col items-center justify-center p-2 rounded-lg hover:bg-gray-100 text-gray-600 transition-all duration-200 min-w-[60px]"
         title="Factures"
       >
-        <List class="text-lg mb-1" />
+        <FontAwesomeIcon icon={faList} class="text-lg mb-1" />
         <span class="text-xs font-medium">Factures</span>
       </a>
       
@@ -218,7 +216,7 @@ import { FileText, ListOrdered, Mail, Settings, List, Users, LayoutGrid, User, A
         class="flex flex-col items-center justify-center p-2 rounded-lg hover:bg-gray-100 text-gray-600 transition-all duration-200 min-w-[60px]"
         title="Séquences"
       >
-        <LayoutGrid class="text-lg mb-1" />
+        <FontAwesomeIcon icon={faTh} class="text-lg mb-1" />
         <span class="text-xs font-medium">Séquences</span>
       </a>
       
@@ -227,7 +225,7 @@ import { FileText, ListOrdered, Mail, Settings, List, Users, LayoutGrid, User, A
         class="flex flex-col items-center justify-center p-2 rounded-lg hover:bg-gray-100 text-gray-600 transition-all duration-200 min-w-[60px]"
         title="Relances"
       >
-        <Send class="text-lg mb-1" />
+        <FontAwesomeIcon icon={faPaperPlane} class="text-lg mb-1" />
         <span class="text-xs font-medium">Relances</span>
       </a>
       
@@ -236,7 +234,7 @@ import { FileText, ListOrdered, Mail, Settings, List, Users, LayoutGrid, User, A
         class="flex flex-col items-center justify-center p-2 rounded-lg hover:bg-gray-100 text-gray-600 transition-all duration-200 min-w-[60px]"
         title="Paramètres"
       >
-        <Settings class="text-lg mb-1" />
+        <FontAwesomeIcon icon={faCog} class="text-lg mb-1" />
         <span class="text-xs font-medium">Paramètres</span>
       </a>
     </nav>

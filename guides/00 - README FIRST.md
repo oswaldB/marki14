@@ -74,9 +74,10 @@ fastify.get('/api/custom-endpoint', async (request, reply) => {
 
 **Exemple** :
 ```astro
-import { Icon } from '@lucide/astro';
+import { FontAwesomeIcon } from '@fortawesome/astro-fontawesome';
+import { faHome } from '@fortawesome/free-solid-svg-icons';
 
-<Icon name="home" />
+<FontAwesomeIcon icon={faHome} />
 ```
 
 ### 5. Interdiction du CSS personnalisé

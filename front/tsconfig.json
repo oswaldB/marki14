@@ -1,0 +1,10 @@
+{
+  "extends": "astro/tsconfigs/strict",
+  "compilerOptions": {
+    "moduleResolution": "node16",
+    "baseUrl": ".",
+    "paths": {},
+    "types": []
+  },
+  "include": ["src/**/*"]
+}

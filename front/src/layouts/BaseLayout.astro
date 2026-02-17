@@ -4,17 +4,15 @@ export const prerender = true;
 interface Props {
   title: string;
   withAuth?: boolean;
-  currentPath?: string;
   hideSidebar?: boolean;
   Alpinefile?: string;}
 
-const { title, withAuth = false, currentPath = '', hideSidebar = false, Alpinefile } = Astro.props;
+const { title, withAuth = false, hideSidebar = false, Alpinefile } = Astro.props;
 
 // Debug: Log the props to ensure they're being passed correctly
-console.log('BaseLayout props:', { title, withAuth, currentPath, hideSidebar });
+console.log('BaseLayout props:', { title, withAuth, hideSidebar });
 
 import SideMenu from '../components/SideMenu.astro';
-import DockComponent from '../components/DockComponent.astro';
 ---
 
 <!DOCTYPE html>
@@ -32,7 +30,7 @@ import DockComponent from '../components/DockComponent.astro';
   <script is:inline>
     // Configuration REST: Parse Auth (Axios)
     if (typeof window !== 'undefined') {
-      // 1. Configurer Parse Auth via REST API
+      // 1. Configurer Parse Auth via REST API (harmonisé avec parse-api.js)
       window.PARSE_AUTH_CONFIG = {
         appId: 'marki',
         restApiKey: 'Careless7-Gore4-Guileless0-Jogger5-Clubbed9',
@@ -97,8 +95,11 @@ import DockComponent from '../components/DockComponent.astro';
             try {
               // Restaurer la session avec le token (Parse REST)
               const result = await window.ParseRest.becomeSession(sessionToken);
-              const user = result.user;
+              const user = result.user; // Utilisation de la variable user
               const newToken = result.sessionToken; // Pour REST, le token ne change pas
+              
+              // Log des informations utilisateur pour le débogage
+              console.log('✅ Utilisateur authentifié:', user?.username || 'Unknown');
               
               // Re-sauvegarder le token dans le bon stockage selon l'origine
               if (isPersistent) {
@@ -145,7 +146,7 @@ import DockComponent from '../components/DockComponent.astro';
     <!-- Sidebar - conditionnellement affichée -->
     {hideSidebar ? null : (
       <aside class="w-80 bg-white border-r border-gray-200 hidden md:block flex-shrink-0 h-screen relative">
-        <SideMenu currentPath={currentPath} />
+        <SideMenu />
       </aside>
     )}
     
@@ -155,9 +156,6 @@ import DockComponent from '../components/DockComponent.astro';
     </main>
   </div>
   
-  <!-- Dock mobile - toujours affiché mais visible uniquement sur mobile -->
-  <DockComponent>
-    <SideMenu currentPath={currentPath} />
-  </DockComponent>
+
   
 </html>

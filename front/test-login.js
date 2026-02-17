@@ -49,7 +49,6 @@ try {
   // Vérification des éléments clés
   const requiredElements = [
     'BaseLayout',
-    '@lucide/astro',
     'redirectUrl',
     'x-show="$state.login.error"',
     '@submit="$state.login.handleSubmit"',
