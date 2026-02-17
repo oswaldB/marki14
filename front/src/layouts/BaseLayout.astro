@@ -223,6 +223,7 @@ import SideMenu from '../components/SideMenu.astro';
     
     // S'assurer que Alpine.store('auth') existe
     document.addEventListener('alpine:init', () => {
+      // @ts-ignore - Alpine is defined globally
       Alpine.store('auth', window.authStoreFallback);
     });
   </script>

@@ -1,8 +1,8 @@
 // Serveur Fastify principal pour la migration depuis Parse Cloud
-import fastify from 'fastify'
-import fastifyCors from '@fastify/cors'
-import fastifyFormbody from '@fastify/formbody'
-import fastifySensible from '@fastify/sensible'
+const fastify = require('fastify')
+const fastifyCors = require('@fastify/cors')
+const fastifyFormbody = require('@fastify/formbody')
+const fastifySensible = require('@fastify/sensible')
 
 // Créer l'instance Fastify
 const app = fastify({ logger: true })
@@ -44,6 +44,10 @@ app.addHook('onSend', async (request, reply) => {
 
 // Plugin pour le support JSON
 app.register(fastifySensible)
+
+// Enregistrer les routes de configuration de synchronisation
+const syncConfigRoutes = require('./routes/syncConfigRoutes')
+app.register(syncConfigRoutes, { prefix: '/api' })
 
 // Route de santé
 app.get('/api/health', async (request, reply) => {

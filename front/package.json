@@ -24,6 +24,7 @@
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.6",
+    "@types/alpinejs": "^3.13.11",
     "cssesc": "^3.0.0",
     "typescript": "^5.9.3"
   }
