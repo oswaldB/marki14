@@ -45,6 +45,8 @@ process_webhook() {
       echo "Exécution de la commande: développement"
     vibe -p "Développe : $implementation_file. Après chaque développement met à jour la fiche d'implémentation " 
     sleep 10
+    vibe -p "Vérifie que $implementation_file est bien complètement développé. si oui tout est bon." 
+    sleep 10
     echo "test astro"
     cd front
     npm run check > "../$test_astro_file"
@@ -59,7 +61,10 @@ process_webhook() {
     sleep 10
     vibe -p "suit le plan de correction specs/fix-webcobsole-error.md"
     sleep 10
-    rm fix-webconsole-error.md
+    rm specs/fix-webconsole-error.md
+
+    sleep 10
+
     vibe -p "commit"
     
     # Vérification du statut de la commande
