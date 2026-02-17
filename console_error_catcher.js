@@ -39,10 +39,12 @@ async function captureConsoleErrors(url, options = {}) {
     let browser;
     try {
         // Launch browser
+        console.log('🚀 Launching browser...');
         browser = await puppeteer.launch({
             headless: config.headless,
             args: ['--no-sandbox', '--disable-setuid-sandbox']
         });
+        console.log('✅ Browser launched successfully');
 
         const page = await browser.newPage();
 
@@ -178,13 +180,17 @@ async function captureConsoleErrors(url, options = {}) {
         console.log(`   - Console Warnings: ${consoleMessages.warnings.length}`);
         console.log(`   - Console Logs: ${consoleMessages.logs.length}`);
 
-        return {
+        const result = {
             pageErrors,
             failedRequests,
             consoleMessages,
             url,
             timestamp: new Date().toISOString()
         };
+
+        // Ensure all async operations are complete before returning
+        await new Promise(resolve => setTimeout(resolve, 500));
+        return result;
 
     } catch (error) {
         console.error('❌ Error during analysis:', error.message);
@@ -199,11 +205,42 @@ async function captureConsoleErrors(url, options = {}) {
         };
     } finally {
         if (browser) {
-            await browser.close();
-            console.log('🔚 Browser closed');
+            try {
+                console.log('🧹 Cleaning up browser resources...');
+                await browser.close();
+                console.log('🔚 Browser closed successfully');
+                // Give a moment for subprocess cleanup
+                await new Promise(resolve => setTimeout(resolve, 200));
+            } catch (cleanupError) {
+                console.error('⚠️  Error during browser cleanup:', cleanupError.message);
+            }
         }
     }
 }
+
+// Set up process event handlers for proper cleanup
+process.on('SIGINT', async () => {
+    console.log('\n🛑 Received SIGINT. Cleaning up...');
+    process.exit(0);
+});
+
+process.on('SIGTERM', async () => {
+    console.log('\n🛑 Received SIGTERM. Cleaning up...');
+    process.exit(0);
+});
+
+process.on('uncaughtException', (error) => {
+    console.error('❌ Uncaught Exception:', error.message);
+    if (error.stack) {
+        console.error('Stack trace:', error.stack);
+    }
+    process.exit(1);
+});
+
+process.on('unhandledRejection', (reason) => {
+    console.error('❌ Unhandled Rejection:', reason);
+    process.exit(1);
+});
 
 // Command line interface
 if (require.main === module) {
@@ -253,8 +290,16 @@ if (require.main === module) {
     captureConsoleErrors(url, options).then(result => {
         // You could save results to a file here if needed
         // fs.writeFileSync('console_analysis.json', JSON.stringify(result, null, 2));
+        
+        // Give a moment for proper cleanup before exiting
+        setTimeout(() => {
+            process.exit(0);
+        }, 1000);
     }).catch(error => {
         console.error('Error in analysis:', error);
+        setTimeout(() => {
+            process.exit(1);
+        }, 1000);
     });
 }
 
