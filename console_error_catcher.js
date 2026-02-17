@@ -69,6 +69,12 @@ async function captureConsoleErrors(url, options = {}) {
                     text,
                     location: msg.location() || 'unknown location'
                 });
+            } else if (type === 'warn' && config.captureWarnings) {
+                consoleMessages.warnings.push({
+                    type: 'warning',
+                    text,
+                    location: msg.location() || 'unknown location'
+                });
             } else if (config.captureLogs) {
                 consoleMessages.logs.push({
                     type,
@@ -108,7 +114,7 @@ async function captureConsoleErrors(url, options = {}) {
         console.log('✅ Page loaded successfully');
 
         // Wait a bit more for any async errors
-        await page.waitForTimeout(2000);
+        await new Promise(resolve => setTimeout(resolve, 2000));
 
         // Display results
         console.log('\n📋 Console Analysis Results:');
@@ -247,6 +253,8 @@ if (require.main === module) {
     captureConsoleErrors(url, options).then(result => {
         // You could save results to a file here if needed
         // fs.writeFileSync('console_analysis.json', JSON.stringify(result, null, 2));
+    }).catch(error => {
+        console.error('Error in analysis:', error);
     });
 }
 
