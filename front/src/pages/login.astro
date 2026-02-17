@@ -1,90 +1,112 @@
----// Page de connexion
-import BaseLayout from '../../layouts/BaseLayout.astro';
-import { Icon } from '@lucide/astro';
-
-const redirectUrl = Astro.url.searchParams.get('redirect') || '/dashboard';
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
 ---
 
-<BaseLayout title="Connexion">
-  <div class="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-    <div class="sm:mx-auto sm:w-full sm:max-w-md">
-      <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
-        Connexion à votre compte
-      </h2>
-    </div>
+<BaseLayout
+  title="Connexion"
+  withAuth={false}
+  Alpinefile="/js/states/login/state-main.js"
+>
+  <div class="container mx-auto px-4 py-8 max-w-md" x-data="$state.login">
+    <!-- Card de connexion avec ombre cohérente -->
+    <div class="bg-white border border-gray-200 rounded-lg p-6 shadow-md">
+      <div class="text-center mb-6">
+        <h1 class="text-2xl font-bold text-gray-900">Connexion</h1>
+        <p class="text-gray-600 mt-2">Connectez-vous à votre compte Marki</p>
+      </div>
 
-    <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-      <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-        <!-- Affichage des erreurs -->
-        <div x-show="$state.login.error" x-text="$state.login.error" 
-             class="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-800 text-sm"></div>
+      <!-- Formulaire de connexion -->
+      <form @submit.prevent="login()" class="space-y-4">
+        <!-- Champ identifiant -->
+        <div>
+          <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Identifiant</label>
+          <input
+            type="text"
+            id="username"
+            x-model="username"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#007ACE] focus:border-transparent"
+            placeholder="oswald.bernard"
+            required
+            @input="console.log('Identifiant saisi:', $event.target.value)"
+          >
+        </div>
 
-        <form @submit="$state.login.handleSubmit" class="space-y-6">
-          <input type="hidden" name="remember" value="true">
-          
-          <!-- Champ Identifiant -->
-          <div>
-            <label for="username" class="block text-sm font-medium text-gray-700">
-              Identifiant
-            </label>
-            <div class="mt-1">
-              <input id="username" name="username" type="text" required
-                     x-model="$state.login.username"
-                     @input="$state.login.clearError()"
-                     class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-[#007ACE] focus:border-[#007ACE] sm:text-sm">
-            </div>
-          </div>
-
-          <!-- Champ Mot de passe -->
-          <div>
-            <label for="password" class="block text-sm font-medium text-gray-700">
-              Mot de passe
-            </label>
-            <div class="mt-1">
-              <input id="password" name="password" type="password" required
-                     x-model="$state.login.password"
-                     @input="$state.login.clearError()"
-                     class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-[#007ACE] focus:border-[#007ACE] sm:text-sm">
-            </div>
-          </div>
-
-          <!-- Se souvenir de moi -->
-          <div class="flex items-center justify-between">
-            <div class="flex items-center">
-              <input id="remember-me" name="remember-me" type="checkbox"
-                     x-model="$state.login.rememberMe"
-                     class="h-4 w-4 text-[#007ACE] focus:ring-[#007ACE] border-gray-300 rounded">
-              <label for="remember-me" class="ml-2 block text-sm text-gray-900">
-                Se souvenir de moi
-              </label>
-            </div>
-
-            <div class="text-sm">
-              <a href="#" class="font-medium text-[#007ACE] hover:text-[#006BCE]">
-                Mot de passe oublié ?
-              </a>
-            </div>
-          </div>
-
-          <!-- Bouton de connexion -->
-          <div>
-            <button type="submit"
-                    :disabled="$state.login.loading || !$state.login.isFormValid"
-                    class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#007ACE] hover:bg-[#006BCE] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#007ACE] disabled:opacity-50 disabled:cursor-not-allowed">
-              <span x-show="!$state.login.loading">Connexion</span>
-              <span x-show="$state.login.loading" class="flex items-center">
-                <Icon name="loader-2" class="animate-spin -ml-1 mr-2 h-4 w-4" />
-                Connexion en cours...
-              </span>
+        <!-- Champ mot de passe avec toggle -->
+        <div>
+          <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Mot de passe</label>
+          <div class="relative">
+            <input
+              :type="showPassword ? 'text' : 'password'"
+              id="password"
+              x-model="password"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#007ACE] focus:border-transparent pr-10"
+              placeholder="••••••••"
+              required
+              @input="console.log('Mot de passe saisi (masqué)')"
+            >
+            <button
+              type="button"
+              @click="togglePasswordVisibility()"
+              class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-500 hover:text-[#007ACE]"
+              aria-label="Toggle password visibility"
+            >
+              <svg x-show="!showPassword" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5-5.33 9.4 9.4 0 0 1-4.33-2.67 12.73 12.73 0 0 1 .67-2.33 11.58 11.58 0 0 1 2.33-.67 9.4 9.4 0 0 1 2.67 4.33A18.45 18.45 0 0 1 20 12c0 4-4 8-11 8-.83 0-1.63-.07-2.4-.22"/>
+                <path d="M12 12s-2-2-2-4 2-4 2-4 2 2 2 4-2 4-2 4"/>
+              </svg>
+              <svg x-show="showPassword" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5-5.33 9.4 9.4 0 0 1-4.33-2.67 12.73 12.73 0 0 1 .67-2.33 11.58 11.58 0 0 1 2.33-.67 9.4 9.4 0 0 1 2.67 4.33A18.45 18.45 0 0 1 20 12c0 4-4 8-11 8-.83 0-1.63-.07-2.4-.22"/>
+                <line x1="12" y1="12" x2="12" y2="22"/>
+                <path d="M12 12s-2-2-2-4 2-4 2-4 2 2 2 4-2 4-2 4"/>
+              </svg>
             </button>
           </div>
-        </form>
-      </div>
+        </div>
+
+        <!-- Options -->
+        <div class="flex items-center justify-between">
+          <div class="flex items-center">
+            <input
+              type="checkbox"
+              id="remember"
+              x-model="rememberMe"
+              class="h-4 w-4 text-[#007ACE] focus:ring-[#007ACE] border-gray-300 rounded"
+            >
+            <label for="remember" class="ml-2 block text-sm text-gray-700">Se souvenir de moi</label>
+          </div>
+          <a href="/forgot-password" class="text-sm text-[#007ACE] hover:text-[#006BCE] font-medium">
+            Mot de passe oublié ?
+          </a>
+        </div>
+
+        <!-- Bouton de connexion -->
+        <button
+          type="submit"
+          :disabled="loading"
+          class="w-full bg-[#007ACE] text-white py-2 px-4 rounded-md hover:bg-[#006BCE] transition-colors focus:outline-none focus:ring-2 focus:ring-[#007ACE] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <span x-show="!loading">Connexion</span>
+          <span x-show="loading" class="flex items-center justify-center">
+            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Connexion en cours...
+          </span>
+        </button>
+
+        <!-- Message d'erreur avec style cohérent -->
+        <div x-show="error" x-transition class="bg-red-50 border border-red-200 rounded-md p-3">
+          <div class="flex items-center">
+            <div class="flex-shrink-0 mr-3">
+              <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+              </svg>
+            </div>
+            <div class="text-sm text-red-700" x-text="error"></div>
+          </div>
+        </div>
+      </form>
     </div>
   </div>
-
-  <!-- Script Alpine.js -->
-  <script>
-    console.log('Page login chargée - URL de redirection:', '{{ redirectUrl }}');
-  </script>
 </BaseLayout>

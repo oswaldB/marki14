@@ -1,0 +1,35 @@
+{
+  "name": "console-error-catcher",
+  "version": "1.0.0",
+  "description": "A Puppeteer-based tool to capture and analyze console errors from web pages",
+  "main": "console_error_catcher.js",
+  "scripts": {
+    "start": "node console_error_catcher.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "analyze": "node console_error_catcher.js"
+  },
+  "keywords": [
+    "puppeteer",
+    "console",
+    "errors",
+    "web",
+    "debugging",
+    "analysis"
+  ],
+  "author": "Mistral Vibe",
+  "license": "MIT",
+  "dependencies": {
+    "puppeteer": "*"
+  },
+  "bin": {
+    "console-error-catcher": "./console_error_catcher.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/console-error-catcher.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/console-error-catcher/issues"
+  },
+  "homepage": "https://github.com/yourusername/console-error-catcher#readme"
+}

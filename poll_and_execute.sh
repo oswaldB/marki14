@@ -36,14 +36,20 @@ process_webhook() {
 
     Exécution de la commande vibe avec le fichier créé
     echo "Exécution de la commande: travail preparatoir"
-    vibe -p "Ton role est de créer  $implementation_file à destination des développeurs. Tu assures que les users stories que tu reçoies sont conforme à la réalité du projet. Tu n'ajoutes pas de uses cases. Après avoir effectué le travail preparatoire, tu crée un fichier $implementation_file dans le quel tu défins une todo liste de toutes les actions à faire dans chacun des fichiers pour développer ce use case. Tu ne codes pas. Tu nommes et tu décris les fonctions dans un format jsdoc. Important tu suis les guides et le modèle data que tu as dans data-model.md" --output streaming
+    vibe -p "Ton role est de créer  $implementation_file à destination des développeurs. Tu assures que les users stories que tu reçoies sont conforme à la réalité du projet. Tu n'ajoutes pas de uses cases. Après avoir effectué le travail preparatoire, tu crée un fichier $implementation_file dans le quel tu défins une todo liste de toutes les actions à faire dans chacun des fichiers pour développer ce use case. Tu ne codes pas. Tu nommes et tu décris les fonctions dans un format jsdoc. Important tu suis les guides et le modèle data que tu as dans data-model.md"
     sleep 10
-    vibe -p "Ton role est de vérifier que l $implementation_file à destination des développeurs respecte bien tous les précepts des guides. Si non, tu corriges." --output streaming
+      echo "Exécution de la vérification"
+    vibe -p "Ton role est de vérifier que l $implementation_file à destination des développeurs respecte bien tous les précepts des guides. Si non, tu corriges." 
     sleep 10
+      echo "Exécution de la commande: développement"
     cd ..
-    vibe -p "Développe : $implementation_file. Après chaque développement met à jour la fiche d'implémentation " --output streaming
+    vibe -p "Développe : $implementation_file. Après chaque développement met à jour la fiche d'implémentation " 
     sleep 10
-    VIBE -p "Execute un cd front && npm run check et corrige les erreurs."
+    echo "test astro"
+    vibe -p "Execute un cd front && npm run check et corrige les erreurs.S'il y a plusieurs package.json trouve le bon"
+    sleep 10
+      echo "Exécution de tests console log"
+    vibe -p "lit le @console error catcher.md et ensuite utilise le sur toutes les pages concernées par les modifications. Corrige les erreurs jusqu'à ne plus en avoir."
     sleep 10
     vibe -p "commit"
     
