@@ -550,8 +550,39 @@ Aucune documentation utilisateur spécifique n'est requise pour cette fonctionna
 **Fichiers implémentés**:
 - ✅ `front/src/pages/login.astro` - Page de login avec Alpine.js
 - ✅ `front/public/js/states/loginState.js` - État Alpine.js pour le login
-- ✅ `front/public/js/states/authState.js` - Store global d'authentification
+- ✅ `front/public/js/states/authState.js` - Store global d'authentification (existant)
 - ✅ `front/src/layouts/BaseLayout.astro` - Intégration de l'authentification
+
+**Détails techniques de l'implémentation**:
+
+### loginState.js
+- **Fonctionnalités clés**: Authentification, stockage de tokens, redirection sécurisée
+- **Méthodes principales**:
+  - `handleLogin()`: Gestion complète du processus de login
+  - `loginToParse()`: Appel API Parse REST avec Axios
+  - `storeAuthToken()`: Stockage sécurisé selon le choix "Se souvenir de moi"
+  - `redirectAfterLogin()`: Redirection avec validation de sécurité
+  - `isSafeUrl()`: Protection contre les attaques XSS
+  - `getErrorMessage()`: Messages d'erreur utilisateur
+  - `init()`: Vérification de session existante
+
+### login.astro
+- **Structure**: Formulaire Alpine.js avec liaison de données bidirectionnelle
+- **Composants**:
+  - Champs: username, password, rememberMe (avec x-model)
+  - Bouton avec état de chargement et désactivation
+  - Affichage conditionnel des erreurs (x-show)
+  - Icônes Font Awesome pour le spinner et les erreurs
+
+### BaseLayout.astro
+- **Intégration**: Vérification d'authentification via Alpine.js
+- **Mécanisme**: Utilisation du store global `authState` pour la validation centralisée
+- **Compatibilité**: Maintien du système existant pour rétrocompatibilité
+
+### authState.js (existant)
+- **Fonctionnalités**: Validation de tokens, gestion de session globale
+- **Intégration**: Utilisé pour la vérification d'authentification dans le layout
+- **Avantages**: Centralisation de la logique d'authentification
 
 **Fonctionnalités implémentées**:
 - ✅ Authentification via Parse REST API

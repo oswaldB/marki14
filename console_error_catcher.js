@@ -48,6 +48,10 @@ async function captureConsoleErrors(url, options = {}) {
             headless: config.headless,
             args: ['--no-sandbox', '--disable-setuid-sandbox']
         });
+        
+        // Store global reference for cleanup
+        globalBrowser = browser;
+        
         console.log('✅ Browser launched successfully');
 
         const page = await browser.newPage();
@@ -211,10 +215,24 @@ async function captureConsoleErrors(url, options = {}) {
         if (browser) {
             try {
                 console.log('🧹 Cleaning up browser resources...');
+                
+                // First, close all pages
+                const pages = await browser.pages();
+                for (const page of pages) {
+                    try {
+                        await page.close();
+                    } catch (pageCloseError) {
+                        // Ignore page close errors
+                    }
+                }
+                
+                // Then close the browser
                 await browser.close();
+                globalBrowser = null;
                 console.log('🔚 Browser closed successfully');
-                // Give a moment for subprocess cleanup
-                await new Promise(resolve => setTimeout(resolve, 200));
+                
+                // Give more time for subprocess cleanup to prevent "Event loop is closed" errors
+                await new Promise(resolve => setTimeout(resolve, 1000));
             } catch (cleanupError) {
                 console.error('⚠️  Error during browser cleanup:', cleanupError.message);
             }
@@ -222,28 +240,73 @@ async function captureConsoleErrors(url, options = {}) {
     }
 }
 
+// Global browser reference for cleanup
+let globalBrowser = null;
+
+/**
+ * Clean up browser resources
+ */
+async function cleanupBrowser() {
+    if (globalBrowser) {
+        try {
+            console.log('🧹 Performing emergency browser cleanup...');
+            const pages = await globalBrowser.pages();
+            for (const page of pages) {
+                try {
+                    await page.close();
+                } catch (error) {
+                    // Ignore page close errors
+                }
+            }
+            await globalBrowser.close();
+            globalBrowser = null;
+            console.log('🔚 Emergency browser cleanup completed');
+        } catch (error) {
+            console.error('⚠️  Error during emergency cleanup:', error.message);
+        }
+    }
+}
+
 // Set up process event handlers for proper cleanup
 process.on('SIGINT', async () => {
     console.log('\n🛑 Received SIGINT. Cleaning up...');
-    process.exit(0);
+    await cleanupBrowser();
+    // Allow time for async cleanup
+    setTimeout(() => process.exit(0), 500);
 });
 
 process.on('SIGTERM', async () => {
     console.log('\n🛑 Received SIGTERM. Cleaning up...');
-    process.exit(0);
+    await cleanupBrowser();
+    // Allow time for async cleanup
+    setTimeout(() => process.exit(0), 500);
 });
 
-process.on('uncaughtException', (error) => {
+process.on('uncaughtException', async (error) => {
     console.error('❌ Uncaught Exception:', error.message);
     if (error.stack) {
         console.error('Stack trace:', error.stack);
     }
-    process.exit(1);
+    await cleanupBrowser();
+    // Allow time for async cleanup before exit
+    setTimeout(() => process.exit(1), 500);
 });
 
-process.on('unhandledRejection', (reason) => {
+process.on('unhandledRejection', async (reason) => {
     console.error('❌ Unhandled Rejection:', reason);
-    process.exit(1);
+    await cleanupBrowser();
+    // Allow time for async cleanup before exit
+    setTimeout(() => process.exit(1), 500);
+});
+
+// Handle normal process exit
+process.on('exit', (code) => {
+    if (globalBrowser) {
+        console.log('🧹 Cleaning up browser resources before exit...');
+        cleanupBrowser().catch(() => {
+            // Ignore cleanup errors on exit
+        });
+    }
 });
 
 /**
@@ -407,14 +470,16 @@ if (require.main === module) {
     if (scanMode) {
         // Test all pages
         testAllPages(options).then(() => {
+            // Give more time for proper cleanup before exiting
             setTimeout(() => {
                 process.exit(0);
-            }, 1000);
+            }, 2000);
         }).catch(error => {
             console.error('Error in page scanning:', error);
+            // Give more time for proper cleanup before exiting
             setTimeout(() => {
                 process.exit(1);
-            }, 1000);
+            }, 2000);
         });
     } else {
         // Single URL mode
@@ -425,15 +490,16 @@ if (require.main === module) {
             // You could save results to a file here if needed
             // fs.writeFileSync('console_analysis.json', JSON.stringify(result, null, 2));
             
-            // Give a moment for proper cleanup before exiting
+            // Give more time for proper cleanup before exiting
             setTimeout(() => {
                 process.exit(0);
-            }, 1000);
+            }, 2000);
         }).catch(error => {
             console.error('Error in analysis:', error);
+            // Give more time for proper cleanup before exiting
             setTimeout(() => {
                 process.exit(1);
-            }, 1000);
+            }, 2000);
         });
     }
 }

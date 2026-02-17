@@ -26,7 +26,20 @@ dev.parse.dashboard.markidiags.com {
 
 
 dev.markidiags.com {
-    reverse_proxy 192.168.1.239:5000
+    # Handle WebSocket connections for Vite HMR
+    reverse_proxy {
+        to 192.168.1.239:5000
+        transport http {
+            websocket
+            header_up Host {host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+    
+    # Enable CORS
+    header Access-Control-Allow-Origin *
+    header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+    header Access-Control-Allow-Headers "Content-Type, Authorization"
 }
 
 dev.api.markidiags.com {

@@ -76,11 +76,9 @@ import SideMenu from '../components/SideMenu.astro';
   <!-- Vérification d'authentification avec Alpine.js -->
   <div x-data x-init="
     if (withAuth) {
-      // Vérification directe via le state de login
-      const authData = localStorage.getItem('parseAuth') || sessionStorage.getItem('parseAuth');
-      if (!authData) {
-        console.log('Utilisateur non authentifié, redirection vers login');
-        window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`;
+      const authStore = Alpine.store('auth');
+      if (authStore && typeof authStore.checkAuth === 'function') {
+        authStore.checkAuth(true, window.location.pathname);
       }
     }
   "></div>
@@ -176,7 +174,27 @@ import SideMenu from '../components/SideMenu.astro';
     <script is:inline src={Alpinefile}></script>
   )}
   
-  <!-- Chargement des states Alpine.js - supprimé le chargement dynamique problématique -->
+  <!-- Chargement du state de login avec fallback -->
+  <script>
+    // Fallback pour loginState si le fichier ne charge pas
+    window.loginState = window.loginState || function() {
+      console.warn('loginState not loaded, using fallback');
+      return {
+        username: '',
+        password: '',
+        rememberMe: false,
+        loading: false,
+        error: null,
+        handleLogin: function() {
+          console.error('Login functionality not available - missing loginState.js');
+          alert('Login functionality is temporarily unavailable. Please try again later.');
+        }
+      };
+    };
+  </script>
+  <script src="/js/states/loginState.js" defer is:inline onerror="console.warn('Failed to load loginState.js, using fallback')"></script>
+  
+  <!-- Chargement des states Alpine.js avec meilleure gestion des erreurs -->
   <!-- Layout principal avec sidebar -->
   <div class="flex min-h-screen h-screen">
     <!-- Sidebar - conditionnellement affichée -->
@@ -192,8 +210,23 @@ import SideMenu from '../components/SideMenu.astro';
     </main>
   </div>
   
-  <!-- Chargement du store auth global -->
-  <script src="/js/states/authState.js" defer></script>
+  <!-- Chargement du store auth global avec fallback -->
+  <script>
+    // Fallback pour authStore si le fichier ne charge pas
+    window.authStoreFallback = {
+      checkAuth: function(redirect, pathname) {
+        console.warn('Auth store not loaded, using fallback');
+        // Ne pas rediriger si le store d'auth n'est pas disponible
+        return Promise.resolve(false);
+      }
+    };
+    
+    // S'assurer que Alpine.store('auth') existe
+    document.addEventListener('alpine:init', () => {
+      Alpine.store('auth', window.authStoreFallback);
+    });
+  </script>
+  <script src="/js/states/authState.js" defer is:inline onerror="console.warn('Failed to load authState.js, using fallback')"></script>
   
 
   

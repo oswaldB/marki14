@@ -33,7 +33,29 @@ export default defineConfig({
     server: {
       host: '0.0.0.0',
       port: 5000,
-      allowedHosts: ['.repl.co', '.replit.dev','all','dev.markidiags.com']
+      allowedHosts: ['.repl.co', '.replit.dev','all','dev.markidiags.com'],
+      hmr: {
+        host: 'dev.markidiags.com',
+        protocol: 'wss',
+        clientPort: 443,
+        path: '/'
+      },
+      proxy: {
+        '/node_modules': {
+          target: 'http://localhost:5000',
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/node_modules/, '')
+        }
+      }
+    },
+    build: {
+      assetsDir: 'assets',
+      rollupOptions: {
+        output: {
+          assetFileNames: 'assets/[name]-[hash][extname]',
+          entryFileNames: 'assets/[name]-[hash].js'
+        }
+      }
     }
   },
   outDir: config.outDir,
@@ -45,7 +67,7 @@ export default defineConfig({
   content: {
     configPath: './src/content/config'
   },
-   experimental: {
+  experimental: {
     chromeDevtoolsWorkspace: false  // Disable experimental features for production
-   }
+  }
 });

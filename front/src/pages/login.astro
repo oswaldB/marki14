@@ -8,9 +8,53 @@ const Alpinefile = '/js/states/loginState.js';
 
 <BaseLayout title={title} withAuth={withAuth} Alpinefile={Alpinefile}>
 
+<!-- Alpine.js CDN Fallback -->
+<script src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.5/dist/cdn.min.js" defer></script>
+
+<!-- Alpine.js Fallback Initialization -->
+<script>
+  // Fallback if local Alpine.js fails to load
+  window.Alpine = window.Alpine || {
+    data: function(name, func) {
+      console.warn('Alpine.js not loaded, using fallback');
+      return func;
+    },
+    init: function() {
+      console.warn('Alpine.js init not available');
+    },
+    store: function(name, store) {
+      console.warn('Alpine.js store not available, using fallback');
+      window.alpineStores = window.alpineStores || {};
+      window.alpineStores[name] = store;
+      return store;
+    }
+  };
+  
+  // Détection des erreurs de chargement des scripts
+  window.addEventListener('error', function(event) {
+    if (event.target && (event.target.src.includes('loginState.js') || event.target.src.includes('authState.js'))) {
+      console.error('Failed to load critical script:', event.target.src);
+      document.getElementById('scriptError').style.display = 'block';
+    }
+  }, true);
+</script>
+
 <div class="container mx-auto px-4 py-8 max-w-md">
   <div class="bg-white border border-gray-200 rounded-lg p-8 shadow-sm">
     <h1 class="text-2xl font-bold text-gray-900 mb-6 text-center">Connexion</h1>
+    
+    <!-- Message d'erreur global si les scripts ne chargent pas -->
+    <div id="scriptError" class="bg-yellow-50 border border-yellow-200 rounded-md p-3 mb-4" style="display: none;">
+      <div class="flex">
+        <div class="flex-shrink-0">
+          <i class="fas fa-exclamation-triangle text-yellow-400 text-lg"></i>
+        </div>
+        <div class="ml-3">
+          <p class="text-sm font-medium text-yellow-800">Fonctionnalité limitée</p>
+          <p class="text-sm text-yellow-700">Certaines fonctionnalités peuvent être temporairement indisponibles.</p>
+        </div>
+      </div>
+    </div>
     
     <div x-data="loginState()">
       <!-- Formulaire de connexion -->
