@@ -63,6 +63,7 @@ async function initializeSyncCollections() {
     SyncConfigs: null,
     DBCredentials: null,
     SyncLogs: null,
+    Contacts: null,
     VariablesGlobales: null
   };
 
@@ -171,7 +172,31 @@ async function initializeSyncCollections() {
       results.SyncLogs = { status: 'existing' };
     }
 
-    // 4. Vérifier/initialiser VariablesGlobales.activeConfigs
+    // 4. Créer la classe Contacts si elle n'existe pas (pour l'import manuel)
+    const contactsExists = await classExists('Contacts');
+    if (!contactsExists) {
+      console.log('Création de la classe Contacts...');
+      const contactsSchema = {
+        className: 'Contacts',
+        fields: {
+          email: { type: 'String', required: true },
+          nom: { type: 'String' },
+          createdAt: { type: 'Date' },
+          updatedAt: { type: 'Date' }
+        },
+        indexes: {
+          email: { email: 1 }
+        }
+      };
+
+      results.Contacts = await createParseClass('Contacts', contactsSchema);
+      console.log('Classe Contacts créée avec succès');
+    } else {
+      console.log('Classe Contacts existe déjà');
+      results.Contacts = { status: 'existing' };
+    }
+
+    // 5. Vérifier/initialiser VariablesGlobales.activeConfigs
     const variablesGlobalesExists = await classExists('VariablesGlobales');
     if (!variablesGlobalesExists) {
       console.log('Création de la classe VariablesGlobales...');

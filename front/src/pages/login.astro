@@ -13,6 +13,9 @@ const Alpinefile = '/js/states/loginState.js';
 
 <!-- Alpine.js Fallback Initialization -->
 <script>
+  // Ensure withAuth is defined globally
+  window.withAuthValue = window.withAuthValue || false;
+  
   // Fallback if local Alpine.js fails to load
   window.Alpine = window.Alpine || {
     data: function(func: any) {
@@ -29,6 +32,25 @@ const Alpinefile = '/js/states/loginState.js';
       return store;
     }
   };
+  
+  // Add error handling for Alpine expressions
+  document.addEventListener('alpine:error', function(event) {
+    try {
+      const message = event.detail && event.detail.message ? event.detail.message : 'Unknown Alpine.js error';
+      console.error('Alpine.js error:', message);
+      
+      // Provide fallback behavior
+      if (message && message.includes && message.includes('withAuth is not defined')) {
+        window.withAuthValue = false;
+        // Force re-evaluation
+        if (window.Alpine) {
+          window.Alpine.flushAndStopDeferringMutations();
+        }
+      }
+    } catch (error) {
+      console.error('Error handling Alpine.js error:', error);
+    }
+  });
   
   // Détection des erreurs de chargement des scripts avec rechargement automatique
   window.addEventListener('error', function(event) {

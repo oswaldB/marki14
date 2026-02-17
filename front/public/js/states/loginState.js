@@ -18,12 +18,20 @@ if (typeof document !== 'undefined') {
        * @returns {Promise<void>}
        */
       async handleLogin() {
-        console.log('Tentative de connexion avec:', this.username);
-        
-        this.loading = true;
-        this.error = null;
-        
         try {
+          this.loading = true;
+          this.error = null;
+          
+          // Defensive checks
+          if (!window.Alpine || !window.Alpine.store) {
+            throw new Error('Alpine.js not properly initialized');
+          }
+          
+          const authStore = window.Alpine.store('auth');
+          if (!authStore) {
+            throw new Error('Auth store not available');
+          }
+          
           // Appel à l'API Parse pour l'authentification
           const response = await this.loginToParse();
           
@@ -37,6 +45,7 @@ if (typeof document !== 'undefined') {
         } catch (error) {
           console.error('Erreur de connexion:', error);
           this.error = this.getErrorMessage(error);
+        } finally {
           this.loading = false;
         }
       },
@@ -46,9 +55,14 @@ if (typeof document !== 'undefined') {
        * @returns {Promise<Object>} Objet contenant sessionToken et objectId
        */
       async loginToParse() {
-        console.log('Appel à Parse REST API pour authentification');
-        
         try {
+          // Defensive checks
+          if (!this.username || !this.password) {
+            throw new Error('Username and password are required');
+          }
+          
+          console.log('Appel à Parse REST API pour authentification');
+          
           const response = await axios.post(
             'https://dev.parse.markidiags.com/parse/login',
             {
@@ -81,20 +95,30 @@ if (typeof document !== 'undefined') {
        * @param {string} userId - ID de l'utilisateur
        */
       storeAuthToken(sessionToken, userId) {
-        const authData = {
-          parseToken: sessionToken,
-          userId: userId
-        };
-        
-        console.log('Stockage du token:', {
-          storageType: this.rememberMe ? 'localStorage' : 'sessionStorage',
-          authData: authData
-        });
-        
-        if (this.rememberMe) {
-          localStorage.setItem('parseAuth', JSON.stringify(authData));
-        } else {
-          sessionStorage.setItem('parseAuth', JSON.stringify(authData));
+        try {
+          // Defensive checks
+          if (!sessionToken || !userId) {
+            console.warn('Invalid auth token or user ID');
+            return;
+          }
+          
+          const authData = {
+            parseToken: sessionToken,
+            userId: userId
+          };
+          
+          console.log('Stockage du token:', {
+            storageType: this.rememberMe ? 'localStorage' : 'sessionStorage',
+            authData: authData
+          });
+          
+          if (this.rememberMe) {
+            localStorage.setItem('parseAuth', JSON.stringify(authData));
+          } else {
+            sessionStorage.setItem('parseAuth', JSON.stringify(authData));
+          }
+        } catch (error) {
+          console.error('Error storing auth token:', error);
         }
       },
 
@@ -103,17 +127,17 @@ if (typeof document !== 'undefined') {
        * @returns {void}
        */
       redirectAfterLogin() {
-        // Récupération du paramètre 'redirect' depuis l'URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const redirectUrl = urlParams.get('redirect') || '/dashboard';
-        
-        console.log('Redirection vers:', redirectUrl);
-        
-        // Validation de l'URL de redirection pour éviter les attaques XSS
-        if (this.isSafeUrl(redirectUrl)) {
-          window.location.href = redirectUrl;
-        } else {
-          console.warn('URL de redirection non sécurisée, utilisation de la valeur par défaut');
+        try {
+          const urlParams = new URLSearchParams(window.location.search);
+          const redirect = urlParams.get('redirect');
+          
+          if (redirect && this.isSafeUrl(redirect)) {
+            window.location.href = redirect;
+          } else {
+            window.location.href = '/dashboard';
+          }
+        } catch (error) {
+          console.error('Error in redirect:', error);
           window.location.href = '/dashboard';
         }
       },
@@ -125,14 +149,14 @@ if (typeof document !== 'undefined') {
        */
       isSafeUrl(url) {
         try {
-          const parsedUrl = new URL(url, window.location.origin);
+          // Defensive check
+          if (!url || typeof url !== 'string') {
+            return false;
+          }
           
-          // Vérifier que l'URL est relative ou sur le même domaine
-          return (
-            parsedUrl.origin === window.location.origin ||
-            url.startsWith('/')
-          );
+          return url.startsWith('/');
         } catch (e) {
+          console.error('Error checking URL safety:', e);
           return false;
         }
       },
@@ -143,34 +167,64 @@ if (typeof document !== 'undefined') {
        * @returns {string} Message d'erreur utilisateur
        */
       getErrorMessage(error) {
-        if (error.response) {
-          switch (error.response.status) {
-            case 401:
-              return 'Identifiant ou mot de passe incorrect';
-            case 404:
-              return 'Utilisateur non trouvé';
-            case 400:
-              return 'Requête invalide';
-            default:
-              return `Erreur serveur (${error.response.status})`;
+        try {
+          // Defensive check
+          if (!error) {
+            return 'An unknown error occurred';
           }
-        } else if (error.message) {
-          return error.message;
+          
+          if (error.message) {
+            if (error.message.includes('Invalid username/password')) {
+              return 'Identifiant ou mot de passe incorrect';
+            }
+            if (error.message.includes('network')) {
+              return 'Erreur réseau. Veuillez vérifier votre connexion.';
+            }
+          }
+          
+          if (error.response) {
+            switch (error.response.status) {
+              case 401:
+                return 'Identifiant ou mot de passe incorrect';
+              case 404:
+                return 'Utilisateur non trouvé';
+              case 400:
+                return 'Requête invalide';
+              default:
+                return `Erreur serveur (${error.response.status})`;
+            }
+          }
+          
+          return 'Erreur de connexion. Veuillez réessayer.';
+        } catch (error) {
+          console.error('Error getting error message:', error);
+          return 'Une erreur est survenue lors de la connexion.';
         }
-        return 'Erreur de connexion. Veuillez réessayer.';
       },
 
       /**
        * Initialisation du composant
        */
       init() {
-        console.log('Composant loginState initialisé');
-        
-        // Vérification si l'utilisateur est déjà connecté
-        const existingAuth = localStorage.getItem('parseAuth') || sessionStorage.getItem('parseAuth');
-        if (existingAuth) {
-          console.log('Utilisateur déjà connecté, redirection vers dashboard');
-          window.location.href = '/dashboard';
+        try {
+          console.log('Composant loginState initialisé');
+          
+          // Vérification si l'utilisateur est déjà connecté
+          const existingAuth = localStorage.getItem('parseAuth') || sessionStorage.getItem('parseAuth');
+          
+          if (existingAuth) {
+            try {
+              const authData = JSON.parse(existingAuth);
+              if (authData && authData.parseToken) {
+                console.log('Utilisateur déjà connecté, redirection vers dashboard');
+                window.location.href = '/dashboard';
+              }
+            } catch (error) {
+              console.error('Error parsing existing auth data:', error);
+            }
+          }
+        } catch (error) {
+          console.error('Error in login state init:', error);
         }
       }
     }));

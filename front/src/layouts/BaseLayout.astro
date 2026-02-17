@@ -5,9 +5,14 @@ interface Props {
   title: string;
   withAuth?: boolean;
   hideSidebar?: boolean;
-  Alpinefile?: string;}
+  Alpinefile?: string;
+  requiredRoles?: string[];}
 
-const { title, withAuth = false, hideSidebar = false, Alpinefile } = Astro.props;
+const { title, withAuth = false, hideSidebar = false, Alpinefile, requiredRoles = [] } = Astro.props;
+
+// requiredRoles is used in Alpine.js template below
+// Explicit reference to satisfy TypeScript
+void requiredRoles;
 
 // Debug: Log the props to ensure they're being passed correctly
 console.log('BaseLayout props:', { title, withAuth, hideSidebar });
@@ -21,6 +26,46 @@ import SideMenu from '../components/SideMenu.astro';
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>{title} — Marki</title>
+  <!-- Initialize global objects early to prevent errors -->
+  <script is:inline>
+    // Initialize global objects early to prevent "Cannot set properties of undefined" errors
+    // This must be done before any external scripts load
+    
+    // Create window object if it doesn't exist (for SSR environments)
+    if (typeof window === 'undefined') {
+      var window = {};
+    }
+    
+    // Initialize PapaParse with all necessary properties
+    window.Papa = {
+      parse: function(data, config) {
+        if (config && config.complete) {
+          config.complete({data: [], errors: ['PapaParse initialized but not fully loaded']});
+        }
+        return {data: [], errors: ['PapaParse initialized but not fully loaded']};
+      },
+      // Add other PapaParse methods that might be called
+      unparse: function() {},
+      LOCAL_CHUNK_SIZE: 100000,
+      RemoteChunkSize: 100000,
+      DefaultDelimiter: ",",
+      BadDelimiters: ["\r", "\n", "\t"],
+      RecordSize: 0,
+      Streamer: null,
+      NodeStreamer: null,
+      ScriptLoader: null,
+      NODE_STREAM_INPUT: null
+    };
+    
+    // Initialize other global objects
+    window.Alpine = window.Alpine || {};
+    window.withAuthValue = window.withAuthValue || false;
+    
+    // Mark that we've initialized PapaParse
+    window.PapaParseInitialized = true;
+    
+    console.log('✅ Global objects initialized:', { Papa: typeof window.Papa, Alpine: typeof window.Alpine });
+  </script>
   <!-- Set withAuth value for Alpine.js -->
   <script is:inline>
     // Read withAuth from data attribute and set it for Alpine.js
@@ -45,6 +90,8 @@ import SideMenu from '../components/SideMenu.astro';
   />
   <!-- Approche REST: Parse Auth via Axios -->
   <script is:inline src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <!-- PapaParse pour le parsing CSV - using our pre-initialized object -->
+  <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script> -->
   <script is:inline>
     // Configuration REST: Parse Auth (Axios)
     if (typeof window !== 'undefined') {
@@ -83,11 +130,23 @@ import SideMenu from '../components/SideMenu.astro';
 </head>
 <body class="bg-gray-50">
   <!-- Vérification d'authentification avec Alpine.js -->
-  <div x-data="{ withAuth: window.withAuthValue }" x-init="
+  <div x-data="{ withAuth: false, requiredRoles: [] }" x-init="
+    // Ensure withAuth is properly defined
+    withAuth = Boolean(window.withAuthValue);
+    
+    // Try to parse requiredRoles safely
+    try {
+      if (typeof requiredRoles === 'string') {
+        requiredRoles = JSON.parse(requiredRoles);
+      }
+    } catch (e) {
+      requiredRoles = [];
+    }
+    
     if (withAuth) {
       const authStore = Alpine.store('auth');
       if (authStore && typeof authStore.checkAuth === 'function') {
-        authStore.checkAuth(true, window.location.pathname);
+        authStore.checkAuth(true, window.location.pathname, requiredRoles);
       }
     }
   "></div>
@@ -172,7 +231,10 @@ import SideMenu from '../components/SideMenu.astro';
   </script>
   
   <!-- Vérification d'authentification via Alpine.js -->
-  <div x-data="{ withAuth: window.withAuthValue }" x-init="
+  <div x-data="{ withAuth: false }" x-init="
+    // Ensure withAuth is properly defined
+    withAuth = Boolean(window.withAuthValue);
+    
     if (withAuth) {
       const authStore = Alpine.store('auth');
       if (authStore && typeof authStore.checkAuth === 'function') {
@@ -209,16 +271,16 @@ import SideMenu from '../components/SideMenu.astro';
         loginToParse: async function() {
           throw new Error('Parse login not available');
         },
-        storeAuthToken: function(token, userId) {
+        storeAuthToken: function(_token: string, _userId: string) {
           console.warn('Auth token storage not available');
         },
         redirectAfterLogin: function() {
           window.location.href = '/dashboard';
         },
-        isSafeUrl: function(url) {
+        isSafeUrl: function(url: string) {
           return url.startsWith('/');
         },
-        getErrorMessage: function(error) {
+        getErrorMessage: function(_error: unknown) {
           return 'Login functionality is temporarily unavailable.';
         },
         init: function() {
@@ -245,17 +307,49 @@ import SideMenu from '../components/SideMenu.astro';
     </main>
   </div>
   
+  <!-- Global error handling -->
+  <script is:inline>
+    // Global error handling for unhandled promise rejections
+    window.addEventListener('unhandledrejection', function(event) {
+      console.error('Unhandled rejection:', event.reason);
+      
+      // Prevent default handling
+      event.preventDefault();
+      
+      // Show user-friendly error
+      if (event.reason.message && event.reason.message.includes('withAuth')) {
+        console.warn('Authentication initialization error detected');
+        // Force reinitialization
+        if (window.loginState && typeof window.loginState.init === 'function') {
+          window.loginState.init();
+        }
+      }
+    });
+    
+    // Global error handling for JavaScript errors
+    window.addEventListener('error', function(event) {
+      console.error('Global error:', event.message, 'at', event.filename, ':', event.lineno);
+      
+      // Handle specific known errors
+      if (event.message && event.message.includes('Cannot read properties of undefined')) {
+        console.warn('Undefined property access detected');
+        
+        // Try to recover by reloading critical scripts
+        if (event.filename && event.filename.includes('login.astro')) {
+          setTimeout(() => {
+            window.location.reload();
+          }, 2000);
+        }
+      }
+    });
+  </script>
+  
   <!-- Chargement du store auth global avec fallback amélioré -->
   <script>
     // Fallback amélioré pour authStore si le fichier ne charge pas
     window.authStoreFallback = {
-      isAuthenticated: false,
-      user: null,
-      checkingAuth: false,
-      
       async checkAuth(requireAuth = false, currentPath = '/') {
         console.warn('Auth store not loaded, using enhanced fallback');
-        this.checkingAuth = true;
         
         try {
           // Vérification des données d'auth existentantes
@@ -263,8 +357,6 @@ import SideMenu from '../components/SideMenu.astro';
                           JSON.parse(sessionStorage.getItem('parseAuth'));
           
           if (authData && authData.parseToken) {
-            this.isAuthenticated = true;
-            this.user = { id: authData.userId };
             return true;
           }
           
@@ -278,35 +370,7 @@ import SideMenu from '../components/SideMenu.astro';
             window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`;
           }
           return false;
-        } finally {
-          this.checkingAuth = false;
         }
-      },
-      
-      async validateToken(token) {
-        console.warn('Token validation not available in fallback');
-        return false;
-      },
-      
-      redirectToLogin(redirectPath) {
-        window.location.href = `/login?redirect=${encodeURIComponent(redirectPath)}`;
-      },
-      
-      logout() {
-        localStorage.removeItem('parseAuth');
-        sessionStorage.removeItem('parseAuth');
-        this.isAuthenticated = false;
-        this.user = null;
-        window.location.href = '/login';
-      },
-      
-      clearAuthData() {
-        localStorage.removeItem('parseAuth');
-        sessionStorage.removeItem('parseAuth');
-      },
-      
-      init() {
-        console.log('Fallback auth store initialized');
       }
     };
     

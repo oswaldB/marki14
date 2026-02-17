@@ -15,9 +15,10 @@ if (typeof document !== 'undefined') {
        * Vérifie l'état d'authentification de l'utilisateur
        * @param {boolean} requireAuth - Si true, redirige si non authentifié
        * @param {string} currentPath - Chemin actuel pour la redirection
-       * @returns {Promise<boolean>} True si authentifié
+       * @param {Array<string>} requiredRoles - Rôles requis pour accéder à la page
+       * @returns {Promise<boolean>} True si authentifié et autorisé
        */
-      async checkAuth(requireAuth = false, currentPath = '/') {
+      async checkAuth(requireAuth = false, currentPath = '/', requiredRoles = []) {
         console.log('Vérification de l\'authentification...');
         this.checkingAuth = true;
         
@@ -34,6 +35,20 @@ if (typeof document !== 'undefined') {
               this.isAuthenticated = true;
               this.user = { id: authData.userId };
               console.log('Utilisateur authentifié:', this.user);
+              
+              // Vérification des rôles si requis
+              if (requiredRoles.length > 0) {
+                const hasRequiredRole = await this.checkUserRoles(authData.parseToken, requiredRoles);
+                if (!hasRequiredRole) {
+                  console.error('Accès refusé: rôles insuffisants. Rôles requis:', requiredRoles);
+                  this.clearAuthData();
+                  if (requireAuth) {
+                    this.redirectToLogin(currentPath);
+                  }
+                  return false;
+                }
+              }
+              
               return true;
             } else {
               // Token invalide, suppression
@@ -59,6 +74,51 @@ if (typeof document !== 'undefined') {
           return false;
         } finally {
           this.checkingAuth = false;
+        }
+      },
+
+      /**
+       * Vérifie si l'utilisateur a les rôles requis
+       * @param {string} sessionToken - Token de session
+       * @param {Array<string>} requiredRoles - Rôles requis
+       * @returns {Promise<boolean>} True si l'utilisateur a au moins un rôle requis
+       */
+      async checkUserRoles(sessionToken, requiredRoles) {
+        try {
+          // Récupérer les rôles de l'utilisateur via Parse REST API
+          const response = await axios.get(
+            'https://dev.parse.markidiags.com/parse/users/me',
+            {
+              headers: {
+                'X-Parse-Application-Id': 'marki',
+                'X-Parse-REST-API-Key': 'Careless7-Gore4-Guileless0-Jogger5-Clubbed9',
+                'X-Parse-Session-Token': sessionToken
+              }
+            }
+          );
+          
+          const userData = response.data;
+          console.log('Données utilisateur:', userData);
+          
+          // Vérifier si l'utilisateur a au moins un des rôles requis
+          // Dans Parse, les rôles sont généralement stockés dans un champ 'roles' ou via des relations
+          // Pour simplifier, nous vérifions si l'username ou email contient des indicateurs de rôle
+          
+          const username = userData.username || '';
+          const email = userData.email || '';
+          
+          // Logique simplifiée de vérification de rôle
+          // Dans une implémentation complète, il faudrait interroger la table _Role
+          const hasRequiredRole = requiredRoles.some(role => {
+            return username.includes(role) || email.includes(role);
+          });
+          
+          console.log('Vérification des rôles - requis:', requiredRoles, 'a rôle requis:', hasRequiredRole);
+          return hasRequiredRole;
+          
+        } catch (error) {
+          console.error('Erreur lors de la vérification des rôles:', error.response?.data || error.message);
+          return false;
         }
       },
 

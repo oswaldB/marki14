@@ -3,6 +3,7 @@ import { defineConfig } from 'astro/config';
 import tailwind from '@astrojs/tailwind';
 import node from '@astrojs/node';
 import alpinejs from '@astrojs/alpinejs';
+import autoprefixer from 'autoprefixer';
 
 const site = process.env.SITE || 'ADTI';
 
@@ -46,6 +47,10 @@ export default defineConfig({
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/node_modules/, '')
         }
+      },
+      // Fix resource paths
+      fs: {
+        allow: ['..']
       }
     },
     build: {
@@ -53,8 +58,26 @@ export default defineConfig({
       rollupOptions: {
         output: {
           assetFileNames: 'assets/[name]-[hash][extname]',
-          entryFileNames: 'assets/[name]-[hash].js'
+          entryFileNames: 'assets/[name]-[hash].js',
+          // Fix chunk file names
+          chunkFileNames: 'assets/[name]-[hash].js'
         }
+      }
+    },
+    // Fix resolve aliases
+    resolve: {
+      alias: {
+        '@': '/src',
+        '~': '/node_modules'
+      }
+    },
+    // Ensure proper CSS processing
+    css: {
+      postcss: {
+        plugins: [
+          tailwind,
+          autoprefixer
+        ]
       }
     }
   },

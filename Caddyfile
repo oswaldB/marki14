@@ -27,7 +27,7 @@ dev.parse.dashboard.markidiags.com {
 
 dev.markidiags.com {
     # Handle WebSocket connections for Vite HMR
-    reverse_proxy {
+    reverse_proxy / {
         to 192.168.1.239:5000
         transport http {
             websocket
@@ -36,23 +36,54 @@ dev.markidiags.com {
         }
     }
     
-    # Handle static assets
+    # Handle static assets from dist directory
     root * /home/oswald/Desktop/marki14/front/dist
-    file_server
+    
+    # Serve node_modules directly
+    @node_modules {
+        path /node_modules/*
+    }
+    handle @node_modules {
+        root /home/oswald/Desktop/marki14/front
+        file_server
+    }
+    
+    # Handle Vite processed assets
+    @viteAssets {
+        path /assets/*
+    }
+    handle @viteAssets {
+        root /home/oswald/Desktop/marki14/front/dist
+        file_server
+    }
+    
+    # Handle CSS files
+    @cssFiles {
+        path *.css
+    }
+    handle @cssFiles {
+        root /home/oswald/Desktop/marki14/front/dist
+        file_server
+    }
+    
+    # Handle JS files
+    @jsFiles {
+        path *.js
+    }
+    handle @jsFiles {
+        root /home/oswald/Desktop/marki14/front/dist
+        file_server
+    }
     
     # Enable CORS
     header Access-Control-Allow-Origin *
     header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
     header Access-Control-Allow-Headers "Content-Type, Authorization"
     
-    # Handle specific file types
-    @static {
-        file
-        path *.js *.css *.png *.ico *.json
-    }
-    handle @static {
-        file_server
-    }
+    # Security headers
+    header X-Content-Type-Options "nosniff"
+    header X-Frame-Options "DENY"
+    header Referrer-Policy "strict-origin-when-cross-origin"
 }
 
 dev.api.markidiags.com {
