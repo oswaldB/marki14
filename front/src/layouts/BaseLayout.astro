@@ -73,7 +73,19 @@ import SideMenu from '../components/SideMenu.astro';
   </script>
 </head>
 <body class="bg-gray-50">
-  <!-- Script d'authentification conditionnel -->
+  <!-- Vérification d'authentification avec Alpine.js -->
+  <div x-data x-init="
+    if (withAuth) {
+      // Vérification directe via le state de login
+      const authData = localStorage.getItem('parseAuth') || sessionStorage.getItem('parseAuth');
+      if (!authData) {
+        console.log('Utilisateur non authentifié, redirection vers login');
+        window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`;
+      }
+    }
+  "></div>
+  
+  <!-- Script d'authentification conditionnel (ancien système) -->
   <script is:inline define:vars={{withAuth: withAuth}}>
     // Code d'authentification - uniquement côté client
     if (typeof window !== 'undefined') {
@@ -149,6 +161,16 @@ import SideMenu from '../components/SideMenu.astro';
     }
   </script>
   
+  <!-- Vérification d'authentification via Alpine.js -->
+  <div x-data x-init="
+    if (withAuth) {
+      const authStore = Alpine.store('auth');
+      if (authStore && typeof authStore.checkAuth === 'function') {
+        authStore.checkAuth(true, window.location.pathname);
+      }
+    }
+  "></div>
+  
   <!-- Script Alpine.js conditionnel -->
   {Alpinefile && (
     <script is:inline src={Alpinefile}></script>
@@ -169,6 +191,9 @@ import SideMenu from '../components/SideMenu.astro';
       <slot />
     </main>
   </div>
+  
+  <!-- Chargement du store auth global -->
+  <script src="/js/states/authState.js" defer></script>
   
 
   

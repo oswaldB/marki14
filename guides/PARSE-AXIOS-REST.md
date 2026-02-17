@@ -27,7 +27,7 @@ Créez un fichier de configuration pour Axios avec les headers nécessaires pour
 import axios from 'axios';
 
 const parseApi = axios.create({
-  baseURL: 'https://votre-serveur-parse.com/parse',
+  baseURL: 'https://dev.parse.markidiags.com',
   headers: {
     'X-Parse-Application-Id': 'VOTRE_APPLICATION_ID',
     'X-Parse-Javascript-Key': 'VOTRE_JAVASCRIPT_KEY',

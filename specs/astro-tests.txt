@@ -2,27 +2,51 @@
 > boomerang-frontend@1.0.0 check
 > astro check
 
-17:22:40 [@astrojs/node] Enabling sessions with filesystem storage
-17:22:40 [vite] Re-optimizing dependencies because vite config has changed
-17:22:40 [content] Syncing content
-17:22:40 [content] Synced content
-17:22:40 [types] Generated 133ms
-17:22:40 [check] Getting diagnostics for Astro files in /home/oswald/Desktop/marki14/front...
-[96msrc/pages/login.astro[0m:[93m86[0m:[93m14[0m - [93mwarning[0m[90m ts(6133): [0m'loginState' is declared but its value is never read.
+17:36:07 [@astrojs/node] Enabling sessions with filesystem storage
+17:36:07 [vite] Re-optimizing dependencies because vite config has changed
+17:36:07 [content] Syncing content
+17:36:07 [content] Synced content
+17:36:07 [types] Generated 105ms
+17:36:07 [check] Getting diagnostics for Astro files in /home/oswald/Desktop/marki14/front...
+[96msrc/pages/login.astro[0m:[93m4[0m:[93m8[0m - [91merror[0m[90m ts(2304): [0mCannot find name 'Connexion'.
 
-[7m86[0m     function loginState() {
-[7m  [0m [93m             ~~~~~~~~~~[0m
-[96msrc/pages/login.astro[0m:[93m83[0m:[93m11[0m - [93mwarning[0m[90m astro(4000): [0mThis script will be treated as if it has the `is:inline` directive because it contains an attribute. Therefore, features that require processing (e.g. using TypeScript or npm packages in the script) are unavailable.
+[7m4[0m title: Connexion
+[7m [0m [91m       ~~~~~~~~~[0m
+[96msrc/pages/login.astro[0m:[93m2[0m:[93m20[0m - [91merror[0m[90m ts(2304): [0mCannot find name 'BaseLayout'.
 
-See docs for more details: https://docs.astro.build/en/guides/client-side-scripts/#script-processing.
+[7m2[0m layout: ../layouts/BaseLayout.astro
+[7m [0m [91m                   ~~~~~~~~~~[0m
+[96msrc/pages/login.astro[0m:[93m2[0m:[93m12[0m - [91merror[0m[90m ts(2304): [0mCannot find name 'layouts'.
 
-Add the `is:inline` directive explicitly to silence this hint.
+[7m2[0m layout: ../layouts/BaseLayout.astro
+[7m [0m [91m           ~~~~~~~[0m
+[96msrc/pages/login.astro[0m:[93m4[0m:[93m1[0m - [93mwarning[0m[90m ts(7028): [0mUnused label.
 
-[7m83[0m   <script type="module">
-[7m  [0m [93m          ~~~~[0m
+[7m4[0m title: Connexion
+[7m [0m [93m~~~~~[0m
+[96msrc/pages/login.astro[0m:[93m3[0m:[93m1[0m - [93mwarning[0m[90m ts(7028): [0mUnused label.
+
+[7m3[0m withAuth: false
+[7m [0m [93m~~~~~~~~[0m
+[96msrc/pages/login.astro[0m:[93m2[0m:[93m1[0m - [93mwarning[0m[90m ts(7028): [0mUnused label.
+
+[7m2[0m layout: ../layouts/BaseLayout.astro
+[7m [0m [93m~~~~~~[0m
+[96msrc/pages/login.astro[0m:[93m2[0m:[93m11[0m - [91merror[0m[90m ts(1003): [0mIdentifier expected.
+
+[7m2[0m layout: ../layouts/BaseLayout.astro
+[7m [0m [91m          ~[0m
+[96msrc/pages/login.astro[0m:[93m2[0m:[93m10[0m - [91merror[0m[90m ts(1003): [0mIdentifier expected.
+
+[7m2[0m layout: ../layouts/BaseLayout.astro
+[7m [0m [91m         ~[0m
+[96msrc/pages/login.astro[0m:[93m2[0m:[93m9[0m - [91merror[0m[90m ts(1109): [0mExpression expected.
+
+[7m2[0m layout: ../layouts/BaseLayout.astro
+[7m [0m [91m        ~[0m
 
 Result (5 files): 
-- 0 errors
+- 6 errors
 - 0 warnings
-- 2 hints
+- 3 hints
 

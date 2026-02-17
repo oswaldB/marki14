@@ -64,8 +64,3 @@ Scénario : Connexion sans paramètre redirect
   ```json
   { "parseToken": "r:abc123xyz456", "userId": "k7X9pLmN2" }
   ```
-
-## Notes supplémentaires
-
-- **Approche technique** : Cette fonctionnalité utilise Parse REST via Axios pour l'authentification, conformément aux règles du projet.
-- **Fastify** : Non nécessaire pour cette fonctionnalité, car elle peut être entièrement gérée par Parse REST.
