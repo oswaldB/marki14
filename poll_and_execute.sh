@@ -33,9 +33,10 @@ process_webhook() {
     echo "$action" > "$fiche_file"
 
     # Exécution de la commande vibe avec le fichier créé
-    echo "Exécution de la commande: vibe -p $fiche_file"
-    vibe -p "Après avoir effectué le travail preparatoire tu crée un fichier Implementation-$fiche_file dans le quel tu défins une todo liste de toutes les actions à faire dans chacun des fichiers du projet. Important tu suis les guides et le modèle data que tu as dans data-model.md"
-    vibe -p "Développe : Implementation-$fiche_file" --output streaming
+    echo "Exécution de la commande: travail preparatoir"
+    vibe -p "Ton role est de créer des fiches d'implémentation pour des développeurs. Tu assures que les users stories que tu reçoies sont conforme à la réalité du projet. Après avoir effectué le travail preparatoire, tu crée un fichier Implementation-$fiche_file dans le quel tu défins une todo liste de toutes les actions à faire dans chacun des fichiers pour développer ce use case. Important tu suis les guides et le modèle data que tu as dans data-model.md" --output streaming
+    sleep 10
+    vibe -p "Développe : Implementation-$fiche_file. Après chaque développement met à jour la fiche d'implémentation " --output streaming
     sleep 10
     vibe -p "commit"
     

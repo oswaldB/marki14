@@ -1,164 +1,423 @@
-# Fiche d'Implémentation - 6992f8f58b20e9a80be0efe8
+# Fiche d'Implémentation - Authentification US1.1
 
-## Contexte
+## Description
+Implémentation du système d'authentification avec connexion sécurisée, gestion du token Parse et redirection paramétrée.
 
-Cette fiche d'implémentation détaille les actions nécessaires pour intégrer les fonctionnalités décrites dans le modèle de données et les guides de développement du projet Marki.
+## User Story
+```
+Scénario : Connexion réussie avec redirection paramétrée
+  Étant donné que je suis sur "/login?redirect=/dashboard/clients"
+  Quand je saisis "oswald.bernard" et mon mot de passe
+  Et que je coche "Se souvenir de moi"
+  Alors mon token Parse est stocké dans localStorage
+  Et je suis redirigé vers "/dashboard/clients"
 
-## Structure des Données
+Scénario : Connexion sans paramètre redirect
+  Étant donné que je suis sur "/login"
+  Quand je saisis mes identifiants
+  Alors je suis redirigé vers "/dashboard" (par défaut)
+```
 
-Le modèle de données comprend plusieurs classes principales :
+## Modèle de Données Parse
+Utilisation de la classe native `_User` avec les champs :
+- `username`: String (identifiant de connexion)
+- `password`: String (mot de passe hashé)
+- `rememberMeToken`: String (optionnel, pour la persistance)
 
-1. **_User** : Gestion des utilisateurs
-2. **_Role** : Gestion des rôles
-3. **_Session** : Gestion des sessions
-4. **Impayes** : Gestion des factures impayées
-5. **Sequences** : Gestion des séquences de relance
-6. **SMTPProfile** : Configuration des profils SMTP
-7. **Relances** : Historique des relances
-8. **FtpConfig** : Configuration FTP
+## Architecture Technique
 
-## Todo Liste des Actions
+### Frontend (Alpine.js)
+- **Fichier**: `front/public/js/pages/loginState.js`
+- **Page**: `front/src/pages/login.astro`
+- **Layout**: `BaseLayout` avec `withAuth=false`
 
-### 1. Backend (Fastify Server)
+### Backend
+- **Approche**: Parse Cloud Functions (pas de Fastify requis)
+- **Authentification**: Parse.User.logIn()
+- **Stockage**: localStorage/sessionStorage selon l'option "Se souvenir de moi"
 
-#### Fichier: `back/fastify-server/index.js`
-- [ ] Vérifier et mettre à jour la configuration du serveur Fastify
-- [ ] S'assurer que tous les plugins nécessaires sont enregistrés
-- [ ] Configurer le logging et la gestion des erreurs
+## Todo Liste d'Implémentation
 
-#### Fichier: `back/fastify-server/routes/emailHistory.js`
-- [ ] Implémenter les routes pour la gestion de l'historique des emails
-- [ ] Ajouter des endpoints pour récupérer, créer, et mettre à jour l'historique des emails
-- [ ] Intégrer la logique métier pour la gestion des emails
+### 1. Création de la Page de Connexion
 
-#### Fichier: `back/fastify-server/routes/ftpConfig.js`
-- [ ] Implémenter les routes pour la gestion de la configuration FTP
-- [ ] Ajouter des endpoints pour récupérer, créer, et mettre à jour la configuration FTP
-- [ ] Intégrer la logique métier pour la gestion de la configuration FTP
+#### Fichier: `front/src/pages/login.astro`
+```astro
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
 
-#### Fichier: `back/fastify-server/utils/ftpUtils.js`
-- [ ] Développer les fonctions utilitaires pour la gestion FTP
-- [ ] Implémenter les fonctions pour la connexion, le téléchargement, et le téléversement de fichiers
-- [ ] Ajouter la gestion des erreurs et des logs
+<BaseLayout
+  title="Connexion"
+  withAuth={false}
+  Alpinefile="/js/pages/loginState.js"
+>
+  <div class="container mx-auto px-4 py-8 max-w-md">
+    <div class="bg-white border border-gray-200 rounded-lg p-8 shadow-sm">
+      <h1 class="text-2xl font-bold text-gray-900 mb-6 text-center">Connexion</h1>
+      
+      <form
+        x-data="loginState()"
+        @submit.prevent="login()"
+        class="space-y-4"
+      >
+        <div>
+          <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Identifiant</label>
+          <input
+            type="text"
+            id="username"
+            x-model="username"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#007ACE] focus:border-transparent"
+            placeholder="Votre identifiant"
+            required
+          >
+        </div>
+        
+        <div>
+          <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Mot de passe</label>
+          <input
+            type="password"
+            id="password"
+            x-model="password"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#007ACE] focus:border-transparent"
+            placeholder="••••••••"
+            required
+          >
+        </div>
+        
+        <div class="flex items-center justify-between">
+          <div class="flex items-center">
+            <input
+              type="checkbox"
+              id="remember"
+              x-model="rememberMe"
+              class="h-4 w-4 text-[#007ACE] focus:ring-[#007ACE] border-gray-300 rounded"
+            >
+            <label for="remember" class="ml-2 block text-sm text-gray-700">Se souvenir de moi</label>
+          </div>
+          
+          <a href="/mot-de-passe-oublie" class="text-sm text-[#007ACE] hover:text-[#006BCE]">
+            Mot de passe oublié ?
+          </a>
+        </div>
+        
+        <button
+          type="submit"
+          :disabled="loading"
+          class="w-full bg-[#007ACE] text-white py-2 px-4 rounded-md hover:bg-[#006BCE] transition-colors focus:outline-none focus:ring-2 focus:ring-[#007ACE] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <span x-show="!loading">Connexion</span>
+          <span x-show="loading" class="flex items-center justify-center">
+            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Connexion en cours...
+          </span>
+        </button>
+        
+        <div x-show="error" class="bg-red-50 border border-red-200 rounded-md p-3">
+          <div class="flex">
+            <div class="flex-shrink-0">
+              <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+              </svg>
+            </div>
+            <div class="ml-3">
+              <p class="text-sm font-medium text-red-800">Erreur</p>
+              <p class="text-sm text-red-700" x-text="error"></p>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</BaseLayout>
+```
 
-#### Fichier: `back/fastify-server/utils/parseUtils.js`
-- [ ] Développer les fonctions utilitaires pour la gestion des données Parse
-- [ ] Implémenter les fonctions pour la récupération et la mise à jour des données
-- [ ] Ajouter la gestion des erreurs et des logs
+### 2. Implémentation du State Alpine.js
 
-### 2. Frontend (Astro)
+#### Fichier: `front/public/js/pages/loginState.js`
+```javascript
+/**
+ * État Alpine.js pour la page de connexion
+ * Gère l'authentification, le stockage du token et la redirection
+ */
 
-#### Fichier: `front/src/components/DockComponent.astro`
-- [ ] Mettre à jour le composant Dock pour inclure les nouvelles fonctionnalités
-- [ ] Ajouter des icônes et des liens pour les nouvelles pages
-- [ ] S'assurer que le composant est responsive et accessible
+if (typeof document !== 'undefined') {
+  document.addEventListener('alpine:init', () => {
+    Alpine.data('loginState', () => ({
+      // État initial
+      username: '',
+      password: '',
+      rememberMe: false,
+      loading: false,
+      error: null,
+      
+      // Méthode de connexion
+      async login() {
+        this.loading = true;
+        this.error = null;
+        
+        try {
+          // Appel à Parse pour l'authentification
+          const user = await Parse.User.logIn(this.username, this.password);
+          
+          // Récupération du token de session
+          const sessionToken = user.getSessionToken();
+          const userId = user.id;
+          
+          // Stockage du token selon l'option "Se souvenir de moi"
+          const tokenData = {
+            parseToken: sessionToken,
+            userId: userId,
+            username: this.username
+          };
+          
+          if (this.rememberMe) {
+            localStorage.setItem('parseAuth', JSON.stringify(tokenData));
+          } else {
+            sessionStorage.setItem('parseAuth', JSON.stringify(tokenData));
+          }
+          
+          // Redirection selon le paramètre URL ou par défaut
+          const urlParams = new URLSearchParams(window.location.search);
+          const redirectUrl = urlParams.get('redirect') || '/dashboard';
+          
+          window.location.href = redirectUrl;
+          
+        } catch (error) {
+          console.error('Erreur de connexion:', error);
+          this.error = 'Identifiant ou mot de passe incorrect. Veuillez réessayer.';
+          
+          // Effacer les champs sensibles
+          this.password = '';
+        } finally {
+          this.loading = false;
+        }
+      },
+      
+      // Initialisation
+      init() {
+        // Vérifier si l'utilisateur est déjà connecté
+        const storedAuth = localStorage.getItem('parseAuth') || sessionStorage.getItem('parseAuth');
+        
+        if (storedAuth) {
+          // Rediriger vers le dashboard si déjà connecté
+          window.location.href = '/dashboard';
+        }
+      }
+    }));
+  });
+}
+```
 
-#### Fichier: `front/src/components/SideMenu.astro`
-- [ ] Mettre à jour le menu latéral pour inclure les nouvelles fonctionnalités
-- [ ] Ajouter des liens vers les nouvelles pages
-- [ ] S'assurer que le menu est responsive et accessible
+### 3. Configuration Parse
 
-#### Fichier: `front/src/layouts/BaseLayout.astro`
-- [ ] Mettre à jour le layout de base pour inclure les nouvelles fonctionnalités
-- [ ] Ajouter des styles et des scripts nécessaires
-- [ ] S'assurer que le layout est responsive et accessible
+#### Fichier: `front/public/js/parse-config.js`
+```javascript
+// Configuration de Parse pour le frontend
+Parse.initialize("VOTRE_APPLICATION_ID");
+Parse.serverURL = 'https://votre-serveur-parse.com/parse';
+```
 
-#### Fichier: `front/src/pages/email-history-demo.astro`
-- [ ] Développer la page de démonstration de l'historique des emails
-- [ ] Ajouter des composants pour afficher l'historique des emails
-- [ ] Intégrer les appels API pour récupérer et afficher les données
+### 4. Middleware d'Authentification (Optionnel)
 
-#### Fichier: `front/src/pages/helloworld.astro`
-- [ ] Mettre à jour la page de démonstration pour inclure les nouvelles fonctionnalités
-- [ ] Ajouter des exemples de composants et de styles
-- [ ] S'assurer que la page est responsive et accessible
+#### Fichier: `front/src/middleware/auth.js` (si nécessaire)
+```javascript
+// Middleware pour vérifier l'authentification sur les pages protégées
+export function checkAuth() {
+  const auth = localStorage.getItem('parseAuth') || sessionStorage.getItem('parseAuth');
+  
+  if (!auth) {
+    // Rediriger vers la page de login avec paramètre de redirection
+    const currentPath = window.location.pathname;
+    window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`;
+    return false;
+  }
+  
+  return JSON.parse(auth);
+}
+```
 
-#### Fichier: `front/src/pages/index.astro`
-- [ ] Mettre à jour la page d'accueil pour inclure les nouvelles fonctionnalités
-- [ ] Ajouter des liens vers les nouvelles pages
-- [ ] S'assurer que la page est responsive et accessible
+### 5. Tests Unitaires
 
-#### Fichier: `front/src/pages/styleguide.astro`
-- [ ] Mettre à jour le guide de style pour inclure les nouvelles fonctionnalités
-- [ ] Ajouter des exemples de composants et de styles
-- [ ] S'assurer que la page est responsive et accessible
+#### Fichier: `tests/login.test.js`
+```javascript
+// Tests unitaires pour la fonction de login
+describe('Login State', () => {
+  let loginState;
+  
+  beforeEach(() => {
+    // Mock de Parse.User.logIn
+    global.Parse = {
+      User: {
+        logIn: jest.fn().mockResolvedValue({
+          getSessionToken: () => 'mock-token',
+          id: 'user-123'
+        })
+      }
+    };
+    
+    // Initialisation du state
+    loginState = loginState();
+  });
+  
+  test('should store token in localStorage when rememberMe is true', async () => {
+    loginState.username = 'test';
+    loginState.password = 'password';
+    loginState.rememberMe = true;
+    
+    await loginState.login();
+    
+    const storedAuth = JSON.parse(localStorage.getItem('parseAuth'));
+    expect(storedAuth.parseToken).toBe('mock-token');
+    expect(storedAuth.userId).toBe('user-123');
+  });
+  
+  test('should store token in sessionStorage when rememberMe is false', async () => {
+    loginState.username = 'test';
+    loginState.password = 'password';
+    loginState.rememberMe = false;
+    
+    await loginState.login();
+    
+    const storedAuth = JSON.parse(sessionStorage.getItem('parseAuth'));
+    expect(storedAuth.parseToken).toBe('mock-token');
+  });
+  
+  test('should redirect to default dashboard when no redirect param', async () => {
+    // Mock de window.location
+    delete window.location;
+    window.location = { href: '', search: '' };
+    
+    loginState.username = 'test';
+    loginState.password = 'password';
+    
+    await loginState.login();
+    
+    expect(window.location.href).toBe('/dashboard');
+  });
+  
+  test('should redirect to specified URL when redirect param exists', async () => {
+    delete window.location;
+    window.location = { href: '', search: '?redirect=/dashboard/clients' };
+    
+    loginState.username = 'test';
+    loginState.password = 'password';
+    
+    await loginState.login();
+    
+    expect(window.location.href).toBe('/dashboard/clients');
+  });
+});
+```
 
-### 3. Configuration et Scripts
+## Vérification des Guides
 
-#### Fichier: `back/fastify-server/.env.example`
-- [ ] Mettre à jour le fichier d'exemple de configuration
-- [ ] Ajouter les nouvelles variables d'environnement nécessaires
-- [ ] Documenter les variables d'environnement
+### ✅ Conformité avec ALPINEJS-STATE-DEVELOPMENT.md
+- Utilisation de `Alpine.data()` pour le state
+- Structure modulaire avec état, méthodes et cycle de vie
+- Gestion des erreurs et états de chargement
+- Validation côté client
 
-#### Fichier: `back/fastify-server/package.json`
-- [ ] Vérifier et mettre à jour les dépendances
-- [ ] Ajouter les nouveaux scripts nécessaires
-- [ ] Documenter les scripts
+### ✅ Conformité avec STYLEGUIDE.md
+- Utilisation des couleurs primaires (#007ACE)
+- Composants UI standard (boutons, formulaires, alertes)
+- Structure responsive avec Tailwind
+- Icônes et états visuels cohérents
 
-#### Fichier: `front/package.json`
-- [ ] Vérifier et mettre à jour les dépendances
-- [ ] Ajouter les nouveaux scripts nécessaires
-- [ ] Documenter les scripts
+### ✅ Conformité avec PARSE-AXIOS-REST.md
+- Utilisation de Parse.User.logIn() pour l'authentification
+- Gestion des tokens de session
+- Structure des réponses et gestion des erreurs
 
-### 4. Documentation
+### ✅ Conformité avec FASTIFY_DEVELOPMENT_GUIDE.md
+- Pas de Fastify requis (pas de demande explicite)
+- Utilisation de l'approche Parse existante
+- Architecture simple et maintenable
 
-#### Fichier: `guides/ALPINEJS-STATE-DEVELOPMENT.md`
-- [ ] Mettre à jour le guide de développement AlpineJS
-- [ ] Ajouter des exemples de code et des bonnes pratiques
-- [ ] Documenter les nouvelles fonctionnalités
+### ✅ Conformité avec CREATE-A-NEWPAGE.md
+- Utilisation de BaseLayout
+- Prop Alpinefile correctement utilisé
+- Structure de page standard
+- Intégration Alpine.js propre
 
-#### Fichier: `guides/CREATE-A-NEWPAGE.md`
-- [ ] Mettre à jour le guide de création de nouvelles pages
-- [ ] Ajouter des exemples de code et des bonnes pratiques
-- [ ] Documenter les nouvelles fonctionnalités
+### ✅ Conformité avec POLITIQUE-DE-TESTS.md
+- Tests unitaires uniquement (pas de tests e2e)
+- Tests isolés avec mocks
+- Tests rapides et déterministes
+- Couverture des cas principaux
 
-#### Fichier: `guides/FASTIFY_DEVELOPMENT_GUIDE.md`
-- [ ] Mettre à jour le guide de développement Fastify
-- [ ] Ajouter des exemples de code et des bonnes pratiques
-- [ ] Documenter les nouvelles fonctionnalités
+## Validation du Modèle de Données
 
-#### Fichier: `guides/FASTIFY_VS_PARSE_GUIDE.md`
-- [ ] Mettre à jour le guide de comparaison Fastify vs Parse
-- [ ] Ajouter des exemples de code et des bonnes pratiques
-- [ ] Documenter les nouvelles fonctionnalités
+### Utilisation de _User
+- ✅ Champ `username` utilisé pour l'identifiant
+- ✅ Champ `password` utilisé pour l'authentification
+- ✅ Token de session géré par Parse
+- ✅ Stockage conforme aux bonnes pratiques
 
-#### Fichier: `guides/PARSE-AXIOS-REST.md`
-- [ ] Mettre à jour le guide de développement Parse/Axios/REST
-- [ ] Ajouter des exemples de code et des bonnes pratiques
-- [ ] Documenter les nouvelles fonctionnalités
+### Stockage des Tokens
+```json
+{
+  "parseToken": "r:abc123xyz456",
+  "userId": "k7X9pLmN2",
+  "username": "oswald.bernard"
+}
+```
 
-#### Fichier: `guides/POLITIQUE-DE-TESTS.md`
-- [ ] Mettre à jour la politique de tests
-- [ ] Ajouter des exemples de code et des bonnes pratiques
-- [ ] Documenter les nouvelles fonctionnalités
+## Points d'Attention
 
-#### Fichier: `guides/STYLEGUIDE.md`
-- [ ] Mettre à jour le guide de style
-- [ ] Ajouter des exemples de code et des bonnes pratiques
-- [ ] Documenter les nouvelles fonctionnalités
+1. **Sécurité**: Toujours utiliser HTTPS pour éviter l'interception des tokens
+2. **Expiration**: Les tokens Parse ont une durée de vie limitée (configurable côté serveur)
+3. **Déconnexion**: Implémenter un mécanisme de déconnexion qui efface le storage
+4. **Rafraîchissement**: Prévoir un mécanisme pour rafraîchir le token si nécessaire
 
-### 5. Scripts et Configuration
+## Dépendances
 
-#### Fichier: `Caddyfile`
-- [ ] Mettre à jour la configuration Caddy pour inclure les nouvelles routes
-- [ ] Ajouter les nouvelles règles de reverse proxy
-- [ ] Documenter les changements
+- Parse SDK (déjà intégré au projet)
+- Alpine.js (déjà intégré au projet)
+- Tailwind CSS (déjà intégré au projet)
 
-#### Fichier: `docker-compose.yml`
-- [ ] Mettre à jour la configuration Docker Compose
-- [ ] Ajouter les nouveaux services nécessaires
-- [ ] Documenter les changements
+## Étapes de Déploiement
 
-#### Fichier: `start.sh`
-- [ ] Mettre à jour le script de démarrage
-- [ ] Ajouter les nouvelles commandes nécessaires
-- [ ] Documenter les changements
+1. Créer les fichiers selon la structure décrite
+2. Tester localement avec différents scénarios
+3. Vérifier la compatibilité mobile
+4. Déployer sur l'environnement de staging
+5. Valider les tests d'intégration
+6. Déployer en production
 
-#### Fichier: `stop.sh`
-- [ ] Mettre à jour le script d'arrêt
-- [ ] Ajouter les nouvelles commandes nécessaires
-- [ ] Documenter les changements
+## Validation
 
-## Conclusion
+- [ ] Page de login créée avec formulaire complet
+- [ ] State Alpine.js implémenté avec gestion des tokens
+- [ ] Redirection paramétrée fonctionnelle
+- [ ] Stockage des tokens selon l'option "Se souvenir de moi"
+- [ ] Gestion des erreurs et états de chargement
+- [ ] Tests unitaires passés
+- [ ] Conformité avec tous les guides du projet
+- [ ] Intégration avec le système d'authentification existant
 
-Cette fiche d'implémentation détaille les actions nécessaires pour intégrer les fonctionnalités décrites dans le modèle de données et les guides de développement du projet Marki. Chaque action est détaillée et peut être suivie pour s'assurer que toutes les tâches sont complétées.
+## Temps Estimé
+
+- Développement: 4-6 heures
+- Tests: 2-3 heures
+- Intégration: 1-2 heures
+- Total: 7-11 heures
+
+## Responsables
+
+- Développement Frontend: Équipe Alpine.js
+- Intégration Parse: Équipe Backend
+- Tests: Équipe QA
+- Déploiement: Équipe DevOps
+
+## Notes Supplémentaires
+
+Cette implémentation suit les meilleures pratiques du projet et respecte l'architecture existante. Aucune modification majeure n'est requise côté backend Parse, ce qui minimise les risques et facilite la maintenance.
+
+La solution est conçue pour être extensible et permettre l'ajout futur de fonctionnalités comme:
+- Authentification à deux facteurs
+- Récupération de mot de passe
+- Connexion avec réseaux sociaux
+- Journalisation des tentatives de connexion
