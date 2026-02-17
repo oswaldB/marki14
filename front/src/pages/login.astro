@@ -9,20 +9,20 @@ const Alpinefile = '/js/states/loginState.js';
 <BaseLayout title={title} withAuth={withAuth} Alpinefile={Alpinefile}>
 
 <!-- Alpine.js CDN Fallback -->
-<script src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.5/dist/cdn.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.5/dist/cdn.min.js" defer is:inline></script>
 
 <!-- Alpine.js Fallback Initialization -->
 <script>
   // Fallback if local Alpine.js fails to load
   window.Alpine = window.Alpine || {
-    data: function(name, func) {
+    data: function(func: any) {
       console.warn('Alpine.js not loaded, using fallback');
       return func;
     },
     init: function() {
       console.warn('Alpine.js init not available');
     },
-    store: function(name, store) {
+    store: function(name: string, store: any) {
       console.warn('Alpine.js store not available, using fallback');
       window.alpineStores = window.alpineStores || {};
       window.alpineStores[name] = store;
@@ -30,13 +30,38 @@ const Alpinefile = '/js/states/loginState.js';
     }
   };
   
-  // Détection des erreurs de chargement des scripts
+  // Détection des erreurs de chargement des scripts avec rechargement automatique
   window.addEventListener('error', function(event) {
-    if (event.target && (event.target.src.includes('loginState.js') || event.target.src.includes('authState.js'))) {
+    if (event.target && 
+        (event.target.src.includes('loginState.js') || 
+         event.target.src.includes('authState.js') ||
+         event.target.src.includes('alpinejs'))) {
       console.error('Failed to load critical script:', event.target.src);
-      document.getElementById('scriptError').style.display = 'block';
+      
+      // Afficher le message d'erreur
+      const errorElement = document.getElementById('scriptError');
+      if (errorElement) {
+        errorElement.style.display = 'block';
+      }
+      
+      // Essayer de recharger après un délai
+      setTimeout(() => {
+        if (event.target.src.includes('loginState.js')) {
+          const script = document.createElement('script');
+          script.src = '/js/states/loginState.js';
+          script.defer = true;
+          script.onload = () => console.log('loginState.js rechargé avec succès');
+          script.onerror = () => console.error('Échec du rechargement de loginState.js');
+          document.head.appendChild(script);
+        }
+      }, 3000);
     }
   }, true);
+  
+  // Gestion des rejets de promesses non capturées
+  window.addEventListener('unhandledrejection', function(event) {
+    console.error('Rejet de promesse non capturé:', event.reason);
+  });
 </script>
 
 <div class="container mx-auto px-4 py-8 max-w-md">

@@ -2,29 +2,13 @@
 > boomerang-frontend@1.0.0 check
 > astro check
 
-18:13:04 [@astrojs/node] Enabling sessions with filesystem storage
-18:13:04 [vite] Re-optimizing dependencies because lockfile has changed
-18:13:04 [content] Syncing content
-18:13:04 [content] Synced content
-18:13:04 [types] Generated 117ms
-18:13:04 [check] Getting diagnostics for Astro files in /home/oswald/Desktop/marki14/front...
-[96msrc/layouts/BaseLayout.astro[0m:[93m226[0m:[93m35[0m - [91merror[0m[90m ts(2339): [0mProperty 'authStoreFallback' does not exist on type 'Window & typeof globalThis'.
-
-[7m226[0m       Alpine.store('auth', window.authStoreFallback);
-[7m   [0m [91m                                  ~~~~~~~~~~~~~~~~~[0m
-[96msrc/layouts/BaseLayout.astro[0m:[93m226[0m:[93m7[0m - [91merror[0m[90m ts(2304): [0mCannot find name 'Alpine'.
-
-[7m226[0m       Alpine.store('auth', window.authStoreFallback);
-[7m   [0m [91m      ~~~~~~[0m
-[96msrc/layouts/BaseLayout.astro[0m:[93m216[0m:[93m12[0m - [91merror[0m[90m ts(2339): [0mProperty 'authStoreFallback' does not exist on type 'Window & typeof globalThis'.
-
-[7m216[0m     window.authStoreFallback = {
-[7m   [0m [91m           ~~~~~~~~~~~~~~~~~[0m
+18:32:32 [@astrojs/node] Enabling sessions with filesystem storage
+18:32:32 [vite] Re-optimizing dependencies because vite config has changed
+18:32:32 [content] Syncing content
+18:32:32 [content] Synced content
+18:32:32 [types] Generated 115ms
+18:32:32 [check] Getting diagnostics for Astro files in /home/oswald/Desktop/marki14/front...
 [96msrc/layouts/BaseLayout.astro[0m:[93m217[0m:[93m37[0m - [93mwarning[0m[90m ts(6133): [0m'pathname' is declared but its value is never read.
-
-[7m217[0m       checkAuth: function(redirect, pathname) {
-[7m   [0m [93m                                    ~~~~~~~~[0m
-[96msrc/layouts/BaseLayout.astro[0m:[93m217[0m:[93m37[0m - [93mwarning[0m[90m ts(7044): [0mParameter 'pathname' implicitly has an 'any' type, but a better type may be inferred from usage.
 
 [7m217[0m       checkAuth: function(redirect, pathname) {
 [7m   [0m [93m                                    ~~~~~~~~[0m
@@ -32,51 +16,7 @@
 
 [7m217[0m       checkAuth: function(redirect, pathname) {
 [7m   [0m [93m                          ~~~~~~~~[0m
-[96msrc/layouts/BaseLayout.astro[0m:[93m217[0m:[93m27[0m - [93mwarning[0m[90m ts(7044): [0mParameter 'redirect' implicitly has an 'any' type, but a better type may be inferred from usage.
 
-[7m217[0m       checkAuth: function(redirect, pathname) {
-[7m   [0m [93m                          ~~~~~~~~[0m
-[96msrc/layouts/BaseLayout.astro[0m:[93m180[0m:[93m32[0m - [91merror[0m[90m ts(2339): [0mProperty 'loginState' does not exist on type 'Window & typeof globalThis'.
-
-[7m180[0m     window.loginState = window.loginState || function() {
-[7m   [0m [91m                               ~~~~~~~~~~[0m
-[96msrc/layouts/BaseLayout.astro[0m:[93m180[0m:[93m12[0m - [91merror[0m[90m ts(2339): [0mProperty 'loginState' does not exist on type 'Window & typeof globalThis'.
-
-[7m180[0m     window.loginState = window.loginState || function() {
-[7m   [0m [91m           ~~~~~~~~~~[0m
-
-[96msrc/pages/login.astro[0m:[93m36[0m:[93m69[0m - [91merror[0m[90m ts(2339): [0mProperty 'src' does not exist on type 'EventTarget'.
-
-[7m36[0m       console.error('Failed to load critical script:', event.target.src);
-[7m  [0m [91m                                                                    ~~~[0m
-[96msrc/pages/login.astro[0m:[93m35[0m:[93m85[0m - [91merror[0m[90m ts(2339): [0mProperty 'src' does not exist on type 'EventTarget'.
-
-[7m35[0m     if (event.target && (event.target.src.includes('loginState.js') || event.target.src.includes('authState.js'))) {
-[7m  [0m [91m                                                                                    ~~~[0m
-[96msrc/pages/login.astro[0m:[93m35[0m:[93m39[0m - [91merror[0m[90m ts(2339): [0mProperty 'src' does not exist on type 'EventTarget'.
-
-[7m35[0m     if (event.target && (event.target.src.includes('loginState.js') || event.target.src.includes('authState.js'))) {
-[7m  [0m [91m                                      ~~~[0m
-[96msrc/pages/login.astro[0m:[93m28[0m:[93m14[0m - [91merror[0m[90m ts(2339): [0mProperty 'alpineStores' does not exist on type 'Window & typeof globalThis'.
-
-[7m28[0m       window.alpineStores[name] = store;
-[7m  [0m [91m             ~~~~~~~~~~~~[0m
-[96msrc/pages/login.astro[0m:[93m27[0m:[93m36[0m - [91merror[0m[90m ts(2339): [0mProperty 'alpineStores' does not exist on type 'Window & typeof globalThis'.
-
-[7m27[0m       window.alpineStores = window.alpineStores || {};
-[7m  [0m [91m                                   ~~~~~~~~~~~~[0m
-[96msrc/pages/login.astro[0m:[93m27[0m:[93m14[0m - [91merror[0m[90m ts(2339): [0mProperty 'alpineStores' does not exist on type 'Window & typeof globalThis'.
-
-[7m27[0m       window.alpineStores = window.alpineStores || {};
-[7m  [0m [91m             ~~~~~~~~~~~~[0m
-[96msrc/pages/login.astro[0m:[93m17[0m:[93m26[0m - [91merror[0m[90m ts(2339): [0mProperty 'Alpine' does not exist on type 'Window & typeof globalThis'.
-
-[7m17[0m   window.Alpine = window.Alpine || {
-[7m  [0m [91m                         ~~~~~~[0m
-[96msrc/pages/login.astro[0m:[93m17[0m:[93m10[0m - [91merror[0m[90m ts(2339): [0mProperty 'Alpine' does not exist on type 'Window & typeof globalThis'.
-
-[7m17[0m   window.Alpine = window.Alpine || {
-[7m  [0m [91m         ~~~~~~[0m
 [96msrc/pages/login.astro[0m:[93m25[0m:[93m27[0m - [93mwarning[0m[90m ts(7044): [0mParameter 'store' implicitly has an 'any' type, but a better type may be inferred from usage.
 
 [7m25[0m     store: function(name, store) {
@@ -106,8 +46,8 @@ Add the `is:inline` directive explicitly to silence this hint.
 [7m12[0m <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.5/dist/cdn.min.js" defer></script>
 [7m  [0m [93m        ~~~[0m
 
-Result (6 files): 
-- 13 errors
+Result (7 files): 
+- 0 errors
 - 0 warnings
-- 10 hints
+- 8 hints
 

@@ -16,11 +16,20 @@ import SideMenu from '../components/SideMenu.astro';
 ---
 
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" data-with-auth={withAuth}>
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>{title} — Marki</title>
+  <!-- Set withAuth value for Alpine.js -->
+  <script is:inline>
+    // Read withAuth from data attribute and set it for Alpine.js
+    document.addEventListener('DOMContentLoaded', function() {
+      const htmlElement = document.documentElement;
+      window.withAuthValue = htmlElement.getAttribute('data-with-auth') === 'true';
+    });
+  </script>
+
   <link rel="icon" href="/favicon.ico" type="image/x-icon">
   <style is:global>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -74,7 +83,7 @@ import SideMenu from '../components/SideMenu.astro';
 </head>
 <body class="bg-gray-50">
   <!-- Vérification d'authentification avec Alpine.js -->
-  <div x-data x-init="
+  <div x-data="{ withAuth: window.withAuthValue }" x-init="
     if (withAuth) {
       const authStore = Alpine.store('auth');
       if (authStore && typeof authStore.checkAuth === 'function') {
@@ -83,12 +92,15 @@ import SideMenu from '../components/SideMenu.astro';
     }
   "></div>
   
+
+
+  
   <!-- Script d'authentification conditionnel (ancien système) -->
-  <script is:inline define:vars={{withAuth: withAuth}}>
+  <script is:inline>
     // Code d'authentification - uniquement côté client
     if (typeof window !== 'undefined') {
       // S'assurer que withAuth est défini et est un booléen
-      const authEnabled = Boolean(withAuth) && window.location.pathname !== '/login';
+      const authEnabled = Boolean(window.withAuthValue) && window.location.pathname !== '/login';
       console.log('Authentification:', authEnabled ? 'activée' : 'désactivée');
       
       if (authEnabled) {
@@ -160,7 +172,7 @@ import SideMenu from '../components/SideMenu.astro';
   </script>
   
   <!-- Vérification d'authentification via Alpine.js -->
-  <div x-data x-init="
+  <div x-data="{ withAuth: window.withAuthValue }" x-init="
     if (withAuth) {
       const authStore = Alpine.store('auth');
       if (authStore && typeof authStore.checkAuth === 'function') {
@@ -174,20 +186,43 @@ import SideMenu from '../components/SideMenu.astro';
     <script is:inline src={Alpinefile}></script>
   )}
   
-  <!-- Chargement du state de login avec fallback -->
+  <!-- Chargement du state de login avec fallback amélioré -->
   <script>
-    // Fallback pour loginState si le fichier ne charge pas
+    // Fallback amélioré pour loginState si le fichier ne charge pas
     window.loginState = window.loginState || function() {
-      console.warn('loginState not loaded, using fallback');
+      console.warn('loginState not loaded, using enhanced fallback');
       return {
         username: '',
         password: '',
         rememberMe: false,
         loading: false,
         error: null,
-        handleLogin: function() {
+        
+        async handleLogin() {
+          this.loading = true;
+          this.error = 'Login functionality is temporarily unavailable. Please try again later.';
+          this.loading = false;
           console.error('Login functionality not available - missing loginState.js');
-          alert('Login functionality is temporarily unavailable. Please try again later.');
+        },
+        
+        // Ajout de toutes les méthodes requises
+        loginToParse: async function() {
+          throw new Error('Parse login not available');
+        },
+        storeAuthToken: function(token, userId) {
+          console.warn('Auth token storage not available');
+        },
+        redirectAfterLogin: function() {
+          window.location.href = '/dashboard';
+        },
+        isSafeUrl: function(url) {
+          return url.startsWith('/');
+        },
+        getErrorMessage: function(error) {
+          return 'Login functionality is temporarily unavailable.';
+        },
+        init: function() {
+          console.log('Fallback loginState initialized');
         }
       };
     };
@@ -210,14 +245,68 @@ import SideMenu from '../components/SideMenu.astro';
     </main>
   </div>
   
-  <!-- Chargement du store auth global avec fallback -->
+  <!-- Chargement du store auth global avec fallback amélioré -->
   <script>
-    // Fallback pour authStore si le fichier ne charge pas
+    // Fallback amélioré pour authStore si le fichier ne charge pas
     window.authStoreFallback = {
-      checkAuth: function(redirect, pathname) {
-        console.warn('Auth store not loaded, using fallback');
-        // Ne pas rediriger si le store d'auth n'est pas disponible
-        return Promise.resolve(false);
+      isAuthenticated: false,
+      user: null,
+      checkingAuth: false,
+      
+      async checkAuth(requireAuth = false, currentPath = '/') {
+        console.warn('Auth store not loaded, using enhanced fallback');
+        this.checkingAuth = true;
+        
+        try {
+          // Vérification des données d'auth existentantes
+          const authData = JSON.parse(localStorage.getItem('parseAuth')) ||
+                          JSON.parse(sessionStorage.getItem('parseAuth'));
+          
+          if (authData && authData.parseToken) {
+            this.isAuthenticated = true;
+            this.user = { id: authData.userId };
+            return true;
+          }
+          
+          if (requireAuth) {
+            window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`;
+          }
+          return false;
+        } catch (error) {
+          console.error('Fallback auth check error:', error);
+          if (requireAuth) {
+            window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`;
+          }
+          return false;
+        } finally {
+          this.checkingAuth = false;
+        }
+      },
+      
+      async validateToken(token) {
+        console.warn('Token validation not available in fallback');
+        return false;
+      },
+      
+      redirectToLogin(redirectPath) {
+        window.location.href = `/login?redirect=${encodeURIComponent(redirectPath)}`;
+      },
+      
+      logout() {
+        localStorage.removeItem('parseAuth');
+        sessionStorage.removeItem('parseAuth');
+        this.isAuthenticated = false;
+        this.user = null;
+        window.location.href = '/login';
+      },
+      
+      clearAuthData() {
+        localStorage.removeItem('parseAuth');
+        sessionStorage.removeItem('parseAuth');
+      },
+      
+      init() {
+        console.log('Fallback auth store initialized');
       }
     };
     
