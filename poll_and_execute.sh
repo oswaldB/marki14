@@ -28,17 +28,19 @@ process_webhook() {
     echo "Action prête"
 
     # Création du fichier fiche-implementation-id.md
-    fiche_file="${id}-fiche-user-story.md"
-    implementation_file="${id}-ficher-implementation.md"
+    fiche_file="specs/${id}-fiche-user-story.md"
+    implementation_file="specs/${id}-ficher-implementation.md"
     echo "Création du fichier: $fiche_file"
+
     echo "$action" > "$fiche_file"
 
-    # Exécution de la commande vibe avec le fichier créé
+    Exécution de la commande vibe avec le fichier créé
     echo "Exécution de la commande: travail preparatoir"
-    vibe -p "Ton role est de créer  $implementation_file à destination des développeurs. Tu assures que les users stories que tu reçoies sont conforme à la réalité du projet. Après avoir effectué le travail preparatoire, tu crée un fichier $implementation_file dans le quel tu défins une todo liste de toutes les actions à faire dans chacun des fichiers pour développer ce use case. Tu ne codes pas. Tu nommes et tu décris les fonctions dans un format jsdoc. Important tu suis les guides et le modèle data que tu as dans data-model.md" --output streaming
+    vibe -p "Ton role est de créer  $implementation_file à destination des développeurs. Tu assures que les users stories que tu reçoies sont conforme à la réalité du projet. Tu n'ajoutes pas de uses cases. Après avoir effectué le travail preparatoire, tu crée un fichier $implementation_file dans le quel tu défins une todo liste de toutes les actions à faire dans chacun des fichiers pour développer ce use case. Tu ne codes pas. Tu nommes et tu décris les fonctions dans un format jsdoc. Important tu suis les guides et le modèle data que tu as dans data-model.md" --output streaming
     sleep 10
     vibe -p "Ton role est de vérifier que l $implementation_file à destination des développeurs respecte bien tous les précepts des guides. Si non, tu corriges." --output streaming
     sleep 10
+    cd ..
     vibe -p "Développe : $implementation_file. Après chaque développement met à jour la fiche d'implémentation " --output streaming
     sleep 10
     VIBE -p "Execute un cd front && npm run check et corrige les erreurs."

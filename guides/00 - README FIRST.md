@@ -40,6 +40,22 @@ const response = await axios.get('https://votre-serveur.parse.com/parse/classes/
 });
 ```
 
+### 8. Utilisation de Fastify
+
+**Règle** : Fastify ne doit être utilisé que si Parse REST via Axios ne peut pas répondre aux besoins du projet. Privilégiez toujours Parse REST avant d'envisager Fastify.
+
+**Justification** : Parse REST via Axios est la solution préférée pour sa simplicité et son intégration avec l'écosystème existant. Fastify doit être réservé aux cas où Parse REST ne suffit pas (par exemple, pour des fonctionnalités backend complexes ou des intégrations spécifiques).
+
+**Exemple** :
+```javascript
+// Exemple d'utilisation de Fastify uniquement si Parse REST ne peut pas gérer la requête
+fastify.get('/api/custom-endpoint', async (request, reply) => {
+  console.log('Requête reçue sur un endpoint personnalisé non gérable par Parse REST');
+  // Logique spécifique
+  return { message: 'Réponse personnalisée' };
+});
+```
+
 ### 3. Interdiction de construire des composants Astro
 
 **Règle** : Il est interdit de créer des composants Astro (`*.astro` dans `src/components/`). Utilisez uniquement des pages Astro (`*.astro` dans `src/pages/`).
