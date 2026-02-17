@@ -45,29 +45,11 @@ app.addHook('onSend', async (request, reply) => {
 // Plugin pour le support JSON
 app.register(fastifySensible)
 
-// Import and register email history routes
-import { getEmailHistory, getFieldDiff } from './routes/emailHistory.js'
-// Import FTP configuration routes
-import { getFtpConfigRoute, saveFtpConfigRoute, testFtpConnectionRoute } from './routes/ftpConfig.js'
-// Import sync configuration routes
-import syncConfigRoutes from './routes/syncConfig.js'
-
 // Route de santé
 app.get('/api/health', async (request, reply) => {
   return { status: 'healthy', timestamp: new Date().toISOString() }
 })
 
-// Email History Routes
-app.get('/api/emails/:emailId/history', getEmailHistory)
-app.get('/api/history/:historyId/diff/:field', getFieldDiff)
-
-// FTP Configuration Routes
-app.get('/api/ftp/config', getFtpConfigRoute)
-app.post('/api/ftp/config', saveFtpConfigRoute)
-app.post('/api/ftp/test-connection', testFtpConnectionRoute)
-
-// Sync Configuration Routes
-app.register(syncConfigRoutes)
 
 // Démarrage du serveur
 const start = async () => {

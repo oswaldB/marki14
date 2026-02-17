@@ -2,12 +2,7 @@
 // src/components/SideMenu.astro
 // Composant de menu latéral simplifié avec HTML statique
 
-// Import des icônes Font Awesome
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { 
-  faHome, faCog, faExclamationTriangle, faList, faUsers, faUser, 
-  faChevronDown, faListOl, faPaperPlane, faTh, faDollarSign
-} from '@fortawesome/free-solid-svg-icons';
+// Pas d'import nécessaire - Font Awesome est chargé via CDN dans BaseLayout.astro
 ---
 
 <script is:inline>
@@ -55,7 +50,7 @@ import {
         class="p-2 rounded-full hover:bg-gray-100 text-gray-600 transition-all duration-200 transform hover:scale-105"
         title="Dashboard"
       >
-        <FontAwesomeIcon icon={faHome} class="" />
+        <i class="fas fa-home"></i>
       </a>
       
       <!-- Impayés parent -->
@@ -65,7 +60,7 @@ import {
           title="Impayés"
           @click="toggleImpayes()"
         >
-          <FontAwesomeIcon icon={faExclamationTriangle} class="" />
+          <i class="fas fa-exclamation-triangle"></i>
         </button>
       </div>
       
@@ -75,7 +70,7 @@ import {
         class="p-2 rounded-full hover:bg-gray-100 text-gray-600 transition-all duration-200 transform hover:scale-105"
         title="Commissions"
       >
-        <FontAwesomeIcon icon={faDollarSign} class="" />
+        <i class="fas fa-dollar-sign"></i>
       </a>
       
       <!-- Paramètres -->
@@ -84,7 +79,7 @@ import {
         class="p-2 rounded-full hover:bg-gray-100 text-gray-600 transition-all duration-200 transform hover:scale-105"
         title="Paramètres"
       >
-        <FontAwesomeIcon icon={faCog} class="" />
+        <i class="fas fa-cog"></i>
       </a>
     </div>
   </div>
@@ -105,10 +100,10 @@ import {
               @click="toggleImpayes()"
             >
               <div class="flex items-center gap-3">
-                <FontAwesomeIcon icon={faExclamationTriangle} class="" />
+                <i class="fas fa-exclamation-triangle"></i>
                 <span class="font-medium">Impayés</span>
               </div>
-              <FontAwesomeIcon icon={faChevronDown} class="transition-transform" :class="{ 'rotate-180': isImpayesOpen }" />
+              <i class="fas fa-chevron-down transition-transform" :class="{ 'rotate-180': isImpayesOpen }"></i>
             </button>
             <ul class="ml-4 mt-1 space-y-1" x-show="isImpayesOpen" x-transition>
               <li>
@@ -116,7 +111,7 @@ import {
                   href="/impayes/list"
                   class="flex items-center gap-3 rounded-md px-3 py-2 hover:bg-gray-100 text-gray-600 transition-all duration-150 text-sm"
                 >
-                  <FontAwesomeIcon icon={faList} class="text-base" />
+                  <i class="fas fa-list text-base"></i>
                   <span class="text-sm">Vue Factures</span>
                 </a>
               </li>
@@ -125,7 +120,7 @@ import {
                   href="/impayes/"
                   class="flex items-center gap-3 rounded-md px-3 py-2 hover:bg-gray-100 text-gray-600 transition-all duration-150 text-sm"
                 >
-                  <FontAwesomeIcon icon={faUsers} class="text-base" />
+                  <i class="fas fa-users text-base"></i>
                   <span class="text-sm">Groupé par payeur</span>
                 </a>
               </li>
@@ -134,7 +129,7 @@ import {
                   href="/impayes/sequence"
                   class="flex items-center gap-3 rounded-md px-3 py-2 hover:bg-gray-100 text-gray-600 transition-all duration-150 text-sm"
                 >
-                  <FontAwesomeIcon icon={faTh} class="text-base" />
+                  <i class="fas fa-th text-base"></i>
                   <span class="text-sm">Vue Séquence</span>
                 </a>
               </li>
@@ -143,7 +138,7 @@ import {
                   href="/impayes/by-actor"
                   class="flex items-center gap-3 rounded-md px-3 py-2 hover:bg-gray-100 text-gray-600 transition-all duration-150 text-sm"
                 >
-                  <FontAwesomeIcon icon={faUser} class="text-base" />
+                  <i class="fas fa-user text-base"></i>
                   <span class="text-sm">Vue par Acteur</span>
                 </a>
               </li>
@@ -152,7 +147,7 @@ import {
                   href="/impayes/to-fix"
                   class="flex items-center gap-3 rounded-md px-3 py-2 hover:bg-gray-100 text-gray-600 transition-all duration-150 text-sm"
                 >
-                  <FontAwesomeIcon icon={faExclamationTriangle} class="text-base" />
+                  <i class="fas fa-exclamation-triangle text-base"></i>
                   <span class="text-sm">À réparer</span>
                 </a>
               </li>
@@ -166,7 +161,7 @@ import {
             href="/sequences"
             class="flex items-center gap-3 rounded-md px-3 py-2.5 hover:bg-gray-100 text-gray-600 transition-all duration-200 font-medium"
           >
-            <FontAwesomeIcon icon={faListOl} class="" />
+            <i class="fas fa-list-ol"></i>
             <span>Séquences</span>
           </a>
         </li>
@@ -176,7 +171,7 @@ import {
             href="/relances"
             class="flex items-center gap-3 rounded-md px-3 py-2.5 hover:bg-gray-100 text-gray-600 transition-all duration-200 font-medium"
           >
-            <FontAwesomeIcon icon={faPaperPlane} class="" />
+            <i class="fas fa-paper-plane"></i>
             <span>Relances</span>
           </a>
         </li>
@@ -198,7 +193,7 @@ import {
         class="flex flex-col items-center justify-center p-2 rounded-lg hover:bg-gray-100 text-gray-600 transition-all duration-200 min-w-[60px]"
         title="Dashboard"
       >
-        <FontAwesomeIcon icon={faHome} class="text-lg mb-1" />
+        <i class="fas fa-home text-lg mb-1"></i>
         <span class="text-xs font-medium">Dashboard</span>
       </a>
       
@@ -207,7 +202,7 @@ import {
         class="flex flex-col items-center justify-center p-2 rounded-lg hover:bg-gray-100 text-gray-600 transition-all duration-200 min-w-[60px]"
         title="Factures"
       >
-        <FontAwesomeIcon icon={faList} class="text-lg mb-1" />
+        <i class="fas fa-list text-lg mb-1"></i>
         <span class="text-xs font-medium">Factures</span>
       </a>
       
@@ -216,7 +211,7 @@ import {
         class="flex flex-col items-center justify-center p-2 rounded-lg hover:bg-gray-100 text-gray-600 transition-all duration-200 min-w-[60px]"
         title="Séquences"
       >
-        <FontAwesomeIcon icon={faTh} class="text-lg mb-1" />
+        <i class="fas fa-th text-lg mb-1"></i>
         <span class="text-xs font-medium">Séquences</span>
       </a>
       
@@ -225,7 +220,7 @@ import {
         class="flex flex-col items-center justify-center p-2 rounded-lg hover:bg-gray-100 text-gray-600 transition-all duration-200 min-w-[60px]"
         title="Relances"
       >
-        <FontAwesomeIcon icon={faPaperPlane} class="text-lg mb-1" />
+        <i class="fas fa-paper-plane text-lg mb-1"></i>
         <span class="text-xs font-medium">Relances</span>
       </a>
       
@@ -234,7 +229,7 @@ import {
         class="flex flex-col items-center justify-center p-2 rounded-lg hover:bg-gray-100 text-gray-600 transition-all duration-200 min-w-[60px]"
         title="Paramètres"
       >
-        <FontAwesomeIcon icon={faCog} class="text-lg mb-1" />
+        <i class="fas fa-cog text-lg mb-1"></i>
         <span class="text-xs font-medium">Paramètres</span>
       </a>
     </nav>

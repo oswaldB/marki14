@@ -3,6 +3,11 @@
 echo "🛑 Arrêt du serveur Fastify..."
 echo "==========================================="
 
+# Arrêter le processus arthuro.sh
+echo "Arrêt du processus arthuro.sh..."
+pkill -f "arthuro.sh" 2>/dev/null || true
+sleep 1
+
 # Arrêter uniquement le serveur Fastify
 echo "Arrêt du serveur Fastify..."
 pkill -f "index.js" 2>/dev/null || true

@@ -37,10 +37,10 @@ process_webhook() {
     echo "$action" > "$fiche_file"
 
     echo "Exécution de la commande: travail preparatoir"
-    vibe -p "Ton role est de créer  $implementation_file à destination des développeurs. Tu assures que les users stories que tu reçoies sont conforme à la réalité du projet. Tu n'ajoutes pas de uses cases. Après avoir effectué le travail preparatoire, tu crée un fichier $implementation_file dans le quel tu défins une todo liste de toutes les actions à faire dans chacun des fichiers pour développer ce use case. Tu ne codes pas. Tu nommes et tu décris les fonctions dans un format jsdoc. Important tu suis les guides et le modèle data que tu as dans data-model.md. **Pas de test, ni de critères de conformités conformément à la policy @politique de tests.md**" 
+    vibe -p "Ton role est de créer  $implementation_file à destination des développeurs. Tu n'ecris aucune ligne de code. Tu assures que les users stories que tu reçoies sont conforme à la réalité du projet. Tu n'ajoutes pas de uses cases. Après avoir effectué le travail preparatoire, tu crée un fichier $implementation_file dans le quel tu défins une todo liste de toutes les actions à faire dans chacun des fichiers pour développer ce use case - sans aucune ligne de code. Tu ne codes pas. Tu nommes et tu décris les fonctions dans un format jsdoc. Important tu suis les guides et le modèle data que tu as dans data-model.md. **Pas de test, ni de critères de conformités conformément à la policy @politique de tests.md**" 
     sleep 10
       echo "Exécution de la vérification"
-    vibe -p "Ton role est de vérifier que l $implementation_file à destination des développeurs respecte bien tous les précepts des guides. Si non, tu corriges." 
+    vibe -p "Ton role est de vérifier que l $implementation_file à destination des développeurs respecte bien tous les précepts des guides. Si non, tu corriges. Tu vérifies aussi si le recours à Fastify est vraiement nécessaire. Si non, tu corriges." 
     sleep 10
       echo "Exécution de la commande: développement"
     vibe -p "Développe : $implementation_file. Après chaque développement met à jour la fiche d'implémentation " 
@@ -52,9 +52,9 @@ process_webhook() {
     cd ..
     vibe -p "lit $test_astro_file. Lit les guides dsns guides/ et cree un plan de correction si besoin dans specs/fix-error.md" 
     sleep 10
-    vibe -p "execute le plan specs/fix-error.md, si absent ou vide stop."
+    vibe -p "execute le plan specs/fix-error.md. si absent ou vide, on retourne 'pas de bug'"
     rm specs/fix-error.md
-     echo "Exécution de tests console log"
+    echo "Exécution de tests console log"
     vibe -p "lit le @console error catcher.md et ensuite utilise le sur toutes les pages concernées par les modifications. lit les guides dqns guides/ et cree un plan de correcrtion dans fix-fwebconsole-error.md."
     sleep 10
     vibe -p "suit le plan de correction fix-webcobsole-error.md"

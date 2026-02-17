@@ -72,19 +72,20 @@ fastify.get('/api/custom-endpoint', async (request, reply) => {
 
 **Justification** : Les composants Astro peuvent introduire des complexités inutiles et des problèmes de maintenance. Les pages Astro sont suffisantes pour structurer l'application.
 
-### 4. Utilisation exclusive des icônes Lucide
+### 4. Utilisation exclusive des icônes Font Awesome
 
-**Règle** : Utilisez uniquement les icônes de la bibliothèque Lucide. Aucune autre bibliothèque d'icônes n'est autorisée.
+**Règle** : Utilisez uniquement les icônes de la bibliothèque Font Awesome via CDN. Aucune autre bibliothèque d'icônes (y compris Lucide) n'est autorisée.
 
-**Justification** : Lucide offre une collection cohérente et moderne d'icônes. L'utilisation d'une seule bibliothèque simplifie la maintenance et garantit une apparence uniforme.
+**Justification** : Font Awesome est déjà configuré via CDN dans le layout de base et offre une collection complète et cohérente d'icônes. L'utilisation d'une seule bibliothèque simplifie la maintenance et garantit une apparence uniforme.
 
 **Exemple** :
-```astro
-import { FontAwesomeIcon } from '@fortawesome/astro-fontawesome';
-import { faHome } from '@fortawesome/free-solid-svg-icons';
-
-<FontAwesomeIcon icon={faHome} />
+```html
+<i class="fas fa-home"></i>
+<i class="far fa-user"></i>
+<i class="fab fa-github"></i>
 ```
+
+**Interdiction spécifique** : L'utilisation de Lucide ou de toute autre bibliothèque d'icônes est strictement interdite. Utilisez uniquement Font Awesome avec les classes CSS comme décrit dans le guide [FONT_AWESOME_GUIDE.md](FONT_AWESOME_GUIDE.md).
 
 ### 5. Interdiction du CSS personnalisé
 

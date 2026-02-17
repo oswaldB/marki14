@@ -13,7 +13,7 @@ Guide des couleurs, composants et conventions de design pour l'application Marki
   - [Drawer](#drawer)
   - [Alertes](#alertes)
   - [Badges](#badges)
-  - [Icônes Lucide](#icônes-lucide)
+  - [Icônes Font Awesome](#icônes-font-awesome)
 
 ## Palettes de couleurs
 
@@ -79,15 +79,11 @@ Guide des couleurs, composants et conventions de design pour l'application Marki
 <div class="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
   <div class="flex items-start">
     <div class="flex-shrink-0 mr-4">
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#007ACE]">
-        <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-        <path d="M2 17l10 5 10-5"/>
-        <path d="M2 12l10 5 10-5"/>
-      </svg>
+      <i class="fas fa-info-circle text-[#007ACE] text-2xl"></i>
     </div>
     <div>
       <h4 class="text-lg font-medium text-gray-900 mb-2">Card avec Icône</h4>
-      <p class="text-gray-600 text-sm">Utilisation d'icônes Lucide pour enrichir le contenu.</p>
+      <p class="text-gray-600 text-sm">Utilisation d'icônes Font Awesome pour enrichir le contenu.</p>
     </div>
   </div>
 </div>
@@ -124,17 +120,10 @@ Guide des couleurs, composants et conventions de design pour l'application Marki
     </div>
     <div class="flex items-center">
       <button class="text-[#007ACE] hover:text-[#006BCE] mr-2">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 20h9"/>
-          <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
-        </svg>
+        <i class="fas fa-edit"></i>
       </button>
       <button class="text-gray-400 hover:text-gray-600">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10"/>
-          <line x1="12" y1="8" x2="12" y2="12"/>
-          <line x1="12" y1="16" x2="12" y2="16"/>
-        </svg>
+        <i class="fas fa-ellipsis-h"></i>
       </button>
     </div>
   </div>
@@ -219,16 +208,10 @@ Guide des couleurs, composants et conventions de design pour l'application Marki
           </td>
           <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
             <button class="text-[#007ACE] hover:text-[#006BCE] mr-2">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 20h9"/>
-                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
-              </svg>
+              <i class="fas fa-edit"></i>
             </button>
             <button class="text-red-500 hover:text-red-600">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="3 6 5 6 21 6"/>
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-              </svg>
+              <i class="fas fa-trash"></i>
             </button>
           </td>
         </tr>
@@ -253,9 +236,7 @@ Guide des couleurs, composants et conventions de design pour l'application Marki
         <div class="absolute top-0 left-0 -ml-8 pt-4 pr-2 flex sm:-ml-10 sm:pr-4">
           <button @click="openDrawer = false" class="rounded-md text-gray-300 hover:text-white focus:outline-none focus:ring-2 focus:ring-white">
             <span class="sr-only">Fermer le panel</span>
-            <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <i class="fas fa-times text-xl"></i>
           </button>
         </div>
 
@@ -300,9 +281,7 @@ Guide des couleurs, composants et conventions de design pour l'application Marki
 <div class="bg-[#00CF9B] bg-opacity-20 border border-[#00CF9B] rounded-md p-4">
   <div class="flex">
     <div class="flex-shrink-0">
-      <svg class="h-5 w-5 text-[#00CF9B]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-      </svg>
+      <i class="fas fa-check-circle text-[#00CF9B] text-lg"></i>
     </div>
     <div class="ml-3">
       <p class="text-sm font-medium text-[#00CF9B]">Succès</p>
@@ -317,9 +296,7 @@ Guide des couleurs, composants et conventions de design pour l'application Marki
 <div class="bg-red-50 border border-red-200 rounded-md p-4">
   <div class="flex">
     <div class="flex-shrink-0">
-      <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-      </svg>
+      <i class="fas fa-exclamation-circle text-red-400 text-lg"></i>
     </div>
     <div class="ml-3">
       <p class="text-sm font-medium text-red-800">Erreur</p>
@@ -340,18 +317,20 @@ Guide des couleurs, composants et conventions de design pour l'application Marki
 <span class="bg-gray-500 text-white text-xs font-medium px-3 py-1 rounded-full">Neutral</span>
 ```
 
-### Icônes Lucide
+### Icônes Font Awesome
 
-L'application utilise la bibliothèque d'icônes Lucide pour une interface cohérente et moderne.
+L'application utilise exclusivement la bibliothèque d'icônes Font Awesome via CDN pour une interface cohérente et moderne. Consultez le guide [FONT_AWESOME_GUIDE.md](FONT_AWESOME_GUIDE.md) pour plus de détails sur l'utilisation.
 
 Exemples d'icônes couramment utilisées:
-- Home
-- Edit
-- Delete
-- More (menu)
-- Message
-- User
-- Location
-- CheckCircle2
+```html
+<i class="fas fa-home text-[#007ACE]"></i> <!-- Home -->
+<i class="fas fa-edit text-[#007ACE]"></i> <!-- Edit -->
+<i class="fas fa-trash text-[#007ACE]"></i> <!-- Delete -->
+<i class="fas fa-ellipsis-h text-[#007ACE]"></i> <!-- More (menu) -->
+<i class="fas fa-envelope text-[#007ACE]"></i> <!-- Message -->
+<i class="fas fa-user text-[#007ACE]"></i> <!-- User -->
+<i class="fas fa-map-marker-alt text-[#007ACE]"></i> <!-- Location -->
+<i class="fas fa-check-circle text-[#00CF9B]"></i> <!-- CheckCircle -->
+```
 
-Les icônes sont utilisées avec la couleur principale (#007ACE) pour une intégration harmonieuse avec le design global.
+**Règle importante** : L'utilisation de Lucide ou de toute autre bibliothèque d'icônes est strictement interdite. Utilisez uniquement Font Awesome avec les classes CSS comme montré ci-dessus.
