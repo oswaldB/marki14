@@ -46,9 +46,11 @@ process_webhook() {
     vibe -p "Développe : $implementation_file. Après chaque développement met à jour la fiche d'implémentation " 
     sleep 10
     echo "test astro"
-    vibe -p "Execute un cd front && npm run check et corrige les erreurs.S'il y a plusieurs package.json trouve le bon"
+    cd front
+    vibe -p "Execute un  "npm run check" et corrige les erreurs.S'il y a plusieurs package.json trouve le bon"
     sleep 10
-      echo "Exécution de tests console log"
+    cd ..  
+    echo "Exécution de tests console log"
     vibe -p "lit le @console error catcher.md et ensuite utilise le sur toutes les pages concernées par les modifications. Corrige les erreurs jusqu'à ne plus en avoir."
     sleep 10
     vibe -p "commit"
