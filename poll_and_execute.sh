@@ -30,24 +30,27 @@ process_webhook() {
     # Création du fichier fiche-implementation-id.md
     fiche_file="specs/${id}-fiche-user-story.md"
     implementation_file="specs/${id}-ficher-implementation.md"
+    test_astro_file="specs/astro-tests.txt"
+    
     echo "Création du fichier: $fiche_file"
 
     echo "$action" > "$fiche_file"
 
-    Exécution de la commande vibe avec le fichier créé
     echo "Exécution de la commande: travail preparatoir"
-    vibe -p "Ton role est de créer  $implementation_file à destination des développeurs. Tu assures que les users stories que tu reçoies sont conforme à la réalité du projet. Tu n'ajoutes pas de uses cases. Après avoir effectué le travail preparatoire, tu crée un fichier $implementation_file dans le quel tu défins une todo liste de toutes les actions à faire dans chacun des fichiers pour développer ce use case. Tu ne codes pas. Tu nommes et tu décris les fonctions dans un format jsdoc. Important tu suis les guides et le modèle data que tu as dans data-model.md. Pas de tests conformément à la policy @politique de tests.md"
+    vibe -p "Ton role est de créer  $implementation_file à destination des développeurs. Tu assures que les users stories que tu reçoies sont conforme à la réalité du projet. Tu n'ajoutes pas de uses cases. Après avoir effectué le travail preparatoire, tu crée un fichier $implementation_file dans le quel tu défins une todo liste de toutes les actions à faire dans chacun des fichiers pour développer ce use case. Tu ne codes pas. Tu nommes et tu décris les fonctions dans un format jsdoc. Important tu suis les guides et le modèle data que tu as dans data-model.md. **Pas de test, ni de critères de conformités conformément à la policy @politique de tests.md**" 
     sleep 10
       echo "Exécution de la vérification"
     vibe -p "Ton role est de vérifier que l $implementation_file à destination des développeurs respecte bien tous les précepts des guides. Si non, tu corriges." 
     sleep 10
       echo "Exécution de la commande: développement"
-    cd ..
     vibe -p "Développe : $implementation_file. Après chaque développement met à jour la fiche d'implémentation " 
     sleep 10
     echo "test astro"
     cd front
-    vibe -p "Execute un  "npm run check" et corrige les erreurs.S'il y a plusieurs package.json trouve le bon"
+    npm run check > "../$test_astro_file"
+    sleep 10
+    cd ..
+    vibe -p "lit $test_astro_file et corrige les erreurs." 
     sleep 10
     cd ..  
     echo "Exécution de tests console log"
