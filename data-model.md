@@ -47,6 +47,12 @@
 ```
 
 
+# FtpConfig
+
+```json
+{"results":[{"className":"FtpConfig","fields":{"objectId":{"type":"String"},"createdAt":{"type":"Date"},"updatedAt":{"type":"Date"},"ACL":{"type":"ACL"},"host":{"type":"String"},"port":{"type":"Number"},"username":{"type":"String"},"password":{"type":"String"},"rootPath":{"type":"String"},"isActive":{"type":"Boolean","defaultValue":true}},"classLevelPermissions":{"ACL":{"*":{"read":true,"write":true}},"find":{"*":true},"count":{"*":true},"get":{"*":true},"create":{"*":true},"update":{"*":true},"delete":{"*":true},"addField":{"*":true},"protectedFields":{"*":[]}},"indexes":{"_id_":{"_id":1}}}]}
+```
+
 # Relances
 
 ```json

@@ -34,7 +34,7 @@ process_webhook() {
 
     # Exécution de la commande vibe avec le fichier créé
     echo "Exécution de la commande: vibe -p $fiche_file"
-    vibe -p "$fiche_file" --output streaming
+    vibe -p "Développe : $fiche_file" --output streaming
     sleep 10
     vibe -p "commit"
     
