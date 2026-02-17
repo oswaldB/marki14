@@ -45,6 +45,12 @@ app.addHook('onSend', async (request, reply) => {
 // Plugin pour le support JSON
 app.register(fastifySensible)
 
+// Importer les routes d'authentification
+import authRoutes from './routes/auth.js'
+
+// Enregistrer les routes d'authentification
+app.register(authRoutes)
+
 // Route de santé
 app.get('/api/health', async (request, reply) => {
   return { status: 'healthy', timestamp: new Date().toISOString() }

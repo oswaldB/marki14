@@ -78,7 +78,7 @@ import SideMenu from '../components/SideMenu.astro';
     // Code d'authentification - uniquement côté client
     if (typeof window !== 'undefined') {
       // S'assurer que withAuth est défini et est un booléen
-      const authEnabled = Boolean(withAuth);
+      const authEnabled = Boolean(withAuth) && window.location.pathname !== '/login';
       console.log('Authentification:', authEnabled ? 'activée' : 'désactivée');
       
       if (authEnabled) {

@@ -11,6 +11,8 @@ A Node.js script that uses Puppeteer to analyze web pages and capture console er
 - ✅ Headless and headful browser modes
 - ✅ Structured output with summary statistics
 - ✅ Can be used as CLI tool or imported as module
+- ✅ **Scan all Astro pages in your project automatically**
+- ✅ **Batch testing with comprehensive summary reports**
 
 ## Installation
 
@@ -52,6 +54,30 @@ node console_error_catcher.js https://example.com --no-logs
 # Show help
 node console_error_catcher.js --help
 ```
+
+### Scan all Astro pages (NEW!)
+
+The script can now automatically find and test all Astro pages in your `front/src/pages/` directory:
+
+```bash
+# Scan all pages with default settings
+node console_error_catcher.js --scan
+
+# Scan all pages in non-headless mode
+node console_error_catcher.js --scan --headless=false
+
+# Scan all pages with custom timeout
+node console_error_catcher.js --scan --timeout=15000
+
+# Scan all pages without capturing warnings
+node console_error_catcher.js --scan --no-warnings
+```
+
+This will:
+1. Find all `.astro` files in `front/src/pages/` (excluding `index.astro`)
+2. Test each page at `https://dev.markidiags.com/page-name`
+3. Provide detailed analysis for each page
+4. Generate a comprehensive summary report
 
 ### Programmatic usage
 
@@ -98,6 +124,41 @@ Each issue includes:
 - Location (URL, line number, column number when available)
 - Stack trace for page errors
 
+
+💥 Page Errors (1):
+
+1. ReferenceError: undefinedVariable is not defined
+   Stack: ReferenceError: undefinedVariable is not defined at https://broken-website.com/script.js:42:13
+
+❌ Console Errors (3):
+
+1. [error] Uncaught TypeError: Cannot read property 'map' of undefined
+   Location: https://broken-website.com/app.js:123:25
+
+2. [error] Failed to load resource: the server responded with a status of 404 (Not Found)
+   Location: https://broken-website.com/missing-file.js:1:1
+
+3. [error] WebSocket connection failed: Error during WebSocket handshake
+   Location: https://broken-website.com/socket.js:8:15
+
+⚠️  Console Warnings (2):
+
+1. [warning] Deprecated API usage: navigator.appVersion is deprecated
+   Location: https://broken-website.com/legacy.js:5:10
+
+2. [warning] Mixed Content: The page at 'https://broken-website.com' was loaded over HTTPS, but requested an insecure resource
+   Location: https://broken-website.com/main.js:18:5
+
+==================================================
+📊 Summary: Found 6 issues total
+   - Page Errors: 1
+   - Failed Requests: 0
+   - Console Errors: 3
+   - Console Warnings: 2
+   - Console Logs: 0
+🔚 Browser closed
+```
+=======
 ## Examples
 
 ### Example 1: Analyzing a page with errors
@@ -111,6 +172,125 @@ $ node console_error_catcher.js https://broken-website.com
 ✅ Page loaded successfully
 
 📋 Console Analysis Results:
+==================================================
+
+💥 Page Errors (1):
+
+1. ReferenceError: undefinedVariable is not defined
+   Stack: ReferenceError: undefinedVariable is not defined at https://broken-website.com/script.js:42:13
+
+❌ Console Errors (3):
+
+1. [error] Uncaught TypeError: Cannot read property 'map' of undefined
+   Location: https://broken-website.com/app.js:123:25
+
+2. [error] Failed to load resource: the server responded with a status of 404 (Not Found)
+   Location: https://broken-website.com/missing-file.js:1:1
+
+3. [error] WebSocket connection failed: Error during WebSocket handshake
+   Location: https://broken-website.com/socket.js:8:15
+
+⚠️  Console Warnings (2):
+
+1. [warning] Deprecated API usage: navigator.appVersion is deprecated
+   Location: https://broken-website.com/legacy.js:5:10
+
+2. [warning] Mixed Content: The page at 'https://broken-website.com' was loaded over HTTPS, but requested an insecure resource
+   Location: https://broken-website.com/main.js:11:5
+
+==================================================
+📊 Summary: Found 6 issues total
+   - Page Errors: 1
+   - Failed Requests: 0
+   - Console Errors: 3
+   - Console Warnings: 2
+   - Console Logs: 0
+🔚 Browser closed
+```
+
+### Example 2: Scanning all Astro pages (NEW!)
+
+```bash
+$ node console_error_catcher.js --scan
+
+📋 Found 3 Astro pages to test:
+   - dashboard
+   - login
+   - styleguide
+
+============================================================
+🧪 Testing page: dashboard
+============================================================
+🔍 Analyzing console output for: https://dev.markidiags.com/dashboard
+📊 Configuration: { headless: true, timeout: '30000ms', waitUntil: 'networkidle2', captureErrors: true, captureWarnings: true, captureLogs: false }
+🚀 Launching browser...
+✅ Browser launched successfully
+🌐 Navigating to page...
+✅ Page loaded successfully
+
+📋 Console Analysis Results for dashboard:
+==================================================
+
+⚠️  Console Warnings (1):
+
+1. [warning] Deprecated API: Using old authentication method
+   Location: https://dev.markidiags.com/dashboard.js:42:15
+
+==================================================
+📊 Summary for dashboard: Found 1 issue total
+   - Page Errors: 0
+   - Failed Requests: 0
+   - Console Errors: 0
+   - Console Warnings: 1
+   - Console Logs: 0
+
+============================================================
+🧪 Testing page: login
+============================================================
+🔍 Analyzing console output for: https://dev.markidiags.com/login
+✅ Page loaded successfully
+
+📋 Console Analysis Results for login:
+==================================================
+
+✅ No issues found!
+
+==================================================
+📊 Summary for login: Found 0 issues total
+
+============================================================
+🧪 Testing page: styleguide
+============================================================
+🔍 Analyzing console output for: https://dev.markidiags.com/styleguide
+✅ Page loaded successfully
+
+📋 Console Analysis Results for styleguide:
+==================================================
+
+❌ Console Errors (2):
+
+1. [error] Failed to load font: https://fonts.example.com/missing-font.woff
+   Location: https://dev.markidiags.com/styleguide.css:18:3
+
+2. [error] CSS parsing error: Unexpected token
+   Location: https://dev.markidiags.com/custom.css:22:1
+
+==================================================
+📊 Summary for styleguide: Found 2 issues total
+
+============================================================
+📊 FINAL SUMMARY
+============================================================
+⚠️  dashboard: 1 issues found
+✅ login: No issues found
+❌ styleguide: 2 issues found
+
+============================================================
+📈 Overall Results: 2/3 pages with issues
+🔢 Total issues across all pages: 3
+============================================================
+🔚 All tests completed
+```
 ==================================================
 
 💥 Page Errors (1):
@@ -215,4 +395,18 @@ Created with ❤️ by Mistral Vibe
 
 ## Version
 
-1.0.0
+2.0.0
+
+### Changelog
+
+**2.0.0** - Added Astro pages scanning functionality
+- ✨ New `--scan` flag to automatically test all Astro pages
+- 🔍 Auto-detects `.astro` files in `front/src/pages/` directory
+- 📊 Comprehensive batch testing with summary reports
+- 🎯 Excludes `index.astro` (root page) from scanning
+- 🔧 Maintains backward compatibility with single URL mode
+
+**1.0.0** - Initial release
+- Basic console error capturing
+- Single URL analysis
+- Configurable options

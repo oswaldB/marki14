@@ -55,7 +55,7 @@ process_webhook() {
     vibe -p "execute le plan specs/fix-error.md. si absent ou vide, on retourne 'pas de bug'"
     rm specs/fix-error.md
     echo "Exécution de tests console log"
-    vibe -p "lit le @console error catcher.md et ensuite utilise le sur toutes les pages concernées par les modifications. lit les guides dqns guides/ et cree un plan de correcrtion dans fix-fwebconsole-error.md."
+    vibe -p "lit le @console error catcher.md et ensuite utilise le sur toutes les pages concernées en utilisant le --scan. lit les guides dans guides/ et cree un plan de correcrtion dans fix-fwebconsole-error.md."
     sleep 10
     vibe -p "suit le plan de correction fix-webcobsole-error.md"
     sleep 10

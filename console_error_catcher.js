@@ -5,9 +5,13 @@
  * 
  * This script navigates to a given URL and captures all console errors,
  * warnings, and other console messages, then displays them in a structured format.
+ * 
+ * Can also scan all pages in front/src/pages/ directory and test them.
  */
 
 const puppeteer = require('puppeteer');
+const fs = require('fs');
+const path = require('path');
 
 /**
  * Main function to capture console errors from a webpage
@@ -242,30 +246,135 @@ process.on('unhandledRejection', (reason) => {
     process.exit(1);
 });
 
+/**
+ * Find all Astro pages in the front/src/pages directory
+ * @returns {Array} Array of page names without .astro extension
+ */
+function findAstroPages() {
+    const pagesDir = path.join(__dirname, 'front', 'src', 'pages');
+    
+    try {
+        if (!fs.existsSync(pagesDir)) {
+            console.error(`❌ Pages directory not found: ${pagesDir}`);
+            return [];
+        }
+        
+        const files = fs.readdirSync(pagesDir);
+        const astroPages = files
+            .filter(file => file.endsWith('.astro'))
+            .map(file => file.replace('.astro', ''))
+            .filter(page => page !== 'index'); // Skip index page as it's the root
+            
+        return astroPages;
+    } catch (error) {
+        console.error(`❌ Error reading pages directory: ${error.message}`);
+        return [];
+    }
+}
+
+/**
+ * Test all Astro pages by constructing URLs and running console error analysis
+ * @param {Object} options - Configuration options
+ */
+async function testAllPages(options = {}) {
+    const pages = findAstroPages();
+    
+    if (pages.length === 0) {
+        console.error('❌ No Astro pages found to test');
+        return;
+    }
+    
+    console.log(`📋 Found ${pages.length} Astro pages to test:`);
+    pages.forEach(page => console.log(`   - ${page}`));
+    
+    const baseUrl = 'https://dev.markidiags.com';
+    const allResults = [];
+    
+    for (const page of pages) {
+        console.log('\n' + '='.repeat(60));
+        console.log(`🧪 Testing page: ${page}`);
+        console.log('='.repeat(60));
+        
+        const url = `${baseUrl}/${page}`;
+        const result = await captureConsoleErrors(url, options);
+        
+        // Store results with page name
+        allResults.push({
+            page,
+            url,
+            result
+        });
+    }
+    
+    // Generate summary
+    console.log('\n' + '='.repeat(60));
+    console.log('📊 FINAL SUMMARY');
+    console.log('='.repeat(60));
+    
+    let totalIssues = 0;
+    let pagesWithIssues = 0;
+    
+    allResults.forEach(({ page, result }) => {
+        if (result.error) {
+            console.log(`❌ ${page}: Analysis failed - ${result.error}`);
+            pagesWithIssues++;
+            return;
+        }
+        
+        const issues = (result.pageErrors?.length || 0) + 
+                      (result.failedRequests?.length || 0) + 
+                      (result.consoleMessages?.errors?.length || 0) + 
+                      (result.consoleMessages?.warnings?.length || 0);
+        
+        totalIssues += issues;
+        
+        if (issues > 0) {
+            console.log(`⚠️  ${page}: ${issues} issues found`);
+            pagesWithIssues++;
+        } else {
+            console.log(`✅ ${page}: No issues found`);
+        }
+    });
+    
+    console.log('\n' + '='.repeat(60));
+    console.log(`📈 Overall Results: ${pagesWithIssues}/${pages.length} pages with issues`);
+    console.log(`🔢 Total issues across all pages: ${totalIssues}`);
+    console.log('='.repeat(60));
+    
+    return allResults;
+}
+
 // Command line interface
 if (require.main === module) {
     const args = process.argv.slice(2);
     
     if (args.length === 0) {
         console.log('Usage: node console_error_catcher.js <url> [options]');
+        console.log('       node console_error_catcher.js --scan [options]');
         console.log('');
         console.log('Options:');
-        console.log('  --headless=false    Run browser in non-headless mode');
-        console.log('  --timeout=5000      Set navigation timeout in ms');
-        console.log('  --no-warnings       Disable warning capture');
-        console.log('  --no-logs          Disable log capture');
-        console.log('  --help              Show this help message');
+        console.log('  <url>                URL to analyze');
+        console.log('  --scan               Scan all Astro pages in front/src/pages/');
+        console.log('  --headless=false     Run browser in non-headless mode');
+        console.log('  --timeout=5000       Set navigation timeout in ms');
+        console.log('  --no-warnings        Disable warning capture');
+        console.log('  --no-logs           Disable log capture');
+        console.log('  --help               Show this help message');
         process.exit(1);
     }
 
-    const url = args[0];
+    // Check if --scan flag is present
+    const scanMode = args.includes('--scan');
     const options = {};
 
     // Parse command line options
-    for (let i = 1; i < args.length; i++) {
+    for (let i = 0; i < args.length; i++) {
         const arg = args[i];
         
-        if (arg.startsWith('--headless=')) {
+        if (arg === '--scan') {
+            // Skip this arg, already handled
+            continue;
+        } else if (arg.startsWith('--headless=')) {
             options.headless = arg.split('=')[1] !== 'false';
         } else if (arg.startsWith('--timeout=')) {
             options.timeout = parseInt(arg.split('=')[1]);
@@ -275,32 +384,58 @@ if (require.main === module) {
             options.captureLogs = false;
         } else if (arg === '--help') {
             console.log('Usage: node console_error_catcher.js <url> [options]');
+            console.log('       node console_error_catcher.js --scan [options]');
             console.log('');
             console.log('Options:');
-            console.log('  --headless=false    Run browser in non-headless mode');
-            console.log('  --timeout=5000      Set navigation timeout in ms');
-            console.log('  --no-warnings       Disable warning capture');
-            console.log('  --no-logs          Disable log capture');
-            console.log('  --help              Show this help message');
+            console.log('  <url>                URL to analyze');
+            console.log('  --scan               Scan all Astro pages in front/src/pages/');
+            console.log('  --headless=false     Run browser in non-headless mode');
+            console.log('  --timeout=5000       Set navigation timeout in ms');
+            console.log('  --no-warnings        Disable warning capture');
+            console.log('  --no-logs           Disable log capture');
+            console.log('  --help               Show this help message');
             process.exit(0);
+        } else if (!arg.startsWith('--')) {
+            // This should be the URL
+            if (scanMode) {
+                console.error('❌ Cannot specify URL when using --scan mode');
+                process.exit(1);
+            }
         }
     }
 
-    // Start the analysis
-    captureConsoleErrors(url, options).then(result => {
-        // You could save results to a file here if needed
-        // fs.writeFileSync('console_analysis.json', JSON.stringify(result, null, 2));
+    if (scanMode) {
+        // Test all pages
+        testAllPages(options).then(() => {
+            setTimeout(() => {
+                process.exit(0);
+            }, 1000);
+        }).catch(error => {
+            console.error('Error in page scanning:', error);
+            setTimeout(() => {
+                process.exit(1);
+            }, 1000);
+        });
+    } else {
+        // Single URL mode
+        const url = args[0];
         
-        // Give a moment for proper cleanup before exiting
-        setTimeout(() => {
-            process.exit(0);
-        }, 1000);
-    }).catch(error => {
-        console.error('Error in analysis:', error);
-        setTimeout(() => {
-            process.exit(1);
-        }, 1000);
-    });
+        // Start the analysis
+        captureConsoleErrors(url, options).then(result => {
+            // You could save results to a file here if needed
+            // fs.writeFileSync('console_analysis.json', JSON.stringify(result, null, 2));
+            
+            // Give a moment for proper cleanup before exiting
+            setTimeout(() => {
+                process.exit(0);
+            }, 1000);
+        }).catch(error => {
+            console.error('Error in analysis:', error);
+            setTimeout(() => {
+                process.exit(1);
+            }, 1000);
+        });
+    }
 }
 
 module.exports = captureConsoleErrors;
