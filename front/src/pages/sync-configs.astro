@@ -1,0 +1,445 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro'
+
+const pageTitle = 'Gestion des Configurations de Synchronisation'
+const pageDescription = 'Configurer et gérer les synchronisations entre bases de données externes et Parse Server'
+---
+
+<BaseLayout
+  title={pageTitle}
+  description={pageDescription}
+  withAuth={true}
+  Alpinefile="/js/pages/syncConfigsState.js"
+>
+  <div class="container mx-auto px-4 py-8" x-data="syncConfigsState()" x-init="init()">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900">{pageTitle}</h1>
+        <p class="text-gray-600 mt-1">{pageDescription}</p>
+      </div>
+      <button
+        class="bg-[#007ACE] text-white px-4 py-2 rounded-md hover:bg-[#006BCE] transition-colors flex items-center"
+        @click="openCreateModal()"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+        </svg>
+        Nouvelle Configuration
+      </button>
+    </div>
+
+    <!-- Filtres -->
+    <div class="flex space-x-4 mb-6">
+      <button
+        class="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+        :class="{ 'bg-[#007ACE] text-white border-[#007ACE]': !activeTab || activeTab === 'configs' }"
+        @click="loadConfigs(); activeTab = 'configs'"
+      >
+        Toutes
+      </button>
+      <button
+        class="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+        :class="{ 'bg-[#007ACE] text-white border-[#007ACE]': activeTab === 'active' }"
+        @click="loadConfigs('active'); activeTab = 'active'"
+      >
+        Actives
+      </button>
+      <button
+        class="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+        :class="{ 'bg-[#007ACE] text-white border-[#007ACE]': activeTab === 'auto' }"
+        @click="loadConfigs('auto'); activeTab = 'auto'"
+      >
+        Automatiques
+      </button>
+    </div>
+
+    <!-- Indicateur de chargement -->
+    <template x-if="isLoading">
+      <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-8 text-center">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#007ACE] mx-auto mb-4"></div>
+        <p class="text-gray-600">Chargement en cours...</p>
+      </div>
+    </template>
+
+    <!-- Tableau des configurations -->
+    <template x-if="!isLoading">
+      <div class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nom</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Base de données</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fréquence</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+              <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <template x-for="config in configs" :key="config.configId">
+              <tr>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900" x-text="config.name"></td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="config.dbConfig.database"></td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="config.frequency"></td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span
+                    class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
+                    :class="config.isActive ? 'bg-[#00CF9B] text-white' : 'bg-gray-200 text-gray-800'"
+                  >
+                    <span x-text="config.isActive ? 'Actif' : 'Désactivé'"></span>
+                  </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span
+                    class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
+                    :class="config.isAuto ? 'bg-[#007ACE] text-white' : 'bg-gray-200 text-gray-800'"
+                  >
+                    <span x-text="config.isAuto ? 'Auto' : 'Manuel'"></span>
+                  </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <div class="flex items-center justify-end space-x-3">
+                    <!-- Bouton Test -->
+                    <button
+                      class="text-[#007ACE] hover:text-[#006BCE] tooltip"
+                      @click="openTestModal(config)"
+                      title="Tester"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                      </svg>
+                    </button>
+                    
+                    <!-- Bouton Exécuter -->
+                    <button
+                      class="text-[#00CF9B] hover:text-[#00B886] tooltip"
+                      @click="runSync(config.configId)"
+                      title="Exécuter maintenant"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                      </svg>
+                    </button>
+                    
+                    <!-- Bouton Éditer -->
+                    <button
+                      class="text-[#007ACE] hover:text-[#006BCE] tooltip"
+                      @click="openEditModal(config)"
+                      title="Éditer"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 20h9"/>
+                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                      </svg>
+                    </button>
+                    
+                    <!-- Bouton Supprimer -->
+                    <button
+                      class="text-red-500 hover:text-red-700 tooltip"
+                      @click="deleteConfig(config.configId)"
+                      title="Supprimer"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                      </svg>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </template>
+            
+            <!-- Message si aucune configuration -->
+            <template x-if="configs.length === 0">
+              <tr>
+                <td colspan="6" class="px-6 py-8 text-center text-gray-500">
+                  <div class="flex flex-col items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <p class="text-gray-600">Aucune configuration de synchronisation trouvée</p>
+                    <p class="text-sm text-gray-500 mt-1">Cliquez sur "Nouvelle Configuration" pour en créer une</p>
+                  </div>
+                </td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
+    </template>
+
+    <!-- Modal de création/édition -->
+    <template x-if="showModal">
+      <div class="fixed inset-0 overflow-hidden z-50">
+        <div class="absolute inset-0 overflow-hidden">
+          <!-- Overlay -->
+          <div class="absolute inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+          
+          <!-- Modal content -->
+          <div class="fixed inset-y-0 right-0 pl-10 max-w-full flex">
+            <div class="relative w-screen max-w-2xl">
+              <!-- Close button -->
+              <div class="absolute top-0 left-0 -ml-8 pt-4 pr-2 flex sm:-ml-10 sm:pr-4">
+                <button @click="closeModal()" class="rounded-md text-gray-300 hover:text-white focus:outline-none focus:ring-2 focus:ring-white">
+                  <span class="sr-only">Fermer</span>
+                  <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              
+              <!-- Modal body -->
+              <div class="h-full flex flex-col py-6 bg-white shadow-xl overflow-y-scroll">
+                <div class="px-4 sm:px-6">
+                  <h2 class="text-lg font-medium text-gray-900">
+                    <span x-text="modalType === 'create' ? 'Nouvelle Configuration' : 'Éditer Configuration'"></span>
+                  </h2>
+                </div>
+                
+                <div class="mt-6 relative flex-1 px-4 sm:px-6">
+                  <form class="space-y-6" @submit.prevent="saveConfig()">
+                    <!-- Informations générales -->
+                    <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                      <div class="sm:col-span-6">
+                        <label for="name" class="block text-sm font-medium text-gray-700">Nom</label>
+                        <input type="text" id="name" x-model="currentConfig.name" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[#007ACE] focus:border-[#007ACE]">
+                      </div>
+                      
+                      <div class="sm:col-span-6">
+                        <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
+                        <textarea id="description" x-model="currentConfig.description" rows="3" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[#007ACE] focus:border-[#007ACE]"></textarea>
+                      </div>
+                      
+                      <div class="sm:col-span-3">
+                        <label class="block text-sm font-medium text-gray-700">Statut</label>
+                        <select x-model="currentConfig.isActive" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[#007ACE] focus:border-[#007ACE]">
+                          <option :value="true">Actif</option>
+                          <option :value="false">Désactivé</option>
+                        </select>
+                      </div>
+                      
+                      <div class="sm:col-span-3">
+                        <label class="block text-sm font-medium text-gray-700">Type</label>
+                        <select x-model="currentConfig.isAuto" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[#007ACE] focus:border-[#007ACE]">
+                          <option :value="true">Automatique</option>
+                          <option :value="false">Manuel</option>
+                        </select>
+                      </div>
+                      
+                      <div class="sm:col-span-3">
+                        <label class="block text-sm font-medium text-gray-700">Fréquence</label>
+                        <select x-model="currentConfig.frequency" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[#007ACE] focus:border-[#007ACE]">
+                          <option value="Quotidienne">Quotidienne</option>
+                          <option value="Hebdo">Hebdomadaire</option>
+                          <option value="Mensuelle">Mensuelle</option>
+                          <option value="Manuel">Manuel</option>
+                        </select>
+                      </div>
+                    </div>
+                    
+                    <!-- Configuration Base de Données -->
+                    <div class="mt-8">
+                      <h3 class="text-lg font-medium text-gray-900">Configuration Base de Données</h3>
+                      <div class="mt-4 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                        <div class="sm:col-span-3">
+                          <label for="host" class="block text-sm font-medium text-gray-700">Hôte</label>
+                          <input type="text" id="host" x-model="currentConfig.dbConfig.host" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[#007ACE] focus:border-[#007ACE]">
+                        </div>
+                        
+                        <div class="sm:col-span-3">
+                          <label for="database" class="block text-sm font-medium text-gray-700">Base de données</label>
+                          <input type="text" id="database" x-model="currentConfig.dbConfig.database" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[#007ACE] focus:border-[#007ACE]">
+                        </div>
+                        
+                        <div class="sm:col-span-3">
+                          <label for="dbUser" class="block text-sm font-medium text-gray-700">Utilisateur</label>
+                          <input type="text" id="dbUser" x-model="currentConfig.dbConfig.user" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[#007ACE] focus:border-[#007ACE]">
+                        </div>
+                        
+                        <div class="sm:col-span-3">
+                          <label for="dbPassword" class="block text-sm font-medium text-gray-700">Mot de passe</label>
+                          <input type="password" id="dbPassword" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[#007ACE] focus:border-[#007ACE]">
+                        </div>
+                        
+                        <div class="sm:col-span-6">
+                          <label for="query" class="block text-sm font-medium text-gray-700">Requête SQL</label>
+                          <textarea id="query" x-model="currentConfig.dbConfig.query" rows="4" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[#007ACE] focus:border-[#007ACE]"></textarea>
+                          <p class="mt-2 text-sm text-gray-500">Utilisez SELECT pour les requêtes de synchronisation. Exemple: SELECT * FROM clients WHERE status = 'active'</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <!-- Configuration Parse -->
+                    <div class="mt-8">
+                      <h3 class="text-lg font-medium text-gray-900">Configuration Parse</h3>
+                      <div class="mt-4 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                        <div class="sm:col-span-3">
+                          <label class="block text-sm font-medium text-gray-700">Classe cible</label>
+                          <select x-model="currentConfig.parseConfig.targetClass" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[#007ACE] focus:border-[#007ACE]">
+                            <option value="Impayes">Impayes</option>
+                            <option value="Relances">Relances</option>
+                            <option value="Clients">Clients</option>
+                            <option value="Factures">Factures</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <!-- Boutons -->
+                    <div class="flex justify-end space-x-4 mt-8">
+                      <button type="button" @click="closeModal()" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#007ACE]">
+                        Annuler
+                      </button>
+                      <button type="submit" class="bg-[#007ACE] text-white py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium hover:bg-[#006BCE] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#007ACE]" :disabled="isLoading">
+                        <span x-text="isLoading ? 'Enregistrement...' : (modalType === 'create' ? 'Créer' : 'Mettre à jour')"></span>
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <!-- Modal de test -->
+    <template x-if="showTestModal">
+      <div class="fixed inset-0 overflow-hidden z-50">
+        <div class="absolute inset-0 overflow-hidden">
+          <!-- Overlay -->
+          <div class="absolute inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+          
+          <!-- Modal content -->
+          <div class="fixed inset-y-0 right-0 pl-10 max-w-full flex">
+            <div class="relative w-screen max-w-3xl">
+              <!-- Close button -->
+              <div class="absolute top-0 left-0 -ml-8 pt-4 pr-2 flex sm:-ml-10 sm:pr-4">
+                <button @click="closeModal()" class="rounded-md text-gray-300 hover:text-white focus:outline-none focus:ring-2 focus:ring-white">
+                  <span class="sr-only">Fermer</span>
+                  <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              
+              <!-- Modal body -->
+              <div class="h-full flex flex-col py-6 bg-white shadow-xl overflow-y-scroll">
+                <div class="px-4 sm:px-6">
+                  <h2 class="text-lg font-medium text-gray-900">Tester Configuration</h2>
+                  <p class="mt-1 text-sm text-gray-600" x-text="currentConfig.name"></p>
+                </div>
+                
+                <div class="mt-6 relative flex-1 px-4 sm:px-6">
+                  <div class="space-y-6">
+                    <!-- Informations de test -->
+                    <div>
+                      <h3 class="text-lg font-medium text-gray-900">Résultats du test</h3>
+                      <p class="mt-1 text-sm text-gray-600">
+                        <span x-text="testResults.length"></span> enregistrements trouvés
+                      </p>
+                    </div>
+                    
+                    <!-- Tableau des résultats -->
+                    <template x-if="testResults.length > 0">
+                      <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                          <thead class="bg-gray-50">
+                            <tr>
+                              <template x-for="(value, key) in testResults[0] || {}">
+                                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" x-text="key"></th>
+                              </template>
+                            </tr>
+                          </thead>
+                          <tbody class="bg-white divide-y divide-gray-200">
+                            <template x-for="row in testResults">
+                              <tr>
+                                <template x-for="(value, key) in row">
+                                  <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500" x-text="value"></td>
+                                </template>
+                              </tr>
+                            </template>
+                          </tbody>
+                        </table>
+                      </div>
+                    </template>
+                    
+                    <!-- Message si aucun résultat -->
+                    <template x-if="testResults.length === 0">
+                      <div class="text-center py-8">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-400 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <p class="text-gray-600">Aucun résultat trouvé</p>
+                        <p class="text-sm text-gray-500 mt-1">La requête n'a retourné aucun enregistrement</p>
+                      </div>
+                    </template>
+                    
+                    <!-- Boutons -->
+                    <div class="flex justify-end">
+                      <button @click="closeModal()" class="bg-[#007ACE] text-white py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium hover:bg-[#006BCE] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#007ACE]">
+                        Fermer
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <!-- Message d'erreur -->
+    <template x-if="error">
+      <div class="mt-4 bg-red-50 border border-red-200 rounded-md p-4">
+        <div class="flex">
+          <div class="flex-shrink-0">
+            <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L10 10.586 7.707 8.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+            </svg>
+          </div>
+          <div class="ml-3">
+            <p class="text-sm font-medium text-red-800">Erreur</p>
+            <p class="text-sm text-red-700" x-text="error"></p>
+          </div>
+        </div>
+      </div>
+    </template>
+  </div>
+</BaseLayout>
+
+<style>
+  .tooltip {
+    position: relative;
+  }
+  
+  .tooltip:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #333;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    margin-bottom: 8px;
+    z-index: 10;
+  }
+  
+  .tooltip:hover::before {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 4px;
+    border-style: solid;
+    border-color: transparent transparent #333 transparent;
+    margin-bottom: 4px;
+  }
+</style>

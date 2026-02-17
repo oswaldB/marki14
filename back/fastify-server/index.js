@@ -49,6 +49,8 @@ app.register(fastifySensible)
 import { getEmailHistory, getFieldDiff } from './routes/emailHistory.js'
 // Import FTP configuration routes
 import { getFtpConfigRoute, saveFtpConfigRoute, testFtpConnectionRoute } from './routes/ftpConfig.js'
+// Import sync configuration routes
+import syncConfigRoutes from './routes/syncConfig.js'
 
 // Route de santé
 app.get('/api/health', async (request, reply) => {
@@ -63,6 +65,9 @@ app.get('/api/history/:historyId/diff/:field', getFieldDiff)
 app.get('/api/ftp/config', getFtpConfigRoute)
 app.post('/api/ftp/config', saveFtpConfigRoute)
 app.post('/api/ftp/test-connection', testFtpConnectionRoute)
+
+// Sync Configuration Routes
+app.register(syncConfigRoutes)
 
 // Démarrage du serveur
 const start = async () => {
