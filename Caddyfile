@@ -26,6 +26,45 @@ dev.parse.dashboard.markidiags.com {
 
 
 dev.markidiags.com {
+    # Handle static assets from dist directory
+    root * /home/oswald/Desktop/marki14/front/dist
+    
+    # Serve node_modules directly - HIGH PRIORITY
+    @node_modules {
+        path /node_modules/*
+    }
+    handle @node_modules {
+        root /home/oswald/Desktop/marki14/front
+        file_server
+    }
+    
+    # Handle Vite processed assets
+    @viteAssets {
+        path /assets/*
+    }
+    handle @viteAssets {
+        root /home/oswald/Desktop/marki14/front/dist
+        file_server
+    }
+    
+    # Handle CSS files
+    @cssFiles {
+        path *.css
+    }
+    handle @cssFiles {
+        root /home/oswald/Desktop/marki14/front/dist
+        file_server
+    }
+    
+    # Handle JS files
+    @jsFiles {
+        path *.js
+    }
+    handle @jsFiles {
+        root /home/oswald/Desktop/marki14/front/dist
+        file_server
+    }
+    
     # Handle WebSocket connections for Vite HMR
     reverse_proxy / {
         to 192.168.1.239:5000
@@ -34,18 +73,6 @@ dev.markidiags.com {
             header_up Host {host}
             header_up X-Forwarded-Proto {scheme}
         }
-    }
-    
-    # Handle static assets from dist directory
-    root * /home/oswald/Desktop/marki14/front/dist
-    
-    # Serve node_modules directly
-    @node_modules {
-        path /node_modules/*
-    }
-    handle @node_modules {
-        root /home/oswald/Desktop/marki14/front
-        file_server
     }
     
     # Handle Vite processed assets

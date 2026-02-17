@@ -2,59 +2,43 @@
 > boomerang-frontend@1.0.0 check
 > astro check
 
-18:54:53 [@astrojs/node] Enabling sessions with filesystem storage
-18:54:53 [content] Syncing content
-18:54:53 [content] Synced content
-18:54:53 [types] Generated 38ms
-18:54:53 [check] Getting diagnostics for Astro files in /home/oswald/Desktop/marki14/front...
-[96msrc/layouts/BaseLayout.astro[0m:[93m11[0m:[93m67[0m - [93mwarning[0m[90m ts(6133): [0m'requiredRoles' is declared but its value is never read.
+19:13:08 [@astrojs/node] Enabling sessions with filesystem storage
+19:13:08 [content] Syncing content
+19:13:08 [content] Synced content
+19:13:08 [types] Generated 35ms
+19:13:08 [check] Getting diagnostics for Astro files in /home/oswald/Desktop/marki14/front...
+[96msrc/layouts/BaseLayout.astro[0m:[93m41[0m:[93m23[0m - [93mwarning[0m[90m ts(6133): [0m'data' is declared but its value is never read.
 
-[7m11[0m const { title, withAuth = false, hideSidebar = false, Alpinefile, requiredRoles = [] } = Astro.props;
-[7m  [0m [93m                                                                  ~~~~~~~~~~~~~[0m
-[96msrc/layouts/BaseLayout.astro[0m:[93m255[0m:[93m63[0m - [93mwarning[0m[90m ts(6133): [0m'requiredRoles' is declared but its value is never read.
+[7m41[0m       parse: function(data, config) {
+[7m  [0m [93m                      ~~~~[0m
 
-[7m255[0m       async checkAuth(requireAuth = false, currentPath = '/', requiredRoles = []) {
-[7m   [0m [93m                                                              ~~~~~~~~~~~~~[0m
-[96msrc/layouts/BaseLayout.astro[0m:[93m224[0m:[93m35[0m - [93mwarning[0m[90m ts(6133): [0m'error' is declared but its value is never read.
+[96msrc/pages/login.astro[0m:[93m44[0m:[93m16[0m - [91merror[0m[90m ts(2339): [0mProperty 'withAuthValue' does not exist on type 'Window & typeof globalThis'.
 
-[7m224[0m         getErrorMessage: function(error) {
-[7m   [0m [93m                                  ~~~~~[0m
-[96msrc/layouts/BaseLayout.astro[0m:[93m224[0m:[93m35[0m - [93mwarning[0m[90m ts(7044): [0mParameter 'error' implicitly has an 'any' type, but a better type may be inferred from usage.
+[7m44[0m         window.withAuthValue = false;
+[7m  [0m [91m               ~~~~~~~~~~~~~[0m
+[96msrc/pages/login.astro[0m:[93m39[0m:[93m68[0m - [91merror[0m[90m ts(2339): [0mProperty 'detail' does not exist on type 'Event'.
 
-[7m224[0m         getErrorMessage: function(error) {
-[7m   [0m [93m                                  ~~~~~[0m
-[96msrc/layouts/BaseLayout.astro[0m:[93m221[0m:[93m29[0m - [93mwarning[0m[90m ts(7044): [0mParameter 'url' implicitly has an 'any' type, but a better type may be inferred from usage.
+[7m39[0m       const message = event.detail && event.detail.message ? event.detail.message : 'Unknown Alpine.js error';
+[7m  [0m [91m                                                                   ~~~~~~[0m
+[96msrc/pages/login.astro[0m:[93m39[0m:[93m45[0m - [91merror[0m[90m ts(2339): [0mProperty 'detail' does not exist on type 'Event'.
 
-[7m221[0m         isSafeUrl: function(url) {
-[7m   [0m [93m                            ~~~[0m
-[96msrc/layouts/BaseLayout.astro[0m:[93m215[0m:[93m41[0m - [93mwarning[0m[90m ts(6133): [0m'userId' is declared but its value is never read.
+[7m39[0m       const message = event.detail && event.detail.message ? event.detail.message : 'Unknown Alpine.js error';
+[7m  [0m [91m                                            ~~~~~~[0m
+[96msrc/pages/login.astro[0m:[93m39[0m:[93m29[0m - [91merror[0m[90m ts(2339): [0mProperty 'detail' does not exist on type 'Event'.
 
-[7m215[0m         storeAuthToken: function(token, userId) {
-[7m   [0m [93m                                        ~~~~~~[0m
-[96msrc/layouts/BaseLayout.astro[0m:[93m215[0m:[93m41[0m - [93mwarning[0m[90m ts(7044): [0mParameter 'userId' implicitly has an 'any' type, but a better type may be inferred from usage.
+[7m39[0m       const message = event.detail && event.detail.message ? event.detail.message : 'Unknown Alpine.js error';
+[7m  [0m [91m                            ~~~~~~[0m
+[96msrc/pages/login.astro[0m:[93m17[0m:[93m33[0m - [91merror[0m[90m ts(2339): [0mProperty 'withAuthValue' does not exist on type 'Window & typeof globalThis'.
 
-[7m215[0m         storeAuthToken: function(token, userId) {
-[7m   [0m [93m                                        ~~~~~~[0m
-[96msrc/layouts/BaseLayout.astro[0m:[93m215[0m:[93m34[0m - [93mwarning[0m[90m ts(6133): [0m'token' is declared but its value is never read.
+[7m17[0m   window.withAuthValue = window.withAuthValue || false;
+[7m  [0m [91m                                ~~~~~~~~~~~~~[0m
+[96msrc/pages/login.astro[0m:[93m17[0m:[93m10[0m - [91merror[0m[90m ts(2339): [0mProperty 'withAuthValue' does not exist on type 'Window & typeof globalThis'.
 
-[7m215[0m         storeAuthToken: function(token, userId) {
-[7m   [0m [93m                                 ~~~~~[0m
-[96msrc/layouts/BaseLayout.astro[0m:[93m215[0m:[93m34[0m - [93mwarning[0m[90m ts(7044): [0mParameter 'token' implicitly has an 'any' type, but a better type may be inferred from usage.
+[7m17[0m   window.withAuthValue = window.withAuthValue || false;
+[7m  [0m [91m         ~~~~~~~~~~~~~[0m
 
-[7m215[0m         storeAuthToken: function(token, userId) {
-[7m   [0m [93m                                 ~~~~~[0m
-
-[96msrc/pages/import/manual.astro[0m:[93m179[0m:[93m11[0m - [93mwarning[0m[90m astro(4000): [0mThis script will be treated as if it has the `is:inline` directive because it contains an attribute. Therefore, features that require processing (e.g. using TypeScript or npm packages in the script) are unavailable.
-
-See docs for more details: https://docs.astro.build/en/guides/client-side-scripts/#script-processing.
-
-Add the `is:inline` directive explicitly to silence this hint.
-
-[7m179[0m   <script src="/js/pages/importManualState.js" defer></script>
-[7m   [0m [93m          ~~~[0m
-
-Result (8 files): 
-- 0 errors
+Result (9 files): 
+- 6 errors
 - 0 warnings
-- 10 hints
+- 1 hint
 

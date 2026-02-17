@@ -49,6 +49,11 @@ declare global {
         sessionToken: string;
       }>;
     };
+    
+    /**
+     * Authentication value fallback
+     */
+    withAuthValue: boolean;
   }
   
   /**
@@ -56,6 +61,13 @@ declare global {
    */
   interface EventTarget {
     src?: string;
+  }
+  
+  /**
+   * Extended Event interface to include detail property for custom events
+   */
+  interface Event {
+    detail?: any;
   }
 }
 

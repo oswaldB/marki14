@@ -1,0 +1,170 @@
+--- 
+import BaseLayout from '../../layouts/BaseLayout.astro';
+const { username } = Astro.params;
+---
+
+<BaseLayout title={`Profil de @${username}`} withAuth={false} Alpinefile="/js/states/profileState.js">
+  <div class="container mx-auto px-4 py-8 max-w-4xl">
+    <div class="bg-white border border-gray-200 rounded-lg p-8 shadow-sm">
+      <!-- Contenu géré par Alpine.js -->
+      <div x-data="profileState()" x-init="loadProfile()">
+        <!-- Header avec chargement -->
+        <template x-if="loading">
+          <div class="text-center py-8">
+            <i class="fas fa-spinner fa-spin text-2xl text-[#007ACE]"></i>
+            <p class="mt-2 text-gray-600">Chargement du profil...</p>
+          </div>
+        </template>
+
+        <!-- Erreur -->
+        <template x-if="!loading && error">
+          <div class="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
+            <div class="flex">
+              <div class="flex-shrink-0">
+                <i class="fas fa-exclamation-circle text-red-400 text-lg"></i>
+              </div>
+              <div class="ml-3">
+                <p class="text-sm font-medium text-red-800">Utilisateur introuvable</p>
+                <p class="text-sm text-red-700" x-text="error"></p>
+                <a href="/" class="mt-2 inline-block bg-[#007ACE] text-white px-4 py-2 rounded text-sm hover:bg-[#006BCE]">
+                  Retour à l'accueil
+                </a>
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <!-- Profil trouvé -->
+        <template x-if="!loading && !error && profile">
+          <div class="text-center mb-6">
+            <h1 class="text-2xl font-bold text-gray-900 mb-2">PROFIL DE <span x-text="'@' + profile.username"></span></h1>
+          </div>
+
+          <div class="flex flex-col items-center mb-6">
+            <!-- Avatar -->
+            <div class="w-32 h-32 bg-gray-200 rounded-full flex items-center justify-center mb-4 overflow-hidden">
+              <template x-if="profile.avatar">
+                <img :src="profile.avatar" alt="Avatar" class="w-full h-full object-cover">
+              </template>
+              <template x-if="!profile.avatar">
+                <i class="fas fa-user text-4xl text-gray-400"></i>
+              </template>
+            </div>
+
+            <!-- Informations -->
+            <div class="text-center space-y-2">
+              <p class="text-lg font-medium text-gray-900">Pseudo: <span x-text="'@' + profile.username"></span></p>
+              <p class="text-gray-600">Membre depuis: <span x-text="formatDate(profile.createdAt)"></span></p>
+            </div>
+
+            <!-- Bouton envoyer message (visible si connecté) -->
+            <template x-if="isAuthenticated">
+              <button 
+                @click="showMessageModal = true"
+                class="mt-4 bg-[#007ACE] text-white px-6 py-2 rounded-md hover:bg-[#006BCE] transition-colors"
+              >
+                <i class="fas fa-envelope mr-2"></i>
+                Envoyer un message
+              </button>
+            </template>
+          </div>
+
+          <!-- Activités récentes -->
+          <div class="mt-8">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">--- ACTIVITÉS RÉCENTES ---</h2>
+
+            <template x-if="loadingActivities">
+              <div class="text-center py-4">
+                <i class="fas fa-spinner fa-spin text-[#007ACE]"></i>
+                <p class="mt-1 text-sm text-gray-600">Chargement des activités...</p>
+              </div>
+            </template>
+
+            <template x-if="!loadingActivities && activities.length > 0">
+              <div class="space-y-4 bg-gray-50 rounded-lg p-4">
+                <template x-for="activity in activities" :key="activity.id">
+                  <div class="bg-white border border-gray-200 rounded-md p-3">
+                    <div class="flex items-start justify-between">
+                      <div class="flex-1">
+                        <p class="font-medium text-gray-900" x-text="activity.title"></p>
+                        <p class="text-sm text-gray-500 mt-1" x-text="formatDate(activity.date)"></p>
+                      </div>
+                      <a 
+                        :href="activity.link"
+                        class="text-[#007ACE] hover:text-[#006BCE] text-sm font-medium"
+                        target="_blank"
+                      >
+                        Voir <i class="fas fa-external-link-alt text-xs"></i>
+                      </a>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </template>
+
+            <template x-if="!loadingActivities && activities.length === 0">
+              <div class="text-center py-4 bg-gray-50 rounded-lg">
+                <p class="text-gray-600">Aucune activité récente</p>
+              </div>
+            </template>
+          </div>
+        </template>
+
+        <!-- Modal envoyer message -->
+        <template x-if="showMessageModal">
+          <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div class="bg-white rounded-lg p-6 max-w-md w-full" @click.away="showMessageModal = false">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-medium text-gray-900">Envoyer un message</h3>
+                <button @click="showMessageModal = false" class="text-gray-400 hover:text-gray-600">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+
+              <form @submit.prevent="sendMessage()" class="space-y-4">
+                <div>
+                  <label for="message" class="block text-sm font-medium text-gray-700 mb-1">Message</label>
+                  <textarea 
+                    id="message"
+                    x-model="messageContent"
+                    rows="4"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#007ACE] focus:border-transparent"
+                    placeholder="Votre message..."
+                    required
+                  ></textarea>
+                </div>
+
+                <div class="flex items-center justify-end space-x-3">
+                  <button 
+                    type="button"
+                    @click="showMessageModal = false"
+                    class="px-4 py-2 text-gray-700 hover:text-gray-900"
+                  >
+                    Annuler
+                  </button>
+                  <button 
+                    type="submit"
+                    :disabled="sendingMessage"
+                    class="bg-[#007ACE] text-white px-4 py-2 rounded-md hover:bg-[#006BCE] transition-colors disabled:opacity-50"
+                  >
+                    <template x-if="!sendingMessage">Envoyer</template>
+                    <template x-if="sendingMessage">
+                      <i class="fas fa-spinner fa-spin mr-2"></i>
+                      Envoi...
+                    </template>
+                  </button>
+                </div>
+
+                <template x-if="messageError">
+                  <div class="bg-red-50 border border-red-200 rounded-md p-3">
+                    <p class="text-sm text-red-700" x-text="messageError"></p>
+                  </div>
+                </template>
+              </form>
+            </div>
+          </div>
+        </template>
+      </div>
+    </div>
+  </div>
+</BaseLayout>

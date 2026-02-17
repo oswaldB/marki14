@@ -36,26 +36,38 @@ import SideMenu from '../components/SideMenu.astro';
       var window = {};
     }
     
-    // Initialize PapaParse with all necessary properties
-    window.Papa = {
-      parse: function(data, config) {
-        if (config && config.complete) {
-          config.complete({data: [], errors: ['PapaParse initialized but not fully loaded']});
+    // Initialize PapaParse with comprehensive fallback
+    window.Papa = window.Papa || {};
+    
+    // Add error handling for PapaParse
+    document.addEventListener('DOMContentLoaded', function() {
+      try {
+        if (typeof Papa === 'undefined') {
+          console.warn('PapaParse not loaded, using fallback');
+          window.Papa = {
+            parse: function(data, config) {
+              console.warn('PapaParse.parse called but library not loaded');
+              if (config && config.complete) {
+                config.complete({data: [], errors: ['PapaParse not available']});
+              }
+              return {data: [], errors: ['PapaParse not available']};
+            },
+            unparse: function() {},
+            LOCAL_CHUNK_SIZE: 100000,
+            RemoteChunkSize: 100000,
+            DefaultDelimiter: ",",
+            BadDelimiters: ["\r", "\n", "\t"],
+            RecordSize: 0,
+            Streamer: null,
+            NodeStreamer: null,
+            ScriptLoader: null,
+            NODE_STREAM_INPUT: null
+          };
         }
-        return {data: [], errors: ['PapaParse initialized but not fully loaded']};
-      },
-      // Add other PapaParse methods that might be called
-      unparse: function() {},
-      LOCAL_CHUNK_SIZE: 100000,
-      RemoteChunkSize: 100000,
-      DefaultDelimiter: ",",
-      BadDelimiters: ["\r", "\n", "\t"],
-      RecordSize: 0,
-      Streamer: null,
-      NodeStreamer: null,
-      ScriptLoader: null,
-      NODE_STREAM_INPUT: null
-    };
+      } catch (error) {
+        console.error('Error initializing PapaParse fallback:', error);
+      }
+    });
     
     // Initialize other global objects
     window.Alpine = window.Alpine || {};

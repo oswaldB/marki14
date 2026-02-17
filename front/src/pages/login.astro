@@ -52,6 +52,23 @@ const Alpinefile = '/js/states/loginState.js';
     }
   });
   
+  // Replace problematic Alpine expressions
+  document.addEventListener('DOMContentLoaded', function() {
+    try {
+      // Ensure requiredRoles is properly parsed
+      if (typeof requiredRoles === 'string') {
+        requiredRoles = JSON.parse(requiredRoles);
+      }
+      
+      // Ensure withAuth is properly defined
+      window.withAuthValue = Boolean(window.withAuthValue);
+    } catch (error) {
+      console.error('Error initializing Alpine data:', error);
+      window.withAuthValue = false;
+      requiredRoles = [];
+    }
+  });
+  
   // Détection des erreurs de chargement des scripts avec rechargement automatique
   window.addEventListener('error', function(event) {
     if (event.target && 

@@ -51,7 +51,9 @@ export default defineConfig({
       // Fix resource paths
       fs: {
         allow: ['..']
-      }
+      },
+      // Proper base path configuration
+      base: '/'
     },
     build: {
       assetsDir: 'assets',
@@ -61,7 +63,9 @@ export default defineConfig({
           entryFileNames: 'assets/[name]-[hash].js',
           // Fix chunk file names
           chunkFileNames: 'assets/[name]-[hash].js'
-        }
+        },
+        // Ensure critical dependencies are bundled, not external
+        external: []
       }
     },
     // Fix resolve aliases
@@ -70,6 +74,11 @@ export default defineConfig({
         '@': '/src',
         '~': '/node_modules'
       }
+    },
+    // Ensure node_modules are properly handled
+    optimizeDeps: {
+      include: ['alpinejs', 'axios', 'papaparse'],
+      exclude: []
     },
     // Ensure proper CSS processing
     css: {
