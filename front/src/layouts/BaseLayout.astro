@@ -130,6 +130,16 @@ import DockComponent from '../components/DockComponent.astro';
   {Alpinefile && (
     <script is:inline src={Alpinefile}></script>
   )}
+  
+  <!-- Chargement des states Alpine.js -->
+  <script is:inline>
+    // Charger dynamiquement les states selon la page
+    const page = window.location.pathname;
+    
+    if (page === '/login') {
+      import('/js/states/login/state-main.js');
+    }
+  </script>
   <!-- Layout principal avec sidebar -->
   <div class="flex min-h-screen h-screen">
     <!-- Sidebar - conditionnellement affichée -->

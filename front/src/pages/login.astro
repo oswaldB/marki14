@@ -1,0 +1,90 @@
+---// Page de connexion
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { Icon } from '@lucide/astro';
+
+const redirectUrl = Astro.url.searchParams.get('redirect') || '/dashboard';
+---
+
+<BaseLayout title="Connexion">
+  <div class="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div class="sm:mx-auto sm:w-full sm:max-w-md">
+      <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
+        Connexion à votre compte
+      </h2>
+    </div>
+
+    <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+      <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+        <!-- Affichage des erreurs -->
+        <div x-show="$state.login.error" x-text="$state.login.error" 
+             class="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-800 text-sm"></div>
+
+        <form @submit="$state.login.handleSubmit" class="space-y-6">
+          <input type="hidden" name="remember" value="true">
+          
+          <!-- Champ Identifiant -->
+          <div>
+            <label for="username" class="block text-sm font-medium text-gray-700">
+              Identifiant
+            </label>
+            <div class="mt-1">
+              <input id="username" name="username" type="text" required
+                     x-model="$state.login.username"
+                     @input="$state.login.clearError()"
+                     class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-[#007ACE] focus:border-[#007ACE] sm:text-sm">
+            </div>
+          </div>
+
+          <!-- Champ Mot de passe -->
+          <div>
+            <label for="password" class="block text-sm font-medium text-gray-700">
+              Mot de passe
+            </label>
+            <div class="mt-1">
+              <input id="password" name="password" type="password" required
+                     x-model="$state.login.password"
+                     @input="$state.login.clearError()"
+                     class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-[#007ACE] focus:border-[#007ACE] sm:text-sm">
+            </div>
+          </div>
+
+          <!-- Se souvenir de moi -->
+          <div class="flex items-center justify-between">
+            <div class="flex items-center">
+              <input id="remember-me" name="remember-me" type="checkbox"
+                     x-model="$state.login.rememberMe"
+                     class="h-4 w-4 text-[#007ACE] focus:ring-[#007ACE] border-gray-300 rounded">
+              <label for="remember-me" class="ml-2 block text-sm text-gray-900">
+                Se souvenir de moi
+              </label>
+            </div>
+
+            <div class="text-sm">
+              <a href="#" class="font-medium text-[#007ACE] hover:text-[#006BCE]">
+                Mot de passe oublié ?
+              </a>
+            </div>
+          </div>
+
+          <!-- Bouton de connexion -->
+          <div>
+            <button type="submit"
+                    :disabled="$state.login.loading || !$state.login.isFormValid"
+                    class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#007ACE] hover:bg-[#006BCE] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#007ACE] disabled:opacity-50 disabled:cursor-not-allowed">
+              <span x-show="!$state.login.loading">Connexion</span>
+              <span x-show="$state.login.loading" class="flex items-center">
+                <Icon name="loader-2" class="animate-spin -ml-1 mr-2 h-4 w-4" />
+                Connexion en cours...
+              </span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Script Alpine.js -->
+  <script>
+    console.log('Page login chargée - URL de redirection:', '{{ redirectUrl }}');
+  </script>
+</BaseLayout>

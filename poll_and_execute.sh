@@ -39,6 +39,8 @@ process_webhook() {
     sleep 10
     vibe -p "Ton role est de vérifier que l $implementation_file à destination des développeurs respecte bien tous les précepts des guides. Si non, tu corriges." --output streaming
     sleep 10
+    echo "Appel à l'URL: $GET_URL"
+    process_webhook
     vibe -p "Développe : $implementation_file. Après chaque développement met à jour la fiche d'implémentation " --output streaming
     sleep 10
     vibe -p "commit"
