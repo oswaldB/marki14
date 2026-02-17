@@ -2,12 +2,12 @@
 > boomerang-frontend@1.0.0 check
 > astro check
 
-16:52:01 [@astrojs/node] Enabling sessions with filesystem storage
-16:52:01 [vite] Re-optimizing dependencies because vite config has changed
-16:52:02 [content] Syncing content
-16:52:02 [content] Synced content
-16:52:02 [types] Generated 140ms
-16:52:02 [check] Getting diagnostics for Astro files in /home/oswald/Desktop/marki14/front...
+17:01:12 [@astrojs/node] Enabling sessions with filesystem storage
+17:01:12 [vite] Re-optimizing dependencies because vite config has changed
+17:01:12 [content] Syncing content
+17:01:12 [content] Synced content
+17:01:12 [types] Generated 102ms
+17:01:12 [check] Getting diagnostics for Astro files in /home/oswald/Desktop/marki14/front...
 Result (5 files): 
 - 0 errors
 - 0 warnings

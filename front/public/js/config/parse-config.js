@@ -10,10 +10,10 @@ import axios from 'axios';
  * @type {import('axios').AxiosInstance}
  */
 export const parseApi = axios.create({
-  baseURL: 'https://dev.parse.markidiags.com/parse',
+  baseURL: 'https://dev.parse.markidiags.com',
   headers: {
-    'X-Parse-Application-Id': typeof window !== 'undefined' ? window.PARSE_AUTH_CONFIG?.appId || 'marki' : 'marki',
-    'X-Parse-REST-API-Key': typeof window !== 'undefined' ? window.PARSE_AUTH_CONFIG?.restApiKey || 'Careless7-Gore4-Guileless0-Jogger5-Clubbed9' : 'Careless7-Gore4-Guileless0-Jogger5-Clubbed9',
+    'X-Parse-Application-Id': 'marki',
+    'X-Parse-REST-API-Key':  'Careless7-Gore4-Guileless0-Jogger5-Clubbed9',
     'Content-Type': 'application/json'
   }
 });

@@ -28,7 +28,7 @@ document.addEventListener('alpine:init', () => {
         // Import sécurisé de la configuration Parse
         let parseConfig;
         try {
-          parseConfig = await import('/js/config/parse-config.js');
+          parseConfig = await import('/public/js/config/parse-config.js');
         } catch (importError) {
           console.error('Échec du chargement de parse-config:', importError);
           this.error = 'Configuration non disponible';
