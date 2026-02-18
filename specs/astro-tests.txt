@@ -2,43 +2,65 @@
 > boomerang-frontend@1.0.0 check
 > astro check
 
-19:13:08 [@astrojs/node] Enabling sessions with filesystem storage
-19:13:08 [content] Syncing content
-19:13:08 [content] Synced content
-19:13:08 [types] Generated 35ms
-19:13:08 [check] Getting diagnostics for Astro files in /home/oswald/Desktop/marki14/front...
-[96msrc/layouts/BaseLayout.astro[0m:[93m41[0m:[93m23[0m - [93mwarning[0m[90m ts(6133): [0m'data' is declared but its value is never read.
+19:32:45 [@astrojs/node] Enabling sessions with filesystem storage
+19:32:45 [vite] Re-optimizing dependencies because vite config has changed
+19:32:45 [WARN] [vite] Failed to resolve dependency: papaparse, present in client 'optimizeDeps.include'
+19:32:45 [content] Syncing content
+19:32:45 [content] Synced content
+19:32:45 [types] Generated 135ms
+19:32:45 [check] Getting diagnostics for Astro files in /home/oswald/Desktop/marki14/front...
+[96msrc/layouts/BaseLayout.astro[0m:[93m443[0m:[93m3[0m - [91merror[0m[90m ts(17002): [0mExpected corresponding JSX closing tag for 'Fragment'.
 
-[7m41[0m       parse: function(data, config) {
-[7m  [0m [93m                      ~~~~[0m
+[7m443[0m </html>
+[7m   [0m [91m  ~~~~[0m
+[96msrc/layouts/BaseLayout.astro[0m:[93m361[0m:[93m5[0m - [91merror[0m[90m ts(17002): [0mExpected corresponding JSX closing tag for 'html'.
 
-[96msrc/pages/login.astro[0m:[93m44[0m:[93m16[0m - [91merror[0m[90m ts(2339): [0mProperty 'withAuthValue' does not exist on type 'Window & typeof globalThis'.
+[7m361[0m   </div>
+[7m   [0m [91m    ~~~[0m
+[96msrc/layouts/BaseLayout.astro[0m:[93m360[0m:[93m7[0m - [91merror[0m[90m ts(17002): [0mExpected corresponding JSX closing tag for 'body'.
 
-[7m44[0m         window.withAuthValue = false;
-[7m  [0m [91m               ~~~~~~~~~~~~~[0m
-[96msrc/pages/login.astro[0m:[93m39[0m:[93m68[0m - [91merror[0m[90m ts(2339): [0mProperty 'detail' does not exist on type 'Event'.
+[7m360[0m     </template>
+[7m   [0m [91m      ~~~~~~~~[0m
+[96msrc/layouts/BaseLayout.astro[0m:[93m353[0m:[93m43[0m - [91merror[0m[90m ts(1002): [0mUnterminated string literal.
 
-[7m39[0m       const message = event.detail && event.detail.message ? event.detail.message : 'Unknown Alpine.js error';
-[7m  [0m [91m                                                                   ~~~~~~[0m
-[96msrc/pages/login.astro[0m:[93m39[0m:[93m45[0m - [91merror[0m[90m ts(2339): [0mProperty 'detail' does not exist on type 'Event'.
+[7m353[0m             }" x-text="toast.message"></p>
+[7m   [0m [91m                                          [0m
+[96msrc/layouts/BaseLayout.astro[0m:[93m353[0m:[93m41[0m - [91merror[0m[90m ts(17002): [0mExpected corresponding JSX closing tag for 'div'.
 
-[7m39[0m       const message = event.detail && event.detail.message ? event.detail.message : 'Unknown Alpine.js error';
-[7m  [0m [91m                                            ~~~~~~[0m
-[96msrc/pages/login.astro[0m:[93m39[0m:[93m29[0m - [91merror[0m[90m ts(2339): [0mProperty 'detail' does not exist on type 'Event'.
+[7m353[0m             }" x-text="toast.message"></p>
+[7m   [0m [91m                                        ~[0m
+[96msrc/layouts/BaseLayout.astro[0m:[93m353[0m:[93m38[0m - [91merror[0m[90m ts(1382): [0mUnexpected token. Did you mean `{'>'}` or `&gt;`?
 
-[7m39[0m       const message = event.detail && event.detail.message ? event.detail.message : 'Unknown Alpine.js error';
-[7m  [0m [91m                            ~~~~~~[0m
-[96msrc/pages/login.astro[0m:[93m17[0m:[93m33[0m - [91merror[0m[90m ts(2339): [0mProperty 'withAuthValue' does not exist on type 'Window & typeof globalThis'.
+[7m353[0m             }" x-text="toast.message"></p>
+[7m   [0m [91m                                     ~[0m
+[96msrc/layouts/BaseLayout.astro[0m:[93m332[0m:[93m6[0m - [91merror[0m[90m ts(17008): [0mHTML element 'template' has no corresponding closing tag.
 
-[7m17[0m   window.withAuthValue = window.withAuthValue || false;
-[7m  [0m [91m                                ~~~~~~~~~~~~~[0m
-[96msrc/pages/login.astro[0m:[93m17[0m:[93m10[0m - [91merror[0m[90m ts(2339): [0mProperty 'withAuthValue' does not exist on type 'Window & typeof globalThis'.
+[7m332[0m     <template x-for="toast in toasts" :key="toast.id">
+[7m   [0m [91m     ~~~~~~~~[0m
+[96msrc/layouts/BaseLayout.astro[0m:[93m48[0m:[93m29[0m - [93mwarning[0m[90m ts(6133): [0m'data' is declared but its value is never read.
 
-[7m17[0m   window.withAuthValue = window.withAuthValue || false;
-[7m  [0m [91m         ~~~~~~~~~~~~~[0m
+[7m48[0m             parse: function(data, config) {
+[7m  [0m [93m                            ~~~~[0m
 
-Result (9 files): 
-- 6 errors
+[96msrc/pages/login.astro[0m:[93m68[0m:[93m7[0m - [91merror[0m[90m ts(2304): [0mCannot find name 'requiredRoles'.
+
+[7m68[0m       requiredRoles = [];
+[7m  [0m [91m      ~~~~~~~~~~~~~[0m
+[96msrc/pages/login.astro[0m:[93m60[0m:[93m36[0m - [91merror[0m[90m ts(2304): [0mCannot find name 'requiredRoles'.
+
+[7m60[0m         requiredRoles = JSON.parse(requiredRoles);
+[7m  [0m [91m                                   ~~~~~~~~~~~~~[0m
+[96msrc/pages/login.astro[0m:[93m60[0m:[93m9[0m - [91merror[0m[90m ts(2304): [0mCannot find name 'requiredRoles'.
+
+[7m60[0m         requiredRoles = JSON.parse(requiredRoles);
+[7m  [0m [91m        ~~~~~~~~~~~~~[0m
+[96msrc/pages/login.astro[0m:[93m59[0m:[93m18[0m - [91merror[0m[90m ts(2304): [0mCannot find name 'requiredRoles'.
+
+[7m59[0m       if (typeof requiredRoles === 'string') {
+[7m  [0m [91m                 ~~~~~~~~~~~~~[0m
+
+Result (10 files): 
+- 11 errors
 - 0 warnings
 - 1 hint
 

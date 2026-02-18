@@ -1,0 +1,156 @@
+--- 
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Mon Profil" withAuth={true} Alpinefile="/js/states/profileEditState.js">
+  <div class="container mx-auto px-4 py-8 max-w-4xl">
+    <div class="bg-white border border-gray-200 rounded-lg p-8 shadow-sm">
+      <!-- Contenu géré par Alpine.js -->
+      <div x-data="profileEditState()" x-init="initializeProfile()">
+        <!-- Header avec chargement -->
+        <template x-if="loading">
+          <div class="text-center py-8">
+            <i class="fas fa-spinner fa-spin text-2xl text-[#007ACE]"></i>
+            <p class="mt-2 text-gray-600">Chargement de votre profil...</p>
+          </div>
+        </template>
+
+        <!-- Erreur -->
+        <template x-if="!loading && error">
+          <div class="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
+            <div class="flex">
+              <div class="flex-shrink-0">
+                <i class="fas fa-exclamation-circle text-red-400 text-lg"></i>
+              </div>
+              <div class="ml-3">
+                <p class="text-sm font-medium text-red-800">Erreur de chargement</p>
+                <p class="text-sm text-red-700" x-text="error"></p>
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <!-- Formulaire d'édition de profil -->
+        <template x-if="!loading && !error">
+          <div class="space-y-6">
+            <!-- Titre -->
+            <div class="text-center">
+              <h1 class="text-2xl font-bold text-gray-900">MON PROFIL</h1>
+              <p class="text-gray-600 mt-2">Modifiez vos informations personnelles</p>
+            </div>
+
+            <!-- Avatar avec prévisualisation -->
+            <div class="flex flex-col items-center">
+              <div class="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center mb-4 overflow-hidden">
+                <template x-if="avatarPreview">
+                  <img :src="avatarPreview" alt="Aperçu avatar" class="w-full h-full object-cover">
+                </template>
+                <template x-if="!avatarPreview && currentUser.avatar">
+                  <img :src="currentUser.avatar" alt="Avatar actuel" class="w-full h-full object-cover">
+                </template>
+                <template x-if="!avatarPreview && !currentUser.avatar">
+                  <i class="fas fa-user text-3xl text-gray-400"></i>
+                </template>
+              </div>
+
+              <!-- Bouton changer avatar -->
+              <label class="bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded-md cursor-pointer transition-colors">
+                <i class="fas fa-camera mr-2"></i>
+                Changer l'avatar
+                <input 
+                  type="file" 
+                  accept="image/jpeg,image/png" 
+                  @change="handleAvatarChange($event)" 
+                  class="hidden"
+                >
+              </label>
+
+              <template x-if="avatarError">
+                <p class="text-sm text-red-600 mt-2" x-text="avatarError"></p>
+              </template>
+            </div>
+
+            <!-- Formulaire -->
+            <form @submit.prevent="saveProfile()" class="space-y-4">
+              <!-- Champ Pseudo -->
+              <div>
+                <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Pseudo</label>
+                <div class="relative">
+                  <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">
+                    <i class="fas fa-at"></i>
+                  </span>
+                  <input 
+                    type="text" 
+                    id="username" 
+                    x-model="currentUser.username" 
+                    @input="validateUsername(currentUser.username)" 
+                    class="w-full pl-10 pr-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#007ACE] focus:border-transparent"
+                    :class="usernameError ? 'border-red-300' : 'border-gray-300'"
+                    placeholder="Votre pseudo"
+                  >
+                </div>
+                <template x-if="usernameError">
+                  <p class="text-sm text-red-600 mt-1" x-text="usernameError"></p>
+                </template>
+              </div>
+
+              <!-- Champ Email -->
+              <div>
+                <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <div class="relative">
+                  <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">
+                    <i class="fas fa-envelope"></i>
+                  </span>
+                  <input 
+                    type="email" 
+                    id="email" 
+                    x-model="currentUser.email" 
+                    @input="validateEmail(currentUser.email)" 
+                    class="w-full pl-10 pr-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#007ACE] focus:border-transparent"
+                    :class="emailError ? 'border-red-300' : 'border-gray-300'"
+                    placeholder="Votre email"
+                  >
+                </div>
+                <template x-if="emailError">
+                  <p class="text-sm text-red-600 mt-1" x-text="emailError"></p>
+                </template>
+              </div>
+
+              <!-- Boutons -->
+              <div class="flex items-center justify-end space-x-3 mt-6">
+                <a 
+                  href="/profil/@${currentUser.username}" 
+                  class="px-4 py-2 text-gray-700 hover:text-gray-900 border border-gray-300 rounded-md hover:bg-gray-50"
+                >
+                  Annuler
+                </a>
+                <button 
+                  type="submit" 
+                  :disabled="!isFormValid || saving" 
+                  class="bg-[#007ACE] text-white px-6 py-2 rounded-md hover:bg-[#006BCE] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <template x-if="!saving">Enregistrer</template>
+                  <template x-if="saving">
+                    <i class="fas fa-spinner fa-spin mr-2"></i>
+                    Enregistrement...
+                  </template>
+                </button>
+              </div>
+            </form>
+
+            <!-- Lien changement de mot de passe -->
+            <div class="border-t border-gray-200 pt-6">
+              <a 
+                href="/profil/changer-mot-de-passe" 
+                class="text-[#007ACE] hover:text-[#006BCE] font-medium"
+              >
+                <i class="fas fa-lock mr-2"></i>
+                Changer le mot de passe
+              </a>
+            </div>
+          </div>
+        </template>
+      </div>
+    </div>
+  </div>
+</BaseLayout>
