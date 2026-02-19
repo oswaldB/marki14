@@ -1,13 +1,16 @@
-import vituum from 'vituum'
-import posthtml from '@vituum/vite-plugin-posthtml'
-import tailwindcss from '@vituum/vite-plugin-tailwindcss'
-
+import vituum from "vituum";
+import posthtml from "@vituum/vite-plugin-posthtml";
 
 export default {
-    plugins: [vituum(),tailwindcss(), posthtml({
-        root: './src'
-    })],
+    plugins: [
+        vituum(),
+        posthtml({
+            root: "./src",
+        }),
+    ],
     server: {
-        port: 5000
-    }
-}
+        port: 5000,
+        host: true,
+        allowedHosts: ["dev.markidiags.com", "localhost"],
+    },
+};

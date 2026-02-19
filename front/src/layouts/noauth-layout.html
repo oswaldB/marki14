@@ -1,0 +1,25 @@
+<extends src="layouts/master-layout.html">
+    <block name="header">
+        <!-- Header spécifique pour les pages sans authentification -->
+        <nav class="flex space-x-4">
+            <a
+                href="/login"
+                class="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                >Connexion</a
+            >
+            <a
+                href="/register"
+                class="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                >Inscription</a
+            >
+        </nav>
+    </block>
+
+    <block name="body">
+        <!-- Ce bloc sera remplacé par les pages filles -->
+        <div class="min-h-screen flex items-center justify-center">
+            <!-- Contenu par défaut si aucune page fille ne remplace ce bloc -->
+            <p>Contenu par défaut</p>
+        </div>
+    </block>
+</extends>

@@ -23,14 +23,14 @@ npm start &
 cd ../..
 sleep 3
 
-# Démarrer le frontend Astro
-echo "Démarrage du frontend Astro..."
+# Démarrer le frontend Vite
+echo "Démarrage du frontend Vite..."
 cd front || exit
-echo "Installation des dépendances Astro..."
+echo "Installation des dépendances Vite..."
 npm install
 
-echo "Lancement du frontend Astro..."
-npm run dev &
+echo "Lancement du frontend Vite..."
+npm run dev -- --host &
 cd ..
 sleep 5
 
@@ -42,4 +42,4 @@ echo "Parse Dashboard est accessible à : http://localhost:4040"
 echo "==========================================="
 
 echo "Lancement Arthuro"
-./arthuro.sh &
+# ./arthuro.sh &

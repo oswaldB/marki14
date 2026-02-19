@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="fr">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title><block name="title">Marki14</block></title>
+
+        <!-- Font Awesome (solution fiable) -->
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+        />
+
+        <!-- Tailwind CSS via CDN -->
+        <script src="https://cdn.tailwindcss.com"></script>
+
+        <!-- Alpine.js -->
+        <script
+            src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"
+            defer
+        ></script>
+
+        <!-- Axios -->
+        <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+        <!-- Parse REST -->
+        <script src="/scripts/parseAxios.js" type="module"></script>
+
+        <block name="head"></block>
+    </head>
+    <body class="bg-gray-50">
+        <!-- Header -->
+        <header class="bg-white shadow-sm">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between h-16">
+                    <div class="flex">
+                        <div class="flex-shrink-0 flex items-center">
+                            <img
+                                class="h-8 w-auto"
+                                src="/src/marki-logo.png"
+                                alt="Marki14"
+                            />
+                        </div>
+                    </div>
+                    <div class="flex items-center">
+                        <block name="header"></block>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+            <block name="body"></block>
+        </main>
+
+        <!-- Alpine.js State -->
+        <block name="alpinejs"></block>
+
+        <!-- Login State -->
+        <script src="/js/pages/login-state.js" type="module"></script>
+
+        <!-- Footer -->
+        <footer class="bg-white border-t mt-8">
+            <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
+                <p class="text-center text-gray-500 text-sm">
+                    &copy; {{ new Date().getFullYear() }} Marki14. Tous droits
+                    réservés.
+                </p>
+            </div>
+        </footer>
+    </body>
+</html>
