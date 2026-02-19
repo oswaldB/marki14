@@ -1,6 +1,6 @@
 # Guide: Faire des appels à Parse avec Axios REST
 
-Ce guide explique comment effectuer des appels REST à Parse en utilisant Axios dans une application JavaScript/TypeScript.
+Ce guide explique comment effectuer des appels REST à Parse en utilisant Axios directement dans les fichiers Alpine.js.
 
 ## Prérequis
 
@@ -18,15 +18,15 @@ npm install axios
  yarn add axios
 ```
 
-### 2. Configurer Axios pour Parse
+### 2. Configurer une instance Axios unique
 
-Créez un fichier de configuration pour Axios avec les headers nécessaires pour Parse:
+Dans votre application, créez une instance Axios unique avec les headers nécessaires pour Parse. Cette instance doit être accessible globalement ou importée là où vous en avez besoin.
 
 ```javascript
-// parse-api.js
+// Dans un fichier accessible globalement (par exemple utils/axios.js)
 import axios from 'axios';
 
-const parseApi = axios.create({
+const parseAxios = axios.create({
   baseURL: 'https://dev.parse.markidiags.com',
   headers: {
     'X-Parse-Application-Id': 'VOTRE_APPLICATION_ID',
@@ -35,7 +35,96 @@ const parseApi = axios.create({
   }
 });
 
-export default parseApi;
+export default parseAxios;
+```
+
+⚠️ **Important**: Ne créez pas de fichier `parse-api.js`. Utilisez directement cette instance Axios dans vos composants Alpine.js.
+
+## Utilisation dans les composants Alpine.js
+
+### Exemple de composant avec requêtes CRUD
+
+```html
+<div x-data="{
+  items: [],
+  newItem: { name: '', description: '' },
+  loading: false,
+  error: null,
+  
+  async fetchItems() {
+    this.loading = true;
+    this.error = null;
+    
+    try {
+      // Importation directe de l'instance Axios
+      const { default: parseAxios } = await import('/utils/axios.js');
+      
+      const response = await parseAxios.get('/classes/MyClass', {
+        params: {
+          limit: 10,
+          order: '-createdAt'
+        }
+      });
+      
+      this.items = response.data.results;
+    } catch (error) {
+      this.error = error.response?.data?.error || error.message;
+      console.error('Erreur:', this.error);
+    } finally {
+      this.loading = false;
+    }
+  },
+  
+  async createItem() {
+    this.loading = true;
+    this.error = null;
+    
+    try {
+      const { default: parseAxios } = await import('/utils/axios.js');
+      
+      const response = await parseAxios.post('/classes/MyClass', this.newItem);
+      
+      this.items.push(response.data);
+      this.newItem = { name: '', description: '' };
+    } catch (error) {
+      this.error = error.response?.data?.error || error.message;
+    } finally {
+      this.loading = false;
+    }
+  },
+  
+  async deleteItem(objectId) {
+    this.loading = true;
+    this.error = null;
+    
+    try {
+      const { default: parseAxios } = await import('/utils/axios.js');
+      
+      await parseAxios.delete(`/classes/MyClass/${objectId}`);
+      this.items = this.items.filter(item => item.objectId !== objectId);
+    } catch (error) {
+      this.error = error.response?.data?.error || error.message;
+    } finally {
+      this.loading = false;
+    }
+  }
+}" x-init="fetchItems()">
+  <!-- Votre interface utilisateur ici -->
+  <template x-for="item in items" :key="item.objectId">
+    <div>
+      <span x-text="item.name"></span>
+      <button @click="deleteItem(item.objectId)">Supprimer</button>
+    </div>
+  </template>
+  
+  <form @submit.prevent="createItem">
+    <input type="text" x-model="newItem.name" placeholder="Nom">
+    <input type="text" x-model="newItem.description" placeholder="Description">
+    <button type="submit" :disabled="loading">Créer</button>
+  </form>
+  
+  <div x-show="error" x-text="error" style="color: red;"></div>
+</div>
 ```
 
 ## Opérations CRUD de base
@@ -43,24 +132,17 @@ export default parseApi;
 ### Créer un objet (Create)
 
 ```javascript
-import parseApi from './parse-api';
-
+// Dans un composant Alpine.js
 async function createObject(className, data) {
   try {
-    const response = await parseApi.post('/classes/' + className, data);
-    console.log('Objet créé:', response.data);
+    const { default: parseAxios } = await import('/utils/axios.js');
+    const response = await parseAxios.post(`/classes/${className}`, data);
     return response.data;
   } catch (error) {
-    console.error('Erreur lors de la création:', error.response?.data || error.message);
+    console.error('Erreur:', error.response?.data || error.message);
     throw error;
   }
 }
-
-// Exemple d'utilisation
-createObject('MaClasse', {
-  nom: 'Exemple',
-  description: 'Un exemple de création'
-});
 ```
 
 ### Lire des objets (Read)
@@ -70,17 +152,14 @@ createObject('MaClasse', {
 ```javascript
 async function getObject(className, objectId) {
   try {
-    const response = await parseApi.get(`/classes/${className}/${objectId}`);
-    console.log('Objet récupéré:', response.data);
+    const { default: parseAxios } = await import('/utils/axios.js');
+    const response = await parseAxios.get(`/classes/${className}/${objectId}`);
     return response.data;
   } catch (error) {
-    console.error('Erreur lors de la récupération:', error.response?.data || error.message);
+    console.error('Erreur:', error.response?.data || error.message);
     throw error;
   }
 }
-
-// Exemple d'utilisation
-getObject('MaClasse', 'ID_DE_L_OBJET');
 ```
 
 #### Récupérer plusieurs objets avec une requête
@@ -88,31 +167,14 @@ getObject('MaClasse', 'ID_DE_L_OBJET');
 ```javascript
 async function queryObjects(className, params = {}) {
   try {
-    const response = await parseApi.get(`/classes/${className}`, { params });
-    console.log('Objets trouvés:', response.data.results);
+    const { default: parseAxios } = await import('/utils/axios.js');
+    const response = await parseAxios.get(`/classes/${className}`, { params });
     return response.data.results;
   } catch (error) {
-    console.error('Erreur lors de la requête:', error.response?.data || error.message);
+    console.error('Erreur:', error.response?.data || error.message);
     throw error;
   }
 }
-
-// Exemples d'utilisation
-// 1. Récupérer tous les objets
-queryObjects('MaClasse');
-
-// 2. Avec une condition where
-queryObjects('MaClasse', {
-  where: JSON.stringify({
-    nom: 'Exemple'
-  })
-});
-
-// 3. Avec limite et tri
-queryObjects('MaClasse', {
-  limit: 10,
-  order: '-createdAt'
-});
 ```
 
 ### Mettre à jour un objet (Update)
@@ -120,19 +182,14 @@ queryObjects('MaClasse', {
 ```javascript
 async function updateObject(className, objectId, updates) {
   try {
-    const response = await parseApi.put(`/classes/${className}/${objectId}`, updates);
-    console.log('Objet mis à jour:', response.data);
+    const { default: parseAxios } = await import('/utils/axios.js');
+    const response = await parseAxios.put(`/classes/${className}/${objectId}`, updates);
     return response.data;
   } catch (error) {
-    console.error('Erreur lors de la mise à jour:', error.response?.data || error.message);
+    console.error('Erreur:', error.response?.data || error.message);
     throw error;
   }
 }
-
-// Exemple d'utilisation
-updateObject('MaClasse', 'ID_DE_L_OBJET', {
-  description: 'Description mise à jour'
-});
 ```
 
 ### Supprimer un objet (Delete)
@@ -140,165 +197,29 @@ updateObject('MaClasse', 'ID_DE_L_OBJET', {
 ```javascript
 async function deleteObject(className, objectId) {
   try {
-    const response = await parseApi.delete(`/classes/${className}/${objectId}`);
-    console.log('Objet supprimé:', response.data);
+    const { default: parseAxios } = await import('/utils/axios.js');
+    const response = await parseAxios.delete(`/classes/${className}/${objectId}`);
     return response.data;
   } catch (error) {
-    console.error('Erreur lors de la suppression:', error.response?.data || error.message);
+    console.error('Erreur:', error.response?.data || error.message);
     throw error;
   }
 }
-
-// Exemple d'utilisation
-deleteObject('MaClasse', 'ID_DE_L_OBJET');
-```
-
-## Requêtes avancées
-
-### Requêtes avec conditions complexes
-
-```javascript
-// Requête avec plusieurs conditions
-queryObjects('MaClasse', {
-  where: JSON.stringify({
-    age: { $gt: 18 },
-    nom: { $regex: '^Exemple' },
-    $or: [
-      { statut: 'actif' },
-      { statut: 'en_attente' }
-    ]
-  })
-});
-```
-
-### Requêtes avec inclusion de relations
-
-```javascript
-// Inclure des objets liés
-queryObjects('MaClasse', {
-  include: 'relationField',
-  where: JSON.stringify({
-    relationField: { $exists: true }
-  })
-});
-```
-
-### Requêtes avec comptage
-
-```javascript
-async function countObjects(className, params = {}) {
-  try {
-    const response = await parseApi.get(`/classes/${className}`, { 
-      params: { 
-        ...params, 
-        count: 1,
-        limit: 0
-      } 
-    });
-    console.log('Nombre d\'objets:', response.data.count);
-    return response.data.count;
-  } catch (error) {
-    console.error('Erreur lors du comptage:', error.response?.data || error.message);
-    throw error;
-  }
-}
-
-// Exemple d'utilisation
-countObjects('MaClasse', {
-  where: JSON.stringify({
-    statut: 'actif'
-  })
-});
-```
-
-## Gestion des erreurs
-
-Parse retourne des codes d'erreur spécifiques que vous pouvez gérer:
-
-```javascript
-async function safeParseOperation(operation) {
-  try {
-    return await operation();
-  } catch (error) {
-    if (error.response) {
-      const { status, data } = error.response;
-      
-      switch(status) {
-        case 400:
-          console.error('Requête invalide:', data.error);
-          break;
-        case 401:
-          console.error('Non autorisé - vérifiez vos clés Parse');
-          break;
-        case 403:
-          console.error('Accès refusé');
-          break;
-        case 404:
-          console.error('Objet non trouvé');
-          break;
-        default:
-          console.error('Erreur Parse:', status, data);
-      }
-    } else {
-      console.error('Erreur réseau:', error.message);
-    }
-    
-    throw error;
-  }
-}
-
-// Utilisation
-safeParseOperation(() => createObject('MaClasse', { nom: 'Test' }));
 ```
 
 ## Bonnes pratiques
 
-1. **Sécurité**: Ne jamais exposer vos clés Parse dans le code côté client
-2. **Gestion des erreurs**: Toujours implémenter une gestion d'erreurs robuste
-3. **Pagination**: Utiliser `limit` et `skip` pour les grandes collections
-4. **Cache**: Envisager de cacher les résultats des requêtes fréquentes
-5. **Logging**: Logger les requêtes et réponses pour le débogage
-
-## Exemple complet
-
-```javascript
-import parseApi from './parse-api';
-
-class ParseService {
-  constructor(className) {
-    this.className = className;
-  }
-
-  async create(data) {
-    return parseApi.post(`/classes/${this.className}`, data);
-  }
-
-  async get(id) {
-    return parseApi.get(`/classes/${this.className}/${id}`);
-  }
-
-  async query(params = {}) {
-    return parseApi.get(`/classes/${this.className}`, { params });
-  }
-
-  async update(id, data) {
-    return parseApi.put(`/classes/${this.className}/${id}`, data);
-  }
-
-  async delete(id) {
-    return parseApi.delete(`/classes/${this.className}/${id}`);
-  }
-}
-
-// Utilisation
-export const UserService = new ParseService('User');
-export const ProductService = new ParseService('Product');
-```
+1. **Instance unique**: Utilisez toujours la même instance Axios configurée pour éviter les duplications
+2. **Pas de fichier parse-api**: Ne créez pas de fichier séparé pour les requêtes Parse
+3. **Requêtes dans Alpine.js**: Faites les requêtes directement dans vos composants Alpine.js
+4. **Gestion des erreurs**: Implémentez toujours une gestion d'erreurs appropriée
+5. **Chargement dynamique**: Utilisez `import()` dynamique pour éviter les problèmes de chargement
+6. **Sécurité**: Ne jamais exposer vos clés Parse dans le code côté client en production
 
 ## Ressources supplémentaires
 
 - [Documentation officielle Parse REST API](https://docs.parseplatform.org/rest/guide/)
 - [Documentation Axios](https://axios-http.com/docs/intro)
-- [Parse Server Guide](https://github.com/parse-community/parse-server)
+- [Documentation Alpine.js](https://alpinejs.dev/)
 
-Ce guide couvre les bases pour interagir avec Parse via Axios. Pour des fonctionnalités plus avancées comme les Cloud Functions, les fichiers, ou les sessions utilisateur, consultez la documentation officielle Parse.
+Ce guide montre comment utiliser Axios REST directement dans les composants Alpine.js sans créer de fichiers intermédiaires. Pour des fonctionnalités avancées, consultez la documentation officielle Parse.

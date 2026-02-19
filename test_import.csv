@@ -1,4 +1,0 @@
-email_contact,montant,date_echeance,role_contact,url_facture,num_facture
-oswald@steriods.com,1200.50,15/01/2026,payeur,ftp://files/INV-01.pdf,INV-01
-jane.doe@example.com,850.00,01/02/2026,apport. affaires,ftp://files/INV-02.pdf,INV-02
-test.user@markidiags.com,1500.75,10/03/2026,payeur,ftp://files/INV-03.pdf,INV-03
