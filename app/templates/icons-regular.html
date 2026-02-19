@@ -1,0 +1,551 @@
+{% extends "base.html" %} {% block title %}LineIcons - Marki{% endblock %} {%
+block content %}
+<div class="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <header class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-gray-900 mb-4">LineIcons</h1>
+            <p class="text-xl text-gray-600 mb-8">
+                Collection d'icônes LineIcons
+            </p>
+
+            <div class="bg-white rounded-lg shadow-sm p-6 mb-8">
+                <h2 class="text-2xl font-bold text-gray-900 mb-4">
+                    Informations
+                </h2>
+                <p class="text-gray-600 mb-4">
+                    Cette page affiche les icônes LineIcons (version 5.1).
+                </p>
+                <p class="text-gray-600 mb-4">
+                    Toutes ces icônes sont gratuites et peuvent être utilisées
+                    sans problème de licence.
+                </p>
+                <div class="flex flex-wrap gap-2 justify-center">
+                    <span
+                        class="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full"
+                        >Gratuit</span
+                    >
+                    <span
+                        class="px-3 py-1 bg-green-100 text-green-800 text-sm font-medium rounded-full"
+                        >LineIcons</span
+                    >
+                    <span
+                        class="px-3 py-1 bg-purple-100 text-purple-800 text-sm font-medium rounded-full"
+                        >Version 5.1</span
+                    >
+                    <span
+                        class="px-3 py-1 bg-sky-100 text-sky-800 text-sm font-medium rounded-full"
+                    >
+                        <i class="lni lni-search mr-1"></i> Recherche
+                    </span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Search Box -->
+        <div class="mb-8">
+            <div class="max-w-md mx-auto">
+                <div class="relative">
+                    <div
+                        class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
+                    >
+                        <i class="lni lni-search text-sky-900"></i>
+                    </div>
+                    <input
+                        type="text"
+                        id="icon-search"
+                        class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-sky-500 focus:border-sky-500"
+                        placeholder="Rechercher une icône..."
+                    />
+                </div>
+            </div>
+        </div>
+
+        <!-- Icons Grid -->
+        <div
+            class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4"
+            id="icons-grid"
+        >
+            <!-- Icons will be generated here by JavaScript -->
+        </div>
+
+        <!-- Footer -->
+        <footer class="bg-white rounded-lg shadow-sm p-6 mt-12 text-center">
+            <p class="text-gray-600 mb-2">
+                Ces icônes font partie du pack gratuit de LineIcons.
+            </p>
+            <p class="text-sm text-gray-500 mb-4">
+                Pour voir toutes les icônes disponibles, consultez la
+                <a
+                    href="https://lineicons.com/icons/"
+                    class="text-sky-500 hover:text-sky-600"
+                    target="_blank"
+                    >documentation officielle</a
+                >.
+            </p>
+            <div class="mt-4">
+                <a
+                    href="/"
+                    class="inline-block bg-sky-500 hover:bg-sky-600 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                >
+                    Retour à l'accueil
+                </a>
+            </div>
+        </footer>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+    // Liste des icônes LineIcons à afficher
+    const lineIcons = [
+        { name: "bar-chart-4", display: "bar-chart-4-duo-tone" },
+        { name: "bookmark-1", display: "bookmark-1" },
+        { name: "brush-1-rotated", display: "brush-1-rotated" },
+        { name: "brush-2", display: "brush-2" },
+        { name: "buildings-1", display: "buildings-1" },
+        { name: "burger-drink", display: "burger-drink" },
+        { name: "cart-1", display: "cart-1" },
+        { name: "cloud-bolt-2", display: "cloud-bolt-2" },
+        { name: "cloud-sun", display: "cloud-sun" },
+        { name: "colour-palette-3", display: "colour-palette-3" },
+        { name: "layers-1", display: "layers-1" },
+        { name: "layout-9", display: "layout-9" },
+        { name: "life-guard-tube-1", display: "life-guard-tube-1" },
+        { name: "location-arrow-right", display: "location-arrow-right" },
+        { name: "road-1", display: "road-1" },
+        { name: "shield-dollar", display: "shield-dollar" },
+        { name: "slice-2", display: "slice-2" },
+        {
+            name: "sliders-horizontal-square-2",
+            display: "sliders-horizontal-square-2",
+        },
+        { name: "aeroplane-1", display: "aeroplane-1" },
+        { name: "agenda", display: "agenda" },
+        { name: "alarm-1", display: "alarm-1" },
+        { name: "align-text-center", display: "align-text-center" },
+        { name: "align-text-left", display: "align-text-left" },
+        { name: "align-text-right", display: "align-text-right" },
+        { name: "ambulance-1", display: "ambulance-1" },
+        { name: "anchor", display: "anchor" },
+        { name: "angle-double-down", display: "angle-double-down" },
+        { name: "angle-double-left", display: "angle-double-left" },
+        { name: "angle-double-right", display: "angle-double-right" },
+        { name: "angle-double-up", display: "angle-double-up" },
+        { name: "arrow-all-direction", display: "arrow-all-direction" },
+        { name: "arrow-angular-top-left", display: "arrow-angular-top-left" },
+        { name: "arrow-angular-top-right", display: "arrow-angular-top-right" },
+        {
+            name: "arrow-both-direction-horizontal-1",
+            display: "arrow-both-direction-horizontal-1",
+        },
+        {
+            name: "arrow-both-direction-vertical-1",
+            display: "arrow-both-direction-vertical-1",
+        },
+        { name: "arrow-downward", display: "arrow-downward" },
+        { name: "arrow-left", display: "arrow-left" },
+        { name: "arrow-left-circle", display: "arrow-left-circle" },
+        { name: "arrow-right", display: "arrow-right" },
+        { name: "arrow-right-circle", display: "arrow-right-circle" },
+        { name: "arrow-upward", display: "arrow-upward" },
+        { name: "badge-decagram-percent", display: "badge-decagram-percent" },
+        { name: "balloons", display: "balloons" },
+        { name: "ban-2", display: "ban-2" },
+        { name: "bar-chart-dollar", display: "bar-chart-dollar" },
+        { name: "basket-shopping-3", display: "basket-shopping-3" },
+        { name: "beat", display: "beat" },
+        { name: "bell-1", display: "bell-1" },
+        { name: "bike", display: "bike" },
+        { name: "bluetooth", display: "bluetooth" },
+        { name: "board-writing-3", display: "board-writing-3" },
+        { name: "bold", display: "bold" },
+        { name: "bolt-2", display: "bolt-2" },
+        { name: "bolt-3", display: "bolt-3" },
+        { name: "book-1", display: "book-1" },
+        { name: "bookmark-1", display: "bookmark-1" },
+        { name: "bookmark-circle", display: "bookmark-circle" },
+        { name: "bookmark-circle", display: "bookmark-circle" },
+        { name: "books-2", display: "books-2" },
+        { name: "box-archive-1", display: "box-archive-1" },
+        { name: "box-closed", display: "box-closed" },
+        { name: "box-gift-1", display: "box-gift-1" },
+        { name: "bricks", display: "bricks" },
+        { name: "bridge-3", display: "bridge-3" },
+        { name: "briefcase-1", display: "briefcase-1" },
+        { name: "briefcase-2", display: "briefcase-2" },
+        { name: "briefcase-plus-1", display: "briefcase-plus-1" },
+        { name: "bug-1", display: "bug-1" },
+        { name: "bulb-2", display: "bulb-2" },
+        { name: "bulb-4", display: "bulb-4" },
+        { name: "burger-1", display: "burger-1" },
+        { name: "bus-1", display: "bus-1" },
+        { name: "busket-ball", display: "busket-ball" },
+        { name: "cake-1", display: "cake-1" },
+        { name: "calculator-1", display: "calculator-1" },
+        { name: "calculator-2", display: "calculator-2" },
+        { name: "calendar-days", display: "calendar-days" },
+        { name: "camera-1", display: "camera-1" },
+        { name: "camera-movie-1", display: "camera-movie-1" },
+        { name: "candy-cane-2", display: "candy-cane-2" },
+        { name: "candy-round-1", display: "candy-round-1" },
+        { name: "capsule-1", display: "capsule-1" },
+        { name: "car-2", display: "car-2" },
+        { name: "car-4", display: "car-4" },
+        { name: "car-6", display: "car-6" },
+        { name: "caravan-1", display: "caravan-1" },
+        { name: "cart-2", display: "cart-2" },
+        { name: "certificate-badge-1", display: "certificate-badge-1" },
+        { name: "chat-bubble-2", display: "chat-bubble-2" },
+        { name: "check", display: "check" },
+        { name: "check-circle-1", display: "check-circle-1" },
+        { name: "check-square-2", display: "check-square-2" },
+        { name: "chevron-down", display: "chevron-down" },
+        { name: "chevron-down-circle", display: "chevron-down-circle" },
+        { name: "chevron-left", display: "chevron-left" },
+        { name: "chevron-left-circle", display: "chevron-left-circle" },
+        { name: "chevron-up", display: "chevron-up" },
+        { name: "chevron-up-circle", display: "chevron-up-circle" },
+        { name: "clipboard", display: "clipboard" },
+        { name: "cloud-2", display: "cloud-2" },
+        { name: "cloud-bolt-1", display: "cloud-bolt-1" },
+        { name: "cloud-check-circle", display: "cloud-check-circle" },
+        { name: "cloud-download", display: "cloud-download" },
+        { name: "cloud-iot-2", display: "cloud-iot-2" },
+        { name: "cloud-rain", display: "cloud-rain" },
+        { name: "cloud-refresh-clockwise", display: "cloud-refresh-clockwise" },
+        { name: "cloud-upload", display: "cloud-upload" },
+        { name: "code-1", display: "code-1" },
+        { name: "code-s", display: "code-s" },
+        { name: "coffee-cup-2", display: "coffee-cup-2" },
+        { name: "comment-1", display: "comment-1" },
+        { name: "comment-1-share", display: "comment-1-share" },
+        { name: "comment-1-text", display: "comment-1-text" },
+        { name: "compass-drafting-2", display: "compass-drafting-2" },
+        { name: "crane-4", display: "crane-4" },
+        { name: "credit-card-multiple", display: "credit-card-multiple" },
+        { name: "crop-2", display: "crop-2" },
+        { name: "crown-3", display: "crown-3" },
+        { name: "dashboard-square-1", display: "dashboard-square-1" },
+        { name: "database-2", display: "database-2" },
+        { name: "diamonds-1", display: "diamonds-1" },
+        { name: "diamonds-2", display: "diamonds-2" },
+        { name: "direction-ltr", display: "direction-ltr" },
+        { name: "direction-rtl", display: "direction-rtl" },
+        { name: "dollar", display: "dollar" },
+        { name: "dollar-circle", display: "dollar-circle" },
+        { name: "double-quotes-end-1", display: "double-quotes-end-1" },
+        { name: "download-1", display: "download-1" },
+        { name: "download-circle-1", display: "download-circle-1" },
+        { name: "dumbbell-1", display: "dumbbell-1" },
+        { name: "emoji-expressionless", display: "emoji-expressionless" },
+        {
+            name: "emoji-expressionless-flat-eyes",
+            display: "emoji-expressionless-flat-eyes",
+        },
+        { name: "emoji-grin", display: "emoji-grin" },
+        { name: "emoji-sad", display: "emoji-sad" },
+        { name: "emoji-smile", display: "emoji-smile" },
+        { name: "emoji-smile-side", display: "emoji-smile-side" },
+        { name: "emoji-smile-sunglass", display: "emoji-smile-sunglass" },
+        { name: "emoji-smile-tongue", display: "emoji-smile-tongue" },
+        { name: "enter", display: "enter" },
+        { name: "envelope-1", display: "envelope-1" },
+        { name: "eraser-1", display: "eraser-1" },
+        { name: "euro", display: "euro" },
+        { name: "exit", display: "exit" },
+        { name: "exit-down", display: "exit-down" },
+        { name: "exit-up", display: "exit-up" },
+        { name: "expand-arrow-1", display: "expand-arrow-1" },
+        { name: "expand-square-4", display: "expand-square-4" },
+        { name: "eye", display: "eye" },
+        { name: "file-format-zip", display: "file-format-zip" },
+        { name: "file-multiple", display: "file-multiple" },
+        { name: "file-pencil", display: "file-pencil" },
+        { name: "file-plus-circle", display: "file-plus-circle" },
+        { name: "file-question", display: "file-question" },
+        { name: "file-xmark", display: "file-xmark" },
+        { name: "firework-rocket-4", display: "firework-rocket-4" },
+        { name: "flag-1", display: "flag-1" },
+        { name: "flag-2", display: "flag-2" },
+        { name: "floppy-disk-1", display: "floppy-disk-1" },
+        { name: "flower-2", display: "flower-2" },
+        { name: "folder-1", display: "folder-1" },
+        { name: "funnel-1", display: "funnel-1" },
+        { name: "gallery", display: "gallery" },
+        { name: "game-pad-modern-1", display: "game-pad-modern-1" },
+        { name: "gauge-1", display: "gauge-1" },
+        { name: "gear-1", display: "gear-1" },
+        { name: "gears-3", display: "gears-3" },
+        { name: "glass-juice-1", display: "glass-juice-1" },
+        { name: "globe-1", display: "globe-1" },
+        { name: "globe-1", display: "globe-1" },
+        { name: "globe-stand", display: "globe-stand" },
+        { name: "graduation-cap-1", display: "graduation-cap-1" },
+        { name: "hammer-1", display: "hammer-1" },
+        { name: "hammer-2", display: "hammer-2" },
+        { name: "hand-mic", display: "hand-mic" },
+        { name: "hand-shake", display: "hand-shake" },
+        { name: "hand-stop", display: "hand-stop" },
+        { name: "hand-taking-dollar", display: "hand-taking-dollar" },
+        { name: "hand-taking-leaf-1", display: "hand-taking-leaf-1" },
+        { name: "hand-taking-user", display: "hand-taking-user" },
+        { name: "hat-chef-3", display: "hat-chef-3" },
+        { name: "headphone-1", display: "headphone-1" },
+        { name: "heart", display: "heart" },
+        { name: "helicopter-2", display: "helicopter-2" },
+        { name: "helmet-safety-1", display: "helmet-safety-1" },
+        { name: "hierarchy-1", display: "hierarchy-1" },
+        { name: "highlighter-1", display: "highlighter-1" },
+        { name: "highlighter-2", display: "highlighter-2" },
+        { name: "home-2", display: "home-2" },
+        { name: "hospital-2", display: "hospital-2" },
+        { name: "hourglass", display: "hourglass" },
+        { name: "indent", display: "indent" },
+        { name: "injection-1", display: "injection-1" },
+        { name: "island-2", display: "island-2" },
+        { name: "key-1", display: "key-1" },
+        { name: "keyboard", display: "keyboard" },
+        { name: "knife-fork-1", display: "knife-fork-1" },
+        { name: "label-dollar-2", display: "label-dollar-2" },
+        { name: "laptop-2", display: "laptop-2" },
+        { name: "laptop-phone", display: "laptop-phone" },
+        { name: "layout-26", display: "layout-26" },
+        { name: "leaf-1", display: "leaf-1" },
+        { name: "leaf-6", display: "leaf-6" },
+        { name: "line-dashed", display: "line-dashed" },
+        { name: "line-dotted", display: "line-dotted" },
+        { name: "line-height", display: "line-height" },
+        { name: "link-2-angular-right", display: "link-2-angular-right" },
+        { name: "link-2-angular-right", display: "link-2-angular-right" },
+        { name: "locked-1", display: "locked-1" },
+        { name: "locked-2", display: "locked-2" },
+        { name: "magnet", display: "magnet" },
+        { name: "map-marker-1", display: "map-marker-1" },
+        { name: "map-marker-5", display: "map-marker-5" },
+        { name: "map-pin-5", display: "map-pin-5" },
+        { name: "megaphone-1", display: "megaphone-1" },
+        { name: "menu-cheesburger", display: "menu-cheesburger" },
+        { name: "menu-hamburger-1", display: "menu-hamburger-1" },
+        { name: "menu-meatballs-1", display: "menu-meatballs-1" },
+        { name: "menu-meatballs-2", display: "menu-meatballs-2" },
+        { name: "message-2", display: "message-2" },
+        { name: "message-2-question", display: "message-2-question" },
+        { name: "message-3-text", display: "message-3-text" },
+        { name: "microphone-1", display: "microphone-1" },
+        { name: "microscope", display: "microscope" },
+        { name: "minus", display: "minus" },
+        { name: "minus-circle", display: "minus-circle" },
+        { name: "monitor", display: "monitor" },
+        { name: "monitor-code", display: "monitor-code" },
+        { name: "monitor-mac", display: "monitor-mac" },
+        { name: "moon-half-right-5", display: "moon-half-right-5" },
+        { name: "mountains-2", display: "mountains-2" },
+        { name: "mouse-2", display: "mouse-2" },
+        { name: "mushroom-1", display: "mushroom-1" },
+        { name: "mushroom-5", display: "mushroom-5" },
+        { name: "music", display: "music" },
+        { name: "next-step-2", display: "next-step-2" },
+        { name: "notebook-1", display: "notebook-1" },
+        { name: "outdent", display: "outdent" },
+        { name: "page-break-1", display: "page-break-1" },
+        { name: "pagination", display: "pagination" },
+        { name: "paint-bucket", display: "paint-bucket" },
+        { name: "paint-roller-1", display: "paint-roller-1" },
+        { name: "paperclip-1", display: "paperclip-1" },
+        { name: "party-flags", display: "party-flags" },
+        { name: "party-spray", display: "party-spray" },
+        { name: "pause", display: "pause" },
+        { name: "pen-to-square", display: "pen-to-square" },
+        { name: "pencil-1", display: "pencil-1" },
+        { name: "phone", display: "phone" },
+        { name: "photos", display: "photos" },
+        { name: "pie-chart-2", display: "pie-chart-2" },
+        { name: "pilcrow", display: "pilcrow" },
+        { name: "pizza-2", display: "pizza-2" },
+        { name: "placeholder-dollar", display: "placeholder-dollar" },
+        { name: "play", display: "play" },
+        { name: "plug-1", display: "plug-1" },
+        { name: "plus", display: "plus" },
+        { name: "pound", display: "pound" },
+        { name: "power-button", display: "power-button" },
+        { name: "previous-step-2", display: "previous-step-2" },
+        { name: "printer", display: "printer" },
+        { name: "question-mark", display: "question-mark" },
+        { name: "question-mark-circle", display: "question-mark-circle" },
+        {
+            name: "refresh-circle-1-clockwise",
+            display: "refresh-circle-1-clockwise",
+        },
+        { name: "refresh-dollar-1", display: "refresh-dollar-1" },
+        { name: "refresh-user-1", display: "refresh-user-1" },
+        { name: "rocket-5", display: "rocket-5" },
+        { name: "route-1", display: "route-1" },
+        { name: "rss-right", display: "rss-right" },
+        { name: "ruler-1", display: "ruler-1" },
+        { name: "ruler-pen", display: "ruler-pen" },
+        { name: "rupee", display: "rupee" },
+        { name: "school-bench-1", display: "school-bench-1" },
+        { name: "school-bench-2", display: "school-bench-2" },
+        { name: "scissors-1-vertical", display: "scissors-1-vertical" },
+        { name: "scoter", display: "scoter" },
+        { name: "scroll-down-2", display: "scroll-down-2" },
+        { name: "search-1", display: "search-1" },
+        { name: "search-2", display: "search-2" },
+        { name: "search-minus", display: "search-minus" },
+        { name: "search-plus", display: "search-plus" },
+        { name: "search-text", display: "search-text" },
+        { name: "select-cursor-1", display: "select-cursor-1" },
+        { name: "seo-monitor", display: "seo-monitor" },
+        { name: "service-bell-1", display: "service-bell-1" },
+        { name: "share-1", display: "share-1" },
+        { name: "share-1-circle", display: "share-1-circle" },
+        { name: "share-2", display: "share-2" },
+        { name: "shield-2", display: "shield-2" },
+        { name: "shield-2-check", display: "shield-2-check" },
+        { name: "shift-left", display: "shift-left" },
+        { name: "shift-right", display: "shift-right" },
+        { name: "ship-1", display: "ship-1" },
+        { name: "shirt-1", display: "shirt-1" },
+        { name: "shovel", display: "shovel" },
+        { name: "shuffle", display: "shuffle" },
+        { name: "sign-post-left", display: "sign-post-left" },
+        { name: "signs-post-2", display: "signs-post-2" },
+        { name: "sort-alphabetical", display: "sort-alphabetical" },
+        { name: "sort-high-to-low", display: "sort-high-to-low" },
+        { name: "spellcheck", display: "spellcheck" },
+        { name: "spinner-2-sacle", display: "spinner-2-sacle" },
+        { name: "spinner-3", display: "spinner-3" },
+        { name: "sports", display: "sports" },
+        { name: "stamp", display: "stamp" },
+        { name: "star-fat", display: "star-fat" },
+        { name: "star-fat-half-2", display: "star-fat-half-2" },
+        { name: "star-sharp-disabled", display: "star-sharp-disabled" },
+        { name: "stethoscope-1", display: "stethoscope-1" },
+        { name: "stopwatch", display: "stopwatch" },
+        { name: "storage-hdd-2", display: "storage-hdd-2" },
+        { name: "strikethrough-1", display: "strikethrough-1" },
+        { name: "sun-1", display: "sun-1" },
+        { name: "surfboard-2", display: "surfboard-2" },
+        { name: "tab", display: "tab" },
+        { name: "target-user", display: "target-user" },
+        { name: "telephone-1", display: "telephone-1" },
+        { name: "telephone-3", display: "telephone-3" },
+        { name: "text-format", display: "text-format" },
+        { name: "text-format-remove", display: "text-format-remove" },
+        { name: "text-paragraph", display: "text-paragraph" },
+        { name: "thumbs-down-3", display: "thumbs-down-3" },
+        { name: "thumbs-up-3", display: "thumbs-up-3" },
+        { name: "ticket-1", display: "ticket-1" },
+        { name: "tickets-3", display: "tickets-3" },
+        { name: "tower-broadcast-1", display: "tower-broadcast-1" },
+        { name: "train-1", display: "train-1" },
+        { name: "train-3", display: "train-3" },
+        { name: "trash-3", display: "trash-3" },
+        { name: "tree-2", display: "tree-2" },
+        { name: "trees-3", display: "trees-3" },
+        { name: "trend-down-1", display: "trend-down-1" },
+        { name: "trend-up-1", display: "trend-up-1" },
+        { name: "trophy-1", display: "trophy-1" },
+        { name: "trowel-1", display: "trowel-1" },
+        { name: "truck-delivery-1", display: "truck-delivery-1" },
+        { name: "underline", display: "underline" },
+        { name: "unlink-2-angular-eft", display: "unlink-2-angular-eft" },
+        { name: "unlink-2-angular-eft", display: "unlink-2-angular-eft" },
+        { name: "unlocked-2", display: "unlocked-2" },
+        { name: "upload-1", display: "upload-1" },
+        { name: "upload-circle-1", display: "upload-circle-1" },
+        { name: "user-4", display: "user-4" },
+        { name: "user-multiple-4", display: "user-multiple-4" },
+        { name: "vector-nodes-6", display: "vector-nodes-6" },
+        { name: "vector-nodes-7", display: "vector-nodes-7" },
+        { name: "volume-1", display: "volume-1" },
+        { name: "volume-high", display: "volume-high" },
+        { name: "volume-low", display: "volume-low" },
+        { name: "volume-mute", display: "volume-mute" },
+        { name: "volume-off", display: "volume-off" },
+        { name: "wallet-1", display: "wallet-1" },
+        { name: "watch-beat-1", display: "watch-beat-1" },
+        { name: "water-drop-1", display: "water-drop-1" },
+        { name: "weight-machine-1", display: "weight-machine-1" },
+        { name: "wheelbarrow-empty", display: "wheelbarrow-empty" },
+        { name: "wheelchair-1", display: "wheelchair-1" },
+        { name: "www", display: "www" },
+        { name: "www", display: "www" },
+        { name: "www-cursor", display: "www-cursor" },
+        { name: "www-cursor", display: "www-cursor" },
+        { name: "xmark", display: "xmark" },
+        { name: "xmark-circle", display: "xmark-circle" },
+        { name: "yen", display: "yen" },
+        { name: "zero-size", display: "zero-size" },
+    ];
+
+    // Fonction pour afficher les icônes
+    function displayIcons(icons) {
+        const grid = document.getElementById("icons-grid");
+        grid.innerHTML = "";
+
+        icons.forEach((icon) => {
+            const iconDiv = document.createElement("div");
+            iconDiv.className =
+                "bg-white rounded-lg shadow-sm p-4 text-center hover:shadow-md transition-shadow icon-item";
+            iconDiv.innerHTML = `
+                <div class="text-3xl mb-2 text-sky-900">
+                    <i class="lni lni-${icon.name}"></i>
+                </div>
+                <p class="text-sm text-gray-600 font-medium truncate">lni-${icon.name}</p>
+                <p class="text-xs text-gray-400 mt-1">LineIcons</p>
+            `;
+            grid.appendChild(iconDiv);
+        });
+    }
+
+    // Fonction de recherche
+    function searchIcons() {
+        const searchTerm = document
+            .getElementById("icon-search")
+            .value.toLowerCase();
+
+        if (searchTerm === "") {
+            displayIcons(lineIcons);
+        } else {
+            const filteredIcons = lineIcons.filter(
+                (icon) =>
+                    icon.name.toLowerCase().includes(searchTerm) ||
+                    icon.display.toLowerCase().includes(searchTerm),
+            );
+            displayIcons(filteredIcons);
+        }
+    }
+
+    // Initial display
+    displayIcons(lineIcons);
+
+    // Setup search
+    document
+        .getElementById("icon-search")
+        .addEventListener("input", searchIcons);
+
+    // Copy to clipboard functionality
+    document.addEventListener("click", function (e) {
+        if (e.target.classList.contains("icon-item")) {
+            const iconName = e.target.querySelector(".text-sm").textContent;
+            navigator.clipboard.writeText(iconName);
+
+            // Show feedback
+            const originalHTML = e.target.innerHTML;
+            e.target.innerHTML = `
+                <div class="text-3xl mb-2 text-green-500">
+                    <i class="lni lni-check-circle"></i>
+                </div>
+                <p class="text-sm text-green-600 font-medium">Copié !</p>
+                <p class="text-xs text-green-400 mt-1">${iconName}</p>
+            `;
+
+            setTimeout(() => {
+                e.target.innerHTML = originalHTML;
+            }, 1500);
+        }
+    });
+</script>
+{% endblock %} {% endblock %}

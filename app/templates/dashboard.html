@@ -1,0 +1,58 @@
+{% extends "base-app.html" %}
+
+{% block title %}Dashboard - Marki{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div class="bg-white rounded-lg shadow p-4">
+        <h3 class="text-lg font-semibold text-gray-800 mb-2">Clients</h3>
+        <p class="text-3xl font-bold text-sky-600">42</p>
+        <p class="text-sm text-gray-500 mt-1">Clients actifs</p>
+    </div>
+
+    <div class="bg-white rounded-lg shadow p-4">
+        <h3 class="text-lg font-semibold text-gray-800 mb-2">Projets</h3>
+        <p class="text-3xl font-bold text-sky-600">12</p>
+        <p class="text-sm text-gray-500 mt-1">Projets en cours</p>
+    </div>
+
+    <div class="bg-white rounded-lg shadow p-4">
+        <h3 class="text-lg font-semibold text-gray-800 mb-2">Factures</h3>
+        <p class="text-3xl font-bold text-sky-600">8</p>
+        <p class="text-sm text-gray-500 mt-1">Factures ce mois</p>
+    </div>
+
+    <div class="bg-white rounded-lg shadow p-4">
+        <h3 class="text-lg font-semibold text-gray-800 mb-2">Revenu</h3>
+        <p class="text-3xl font-bold text-sky-600">24 500 €</p>
+        <p class="text-sm text-gray-500 mt-1">Ce mois</p>
+    </div>
+</div>
+
+<div class="bg-white rounded-lg shadow p-6">
+    <h2 class="text-xl font-semibold text-gray-800 mb-4">Activité récente</h2>
+    <div class="space-y-4">
+        <div class="flex items-center p-3 border-b border-gray-100">
+            <i class="lni lni-user text-sky-900 mr-3"></i>
+            <div>
+                <p class="font-medium text-gray-800">Nouveau client ajouté</p>
+                <p class="text-sm text-gray-500">Client ABC - il y a 2 heures</p>
+            </div>
+        </div>
+        <div class="flex items-center p-3 border-b border-gray-100">
+            <i class="lni lni-files text-sky-900 mr-3"></i>
+            <div>
+                <p class="font-medium text-gray-800">Facture payée</p>
+                <p class="text-sm text-gray-500">Facture #1024 - il y a 1 jour</p>
+            </div>
+        </div>
+        <div class="flex items-center p-3">
+            <i class="lni lni-calendar text-sky-900 mr-3"></i>
+            <div>
+                <p class="font-medium text-gray-800">Rendez-vous planifié</p>
+                <p class="text-sm text-gray-500">Avec Client XYZ - demain à 14h</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

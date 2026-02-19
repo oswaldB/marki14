@@ -12,34 +12,34 @@ sleep 5
 echo "Vérification des conteneurs Docker..."
 docker ps -a
 
-# Démarrer le serveur Fastify
-echo "Démarrage du serveur Fastify..."
-cd back/fastify-server || exit
-echo "Installation des dépendances Fastify..."
-npm install
+# Démarrer le serveur Flask
+echo "Démarrage du serveur Flask..."
+cd app || exit
 
-echo "Lancement du serveur Fastify..."
-npm start &
-cd ../..
-sleep 3
+# Vérifier si l'environnement virtuel existe
+if [ ! -d "venv" ]; then
+    echo "Création de l'environnement virtuel Python..."
+    python3 -m venv venv
+fi
 
-# Démarrer le frontend Vite
-echo "Démarrage du frontend Vite..."
-cd front || exit
-echo "Installation des dépendances Vite..."
-npm install
+# Activer l'environnement virtuel et installer les dépendances
+source venv/bin/activate
+if ! pip show flask &> /dev/null; then
+    echo "Installation des dépendances Flask..."
+    pip install flask flask-livereload
+fi
 
-echo "Lancement du frontend Vite..."
-npm run dev -- --host &
+# Lancer le serveur Flask en arrière-plan
+echo "Lancement du serveur Flask..."
+python app.py &
+
+# Retourner au répertoire racine
 cd ..
-sleep 5
+
+sleep 3
 
 echo "✅ Le serveur Marki et tous les composants ont été démarrés."
 echo "==========================================="
-echo "Le frontend est accessible à : http://localhost:5000"
-echo "Le serveur Fastify est accessible à : http://localhost:3000"
-echo "Parse Dashboard est accessible à : http://localhost:4040"
+echo "Le serveur Flask est accessible à : http://localhost:5000"
+echo "Les conteneurs Docker sont en cours d'exécution"
 echo "==========================================="
-
-echo "Lancement Arthuro"
-# ./arthuro.sh &
