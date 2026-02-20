@@ -1,0 +1,105 @@
+{% extends "base-app.html" %}
+
+{% block main_content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-2xl font-bold text-gray-800 mb-6">Configuration Administrative</h1>
+
+    <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+        <div class="px-4 py-5 sm:px-6">
+            <h2 class="text-lg font-medium text-gray-900">Paramètres du système</h2>
+            <p class="mt-1 max-w-2xl text-sm text-gray-500">Configuration des paramètres de l'application</p>
+        </div>
+        <div class="border-t border-gray-200">
+            <div class="p-6">
+                <form>
+                    <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                        <div class="sm:col-span-6">
+                            <label for="app-name" class="block text-sm font-medium text-gray-700">
+                                Nom de l'application
+                            </label>
+                            <div class="mt-1">
+                                <input type="text" name="app-name" id="app-name" 
+                                       value="WebConsole Checker" 
+                                       class="shadow-sm focus:ring-sky-500 focus:border-sky-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                            </div>
+                        </div>
+
+                        <div class="sm:col-span-3">
+                            <label for="email-sender" class="block text-sm font-medium text-gray-700">
+                                Email expéditeur
+                            </label>
+                            <div class="mt-1">
+                                <input type="email" name="email-sender" id="email-sender" 
+                                       value="noreply@webconsole.com" 
+                                       class="shadow-sm focus:ring-sky-500 focus:border-sky-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                            </div>
+                        </div>
+
+                        <div class="sm:col-span-3">
+                            <label for="max-emails" class="block text-sm font-medium text-gray-700">
+                                Emails max par jour
+                            </label>
+                            <div class="mt-1">
+                                <input type="number" name="max-emails" id="max-emails" 
+                                       value="1000" 
+                                       class="shadow-sm focus:ring-sky-500 focus:border-sky-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                            </div>
+                        </div>
+
+                        <div class="sm:col-span-6">
+                            <label for="maintenance-mode" class="flex items-center">
+                                <input type="checkbox" name="maintenance-mode" id="maintenance-mode" 
+                                       class="h-4 w-4 text-sky-600 focus:ring-sky-500 border-gray-300 rounded">
+                                <span class="ml-2 block text-sm text-gray-900">
+                                    Mode maintenance
+                                </span>
+                            </label>
+                        </div>
+
+                        <div class="sm:col-span-6">
+                            <div class="flex justify-end">
+                                <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-sky-500 hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500">
+                                    <i class="las la-save mr-2"></i>
+                                    Enregistrer les modifications
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-8 bg-white shadow overflow-hidden sm:rounded-lg">
+        <div class="px-4 py-5 sm:px-6">
+            <h2 class="text-lg font-medium text-gray-900">Paramètres avancés</h2>
+        </div>
+        <div class="border-t border-gray-200">
+            <div class="p-6">
+                <div class="grid grid-cols-1 gap-4">
+                    <div>
+                        <label for="parse-server-url" class="block text-sm font-medium text-gray-700">
+                            URL du serveur Parse
+                        </label>
+                        <div class="mt-1">
+                            <input type="url" name="parse-server-url" id="parse-server-url" 
+                                   value="https://parse-server.example.com" 
+                                   class="shadow-sm focus:ring-sky-500 focus:border-sky-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                        </div>
+                    </div>
+                    <div>
+                        <label for="parse-app-id" class="block text-sm font-medium text-gray-700">
+                            Parse Application ID
+                        </label>
+                        <div class="mt-1">
+                            <input type="text" name="parse-app-id" id="parse-app-id" 
+                                   value="my-app-id" 
+                                   class="shadow-sm focus:ring-sky-500 focus:border-sky-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

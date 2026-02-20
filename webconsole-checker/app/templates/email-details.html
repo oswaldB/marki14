@@ -1,0 +1,81 @@
+{% extends "base-app.html" %}
+
+{% block main_content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- En-tête de la page -->
+    <div class="flex items-center justify-between mb-6">
+        <button onclick="window.history.back()" class="flex items-center text-sky-500 hover:text-sky-700">
+            <i class="las la-arrow-left mr-2"></i>
+            <span>Retour</span>
+        </button>
+        <h1 class="text-2xl font-bold text-gray-800">DÉTAILS DE L'EMAIL #<span>{{ email_id }}</span></h1>
+    </div>
+
+    <!-- Onglets -->
+    <div class="border-b border-gray-200 mb-6">
+        <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+            <a href="#" class="border-sky-500 text-sky-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" aria-current="page">
+                Détails
+            </a>
+            <a href="/email/{{ email_id }}/history" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                Historique
+            </a>
+        </nav>
+    </div>
+
+    <!-- Contenu principal -->
+    <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+        <div class="px-4 py-5 sm:px-6">
+            <h2 class="text-lg font-medium text-gray-900">Informations de l'email</h2>
+            <p class="mt-1 max-w-2xl text-sm text-gray-500">Détails de l'email planifié</p>
+        </div>
+        <div class="border-t border-gray-200">
+            <dl>
+                <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <dt class="text-sm font-medium text-gray-500">Objet</dt>
+                    <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">Réunion d'équipe importante</dd>
+                </div>
+                <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <dt class="text-sm font-medium text-gray-500">Destinataires</dt>
+                    <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">equipe@entreprise.com, manager@entreprise.com</dd>
+                </div>
+                <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <dt class="text-sm font-medium text-gray-500">Date d'envoi</dt>
+                    <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">15 octobre 2024 à 14:00</dd>
+                </div>
+                <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <dt class="text-sm font-medium text-gray-500">Statut</dt>
+                    <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                            Planifié
+                        </span>
+                    </dd>
+                </div>
+                <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <dt class="text-sm font-medium text-gray-500">Corps de l'email</dt>
+                    <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                        <div class="bg-white p-4 rounded border border-gray-200">
+                            <p>Bonjour l'équipe,</p>
+                            <p class="mt-2">Ceci est un email planifié pour rappeler la réunion importante de demain.</p>
+                            <p class="mt-2">Merci de vous préparer avec les documents nécessaires.</p>
+                            <p class="mt-2">Cordialement,<br>L'équipe de gestion</p>
+                        </div>
+                    </dd>
+                </div>
+            </dl>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="mt-6 flex justify-end space-x-3">
+        <button type="button" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500">
+            <i class="las la-edit mr-2"></i>
+            Modifier
+        </button>
+        <button type="button" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-sky-500 hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500">
+            <i class="las la-paper-plane mr-2"></i>
+            Envoyer maintenant
+        </button>
+    </div>
+</div>
+{% endblock %}

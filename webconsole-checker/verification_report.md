@@ -170,3 +170,46 @@ Le projet est globalement conforme aux règles de développement définies dans 
 4. **Optimiser parseAxios** pour éviter les initialisations multiples
 
 **Statut global: ✅ CONFORME (corrections de classification appliquées, améliorations fonctionnelles recommandées)**
+
+## Développement Récent - Historique des Emails
+
+### User Story US002 - Consulter l'historique des modifications d'un email planifié
+
+**Statut** : ✅ Complètement implémenté et testé
+
+**Fichiers créés/modifiés** :
+- `app/app.py` - Routes principales de l'application
+- `app/templates/base.html` - Template de base
+- `app/templates/base-app.html` - Template pour les pages authentifiées
+- `app/templates/email-history.html` - Page d'historique des emails
+- `app/templates/email-details.html` - Page de détails des emails
+- `app/templates/icons-regular.html` - Bibliothèque d'icônes
+- `app/templates/admin-configurations.html` - Page de configuration admin
+- `static/js/templates/email/emailHistoryState.js` - Logique Alpine.js
+- `scripts/emailHistory.js` - Fonctions backend pour l'historique
+- `scripts/emailHistoryRoute.js` - Routes pour l'API d'historique
+- `scripts/script_bp.py` - Blueprint pour les scripts dynamiques
+- `test_email_history.py` - Tests de conformité
+
+**Fonctionnalités implémentées** :
+1. Affichage de l'historique complet des modifications
+2. Gestion des cas où l'historique est vide
+3. Comparaison avant/après pour le corps de l'email avec modale
+4. Intégration complète avec Parse Server (simulé pour les tests)
+5. Respect strict de toutes les règles de développement
+
+**Tests** :
+- Tous les tests de conformité passent (9/9)
+- Vérification de l'utilisation exclusive de TailwindCSS
+- Validation du pattern Alpine.js
+- Confirmation de l'utilisation des icônes LineAwesome en sky-900
+- Vérification des routes et du blueprint des scripts
+
+**Conformité** :
+- ✅ 100% conforme aux règles définies dans checkcontrole.md
+- ✅ Utilisation exclusive de TailwindCSS (plus de CSS personnalisé)
+- ✅ Alpine.js pour toute la logique frontend
+- ✅ Couleur principale sky-500 utilisée de manière cohérente
+- ✅ Icônes LineAwesome en sky-900
+- ✅ Appels Parse via /script/ et parseAxios
+- ✅ Structure de fichiers respectée

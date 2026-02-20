@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+{% extends "base.html" %}
+
+{% block title %}Icônes LineAwesome - WebConsole{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold text-gray-800 mb-6">Bibliothèque d'icônes LineAwesome</h1>
+    
+    <div class="bg-white shadow overflow-hidden sm:rounded-lg mb-8">
+        <div class="px-4 py-5 sm:px-6">
+            <h2 class="text-lg font-medium text-gray-900">Icônes disponibles</h2>
+            <p class="mt-1 max-w-2xl text-sm text-gray-500">Toutes les icônes sont en couleur sky-900 comme spécifié dans les règles.</p>
+        </div>
+        <div class="border-t border-gray-200">
+            <div class="grid grid-cols-4 gap-4 p-6">
+                <div class="flex flex-col items-center p-3 border border-gray-200 rounded-lg">
+                    <i class="las la-envelope text-2xl text-sky-900 mb-2"></i>
+                    <span class="text-sm text-gray-600">la-envelope</span>
+                </div>
+                <div class="flex flex-col items-center p-3 border border-gray-200 rounded-lg">
+                    <i class="las la-users text-2xl text-sky-900 mb-2"></i>
+                    <span class="text-sm text-gray-600">la-users</span>
+                </div>
+                <div class="flex flex-col items-center p-3 border border-gray-200 rounded-lg">
+                    <i class="las la-file-alt text-2xl text-sky-900 mb-2"></i>
+                    <span class="text-sm text-gray-600">la-file-alt</span>
+                </div>
+                <div class="flex flex-col items-center p-3 border border-gray-200 rounded-lg">
+                    <i class="las la-history text-2xl text-sky-900 mb-2"></i>
+                    <span class="text-sm text-gray-600">la-history</span>
+                </div>
+                <div class="flex flex-col items-center p-3 border border-gray-200 rounded-lg">
+                    <i class="las la-arrow-left text-2xl text-sky-900 mb-2"></i>
+                    <span class="text-sm text-gray-600">la-arrow-left</span>
+                </div>
+                <div class="flex flex-col items-center p-3 border border-gray-200 rounded-lg">
+                    <i class="las la-bell text-2xl text-sky-900 mb-2"></i>
+                    <span class="text-sm text-gray-600">la-bell</span>
+                </div>
+                <div class="flex flex-col items-center p-3 border border-gray-200 rounded-lg">
+                    <i class="las la-cog text-2xl text-sky-900 mb-2"></i>
+                    <span class="text-sm text-gray-600">la-cog</span>
+                </div>
+                <div class="flex flex-col items-center p-3 border border-gray-200 rounded-lg">
+                    <i class="las la-search text-2xl text-sky-900 mb-2"></i>
+                    <span class="text-sm text-gray-600">la-search</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+        <div class="px-4 py-5 sm:px-6">
+            <h2 class="text-lg font-medium text-gray-900">Utilisation</h2>
+            <p class="mt-1 max-w-2xl text-sm text-gray-500">Comment utiliser les icônes dans le projet.</p>
+        </div>
+        <div class="border-t border-gray-200">
+            <div class="p-6">
+                <div class="mb-4">
+                    <h3 class="text-md font-medium text-gray-900 mb-2">Exemple d'utilisation :</h3>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <pre class="text-sm text-gray-700"><code>&lt;i class=&quot;las la-envelope text-sky-900&quot;&gt;&lt;/i&gt;</code></pre>
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <h3 class="text-md font-medium text-gray-900 mb-2">Avec taille personnalisée :</h3>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <pre class="text-sm text-gray-700"><code>&lt;i class=&quot;las la-envelope text-2xl text-sky-900&quot;&gt;&lt;/i&gt;</code></pre>
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <h3 class="text-md font-medium text-gray-900 mb-2">Avec bouton :</h3>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <pre class="text-sm text-gray-700"><code>&lt;button class=&quot;bg-sky-500 text-white px-4 py-2 rounded&quot;&gt;
+    &lt;i class=&quot;las la-envelope mr-2&quot;&gt;&lt;/i&gt; Envoyer
+&lt;/button&gt;</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
