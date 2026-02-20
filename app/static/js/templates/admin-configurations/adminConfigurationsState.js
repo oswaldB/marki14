@@ -43,7 +43,7 @@ document.addEventListener('alpine:init', () => {
         // Rafraîchir la liste des configurations
         async refreshConfigurations() {
             try {
-                const response = await window.parseAxios.get('classes/SyncConfigs');
+                const response = await Alpine.store('parseAxios').get('classes/SyncConfigs');
                 this.configurations = response.data.results || [];
                 this.filteredConfigurations = [...this.configurations];
                 this.filterConfigurations();
@@ -121,7 +121,7 @@ document.addEventListener('alpine:init', () => {
                 };
                 
                 // Création dans Parse
-                const response = await window.parseAxios.post('classes/SyncConfigs', configData);
+                const response = await Alpine.store('parseAxios').post('classes/SyncConfigs', configData);
                 
                 // Création des credentials (simplifiée - dans un vrai scénario, il faudrait chiffrer)
                 const credentialsData = {
@@ -130,7 +130,7 @@ document.addEventListener('alpine:init', () => {
                     password: this.currentConfig.dbConfig.password // Note: Dans une vraie app, il faudrait chiffrer
                 };
                 
-                await window.parseAxios.post('classes/DBCredentials', credentialsData);
+                await Alpine.store('parseAxios').post('classes/DBCredentials', credentialsData);
                 
                 // Mise à jour des variables globales (simplifiée)
                 await this.updateGlobalVariables();
@@ -195,13 +195,13 @@ document.addEventListener('alpine:init', () => {
                     isActif: this.currentConfig.isActif
                 };
                 
-                await window.parseAxios.put(
+                await Alpine.store('parseAxios').put(
                     `classes/SyncConfigs/${this.currentConfig.objectId}`,
                     configData
                 );
                 
                 // Mise à jour des credentials si nécessaire
-                await window.parseAxios.put(
+                await Alpine.store('parseAxios').put(
                     `classes/DBCredentials/${this.currentConfig.configId}`,
                     {
                         username: this.currentConfig.dbConfig.user,
@@ -230,7 +230,7 @@ document.addEventListener('alpine:init', () => {
         // Éditer une configuration
         async editConfiguration(configId) {
             try {
-                const response = await window.parseAxios.get(`classes/SyncConfigs/${configId}`);
+                const response = await Alpine.store('parseAxios').get(`classes/SyncConfigs/${configId}`);
                 const config = response.data;
                 
                 // Remplir le formulaire
@@ -280,7 +280,7 @@ document.addEventListener('alpine:init', () => {
                 const config = configResponse.data;
                 
                 // Récupérer les credentials
-                const credsResponse = await window.parseAxios.get(`classes/DBCredentials/${config.configId}`);
+                const credsResponse = await Alpine.store('parseAxios').get(`classes/DBCredentials/${config.configId}`);
                 const credentials = credsResponse.data;
                 
                 // Simuler un test de connexion et d'exécution de requête
@@ -359,7 +359,7 @@ document.addEventListener('alpine:init', () => {
         // Logger une erreur
         async logError(details) {
             try {
-                await window.parseAxios.post('classes/SyncLogs', {
+                await Alpine.store('parseAxios').post('classes/SyncLogs', {
                     status: 'error',
                     details: details,
                     configId: this.currentConfig.configId || null,
