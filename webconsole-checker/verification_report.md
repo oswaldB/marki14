@@ -82,13 +82,13 @@ Projet: webconsole-checker
     - Vérifié: Les résultats ont été analysés et corrigés
     - Résultats organisés dans console-web-error/ avec deux sous-répertoires:
       - error/: 2 fichiers avec erreurs critiques
-      - clear/: 7 fichiers sans erreurs bloquantes
+      - clear/: 6 fichiers sans erreurs bloquantes
     - Routes avec statut "error":
       - / (problème de ressource indexState.js manquant)
       - /admin/configurations (erreur JavaScript TypeError)
     - Routes avec statut "clear":
       - /dashboard, /dashboard/clients, /login, /styleguide
-      - /icons-regular, /test-html, /test-notifications
+      - /test-html, /test-notifications
 
 15. **✅ Il existe un script par script dans le folder scripts/**
     - Vérifié: Le dossier scripts/ contient:

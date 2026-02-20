@@ -6,7 +6,7 @@ const path = require("path");
 const BASE_URL = "https://dev.markidiags.com";
 const WAIT_TIME = 5000; // 5 seconds
 const OUTPUT_DIR = path.join(__dirname, "console-web-error");
-const APP_PY_PATH = path.join(__dirname, "app/app.py");
+const APP_PY_PATH = path.join(__dirname, "../app/app.py");
 
 // Function to extract routes from app.py
 function extractRoutesFromAppPy() {
