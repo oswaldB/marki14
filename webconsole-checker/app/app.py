@@ -51,6 +51,12 @@ def admin_configurations():
     """Page de configuration administrative"""
     return render_template('admin-configurations.html')
 
+# Routes pour l'envoi d'emails avec factures
+@app.route('/invoice-email')
+def invoice_email():
+    """Page d'envoi d'emails avec factures"""
+    return render_template('invoice-email.html')
+
 # Blueprint pour les scripts (à importer et enregistrer)
 try:
     from scripts.script_bp import script_bp

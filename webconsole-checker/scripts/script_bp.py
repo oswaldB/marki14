@@ -99,6 +99,34 @@ def invoice_verification_route():
             'error': f'Erreur interne: {str(e)}'
         }), 500
 
+# Route spécifique pour l'envoi d'emails avec factures
+@script_bp.route('/invoiceEmail', methods=['GET', 'POST'])
+def invoice_email_route():
+    """
+    Route pour gérer les requêtes liées à l'envoi d'emails avec factures
+    """
+    try:
+        action = request.args.get('action') if request.method == 'GET' else request.form.get('action')
+        
+        if action == 'checkInvoiceFile':
+            return handle_check_invoice_file()
+        elif action == 'generateDownloadLink':
+            return handle_generate_download_link()
+        elif action == 'sendInvoiceEmail':
+            return handle_send_invoice_email()
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'Action non valide'
+            }), 400
+            
+    except Exception as e:
+        current_app.logger.error(f"Erreur dans invoice_email_route: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': f'Erreur interne: {str(e)}'
+        }), 500
+
 def handle_fetch_email_history():
     """
     Gère la récupération de l'historique des emails
@@ -292,3 +320,43 @@ def handle_verify_and_generate_link():
         'expiresAt': generate_result['expiresAt'],
         'filePath': check_result['result']['filePath']
     })
+
+# Handlers pour l'envoi d'emails avec factures
+def handle_send_invoice_email():
+    """
+    Gère l'envoi d'un email avec facture
+    """
+    invoice_id = request.args.get('invoiceId')
+    recipient_email = request.args.get('recipientEmail')
+    recipient_name = request.args.get('recipientName')
+    email_subject = request.args.get('emailSubject', f'Votre facture {invoice_id}')
+    
+    if not invoice_id or not recipient_email or not recipient_name:
+        return jsonify({
+            'success': False,
+            'error': 'invoiceId, recipientEmail et recipientName sont requis'
+        }), 400
+    
+    # Dans une implémentation réelle, cela appellerait le service Parse
+    # Pour cette démo, nous simulons le processus
+    
+    # Vérifier si la facture existe (simulation)
+    if invoice_id == 'INV-2023-001':
+        # Facture trouvée - générer un lien et envoyer l'email
+        token = 'mock-token-' + invoice_id
+        download_link = f'/api/download?token={token}&file=/invoices/{invoice_id}.pdf'
+        expires_at = '2024-12-31T23:59:59Z'
+        
+        return jsonify({
+            'success': True,
+            'emailId': 'email-' + invoice_id,
+            'downloadLink': download_link,
+            'expiresAt': expires_at
+        })
+    else:
+        # Facture non trouvée - envoyer un email de notification
+        return jsonify({
+            'success': False,
+            'error': 'Facture non trouvée',
+            'errorType': 'FILE_NOT_FOUND'
+        }), 404
