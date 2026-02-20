@@ -71,6 +71,34 @@ def email_history_route():
             'error': f'Erreur interne: {str(e)}'
         }), 500
 
+# Route spécifique pour la vérification des factures
+@script_bp.route('/invoiceVerification', methods=['GET', 'POST'])
+def invoice_verification_route():
+    """
+    Route pour gérer les requêtes liées à la vérification des fichiers de facture
+    """
+    try:
+        action = request.args.get('action') if request.method == 'GET' else request.form.get('action')
+        
+        if action == 'checkInvoiceFile':
+            return handle_check_invoice_file()
+        elif action == 'generateDownloadLink':
+            return handle_generate_download_link()
+        elif action == 'verifyAndGenerateLink':
+            return handle_verify_and_generate_link()
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'Action non valide'
+            }), 400
+            
+    except Exception as e:
+        current_app.logger.error(f"Erreur dans invoice_verification_route: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': f'Erreur interne: {str(e)}'
+        }), 500
+
 def handle_fetch_email_history():
     """
     Gère la récupération de l'historique des emails
@@ -173,4 +201,94 @@ def handle_get_diff_for_field():
     return jsonify({
         'success': True,
         'diff': diff_data
+    })
+
+# Handlers pour la vérification des factures
+def handle_check_invoice_file():
+    """
+    Gère la vérification de l'existence d'un fichier de facture
+    """
+    invoice_id = request.args.get('invoiceId')
+    file_extension = request.args.get('fileExtension')
+    
+    if not invoice_id or not file_extension:
+        return jsonify({
+            'success': False,
+            'error': 'invoiceId et fileExtension sont requis'
+        }), 400
+    
+    # Données mockées pour la démonstration
+    # Dans une vraie implémentation, cela appellerait le service FTP
+    if invoice_id == 'INV-2023-001' and file_extension == 'pdf':
+        result = {
+            'exists': True,
+            'filePath': f'/invoices/{invoice_id}.{file_extension}',
+            'error': None
+        }
+    else:
+        result = {
+            'exists': False,
+            'filePath': None,
+            'error': 'Fichier non trouvé'
+        }
+    
+    return jsonify({
+        'success': True,
+        'result': result
+    })
+
+def handle_generate_download_link():
+    """
+    Gère la génération d'un lien de téléchargement
+    """
+    file_path = request.args.get('filePath')
+    
+    if not file_path:
+        return jsonify({
+            'success': False,
+            'error': 'filePath requis'
+        }), 400
+    
+    # Données mockées pour la démonstration
+    # Dans une vraie implémentation, cela générerait un vrai token
+    token = 'mock-token-' + file_path.replace('/', '-')
+    download_link = f'/api/download?token={token}&file={file_path}'
+    
+    return jsonify({
+        'success': True,
+        'downloadLink': download_link,
+        'expiresAt': '2024-12-31T23:59:59Z'
+    })
+
+def handle_verify_and_generate_link():
+    """
+    Gère le processus complet de vérification et génération de lien
+    """
+    invoice_id = request.args.get('invoiceId')
+    file_extension = request.args.get('fileExtension')
+    
+    if not invoice_id or not file_extension:
+        return jsonify({
+            'success': False,
+            'error': 'invoiceId et fileExtension sont requis'
+        }), 400
+    
+    # Vérification du fichier
+    check_result = handle_check_invoice_file().get_json()
+    
+    if not check_result['success'] or not check_result['result']['exists']:
+        return jsonify({
+            'success': False,
+            'error': check_result['result']['error'],
+            'errorType': 'FILE_NOT_FOUND'
+        }), 404
+    
+    # Génération du lien
+    generate_result = handle_generate_download_link().get_json()
+    
+    return jsonify({
+        'success': True,
+        'downloadLink': generate_result['downloadLink'],
+        'expiresAt': generate_result['expiresAt'],
+        'filePath': check_result['result']['filePath']
     })

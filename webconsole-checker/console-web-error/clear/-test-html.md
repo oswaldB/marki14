@@ -11,3 +11,7 @@ parseAxios instance initialized and available in window.parseAxios
 parseAxios instance initialized and available in window.parseAxios
 Failed to load resource: the server responded with a status of 404 ()
 ```
+
+## Recommendations:
+- Investigate the 404 error to identify the missing resource.
+- Verify why parseAxios is initialized twice.
