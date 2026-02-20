@@ -1,6 +1,6 @@
-# Console Output for /login
+# Console Output for /dashboard/clients
 
-URL: https://dev.markidiags.com/login
+URL: https://dev.markidiags.com/dashboard/clients
 
 Status: clear
 

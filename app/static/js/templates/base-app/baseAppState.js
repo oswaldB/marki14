@@ -1,70 +1,40 @@
-document.addEventListener("alpine:init", () => {
-    Alpine.data("baseAppState", () => ({
-        sidebarOpen: false,
-
-        init() {
-            // Vérification de l'authentification au chargement
-            this.checkAuthentication();
-
-            // Gestion de la sidebar pour desktop
-            this.sidebarOpen = window.innerWidth >= 640; // sm breakpoint
-
-            // Écouteur pour le redimensionnement
-            window.addEventListener("resize", () => {
-                this.sidebarOpen = window.innerWidth >= 640;
-            });
-        },
-
+document.addEventListener('alpine:init', () => {
+    Alpine.data('baseAppState', () => ({
+        sidebarOpen: true,
+        
         toggleSidebar() {
             this.sidebarOpen = !this.sidebarOpen;
         },
-
-        checkAuthentication() {
-            // Vérification du token dans localStorage ou sessionStorage
-            const parseToken =
-                localStorage.getItem("parseToken") ||
-                sessionStorage.getItem("parseToken");
-            const currentPath = window.location.pathname;
-
-            if (!parseToken) {
-                // Redirection vers la page de login avec le chemin actuel
-                window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`;
-            } else {
-                // Validation du token via Parse Server
-                this.validateTokenWithParse(parseToken);
-            }
-        },
-
-        async validateTokenWithParse(token) {
-            try {
-                // Utilisation de parseAxios pour valider le token
-                const response = await Alpine.store("parseAxios").get(
-                    "users/me",
-                    {
-                        headers: {
-                            "X-Parse-Session-Token": token,
-                        },
-                    },
-                );
-
-                // Si la requête réussit, le token est valide
-                console.log(
-                    "Token valide, utilisateur authentifié:",
-                    response.data,
-                );
-            } catch (error) {
-                console.error("Token invalide, redirection vers login:", error);
-                localStorage.removeItem("parseToken");
-                sessionStorage.removeItem("parseToken");
-                window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`;
-            }
-        },
-
+        
         logout() {
-            // Déconnexion - à appeler depuis les liens de déconnexion
-            localStorage.removeItem("parseToken");
-            sessionStorage.removeItem("parseToken");
-            window.location.href = "/login";
-        },
+            // Logique de déconnexion à implémenter
+            console.log('Déconnexion');
+            window.location.href = '/login';
+        }
     }));
+    
+    // Initialiser le store Alpine pour les notifications si ce n'est pas déjà fait
+    if (!Alpine.store('notifications')) {
+        Alpine.store('notifications', {
+            notifications: [],
+            
+            addNotification(notification) {
+                this.notifications.push({
+                    id: Date.now(),
+                    type: notification.type || 'info',
+                    message: notification.message,
+                    timeout: notification.timeout || 5000
+                });
+                
+                // Supprimer automatiquement après le timeout
+                setTimeout(() => {
+                    this.removeNotification(notification.id);
+                }, notification.timeout);
+            },
+            
+            removeNotification(id) {
+                this.notifications = this.notifications.filter(n => n.id !== id);
+            }
+        });
+    }
 });

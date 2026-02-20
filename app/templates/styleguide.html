@@ -1,18 +1,6 @@
 {% extends "base.html" %} {% block title %}Styleguide - Mon Application{%
 endblock %} {% block head %}
-<style>
-    /* Custom styles for Flowbite-inspired components */
-    .flowbite-card {
-        transition: all 0.3s ease;
-    }
-    .flowbite-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-    }
-    .sky-gradient {
-        background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
-    }
-</style>
+
 {% endblock %} {% block content %}
 <div class="min-h-screen bg-gray-50">
     <!-- Main Content -->
@@ -257,10 +245,10 @@ endblock %} {% block head %}
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <!-- Basic Card -->
                         <div
-                            class="flowbite-card bg-white rounded-lg shadow-md overflow-hidden"
+                            class="bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg"
                         >
                             <div
-                                class="sky-gradient h-32 flex items-center justify-center"
+                                class="bg-gradient-to-br from-sky-500 to-sky-700 h-32 flex items-center justify-center"
                             >
                                 <h3 class="text-white text-xl font-bold">
                                     Carte de base

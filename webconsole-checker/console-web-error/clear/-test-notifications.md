@@ -1,6 +1,6 @@
-# Console Output for /login
+# Console Output for /test-notifications
 
-URL: https://dev.markidiags.com/login
+URL: https://dev.markidiags.com/test-notifications
 
 Status: clear
 

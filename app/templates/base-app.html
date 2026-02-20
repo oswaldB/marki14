@@ -8,12 +8,6 @@
         <!-- Tailwind CSS CDN -->
         <script src="https://cdn.tailwindcss.com"></script>
 
-        <!-- Alpine.js CDN -->
-        <script
-            defer
-            src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"
-        ></script>
-
         <!-- LineIcons CDN -->
         <link
             href="https://cdn.lineicons.com/5.1/line/lineicons.css"
@@ -25,6 +19,15 @@
 
         <!-- parseAxios configuration -->
         <script src="{{ url_for('static', filename='js/parseAxios.js') }}"></script>
+
+        <!-- Base app state - doit être chargé avant Alpine -->
+        <script src="{{ url_for('static', filename='js/templates/base-app/baseAppState.js') }}"></script>
+
+        <!-- Alpine.js CDN -->
+        <script
+            defer
+            src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"
+        ></script>
 
         {% block head %}{% endblock %}
     </head>
@@ -142,5 +145,7 @@
         {% block scripts %}
         <script src="{{ url_for('static', filename='js/templates/base-app/baseAppState.js') }}"></script>
         {% endblock %}
+        <!-- Système de notifications -->
+        {% include 'partials/_notifications.html' %}
     </body>
 </html>

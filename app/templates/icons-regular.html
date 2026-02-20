@@ -97,8 +97,10 @@ block content %}
 
 {% block scripts %}
 <script>
-    // Liste des icônes LineIcons à afficher
-    const lineIcons = [
+    // Utiliser une IIFE pour éviter les conflits avec le CDN LineIcons
+    (function() {
+        // Liste des icônes LineIcons à afficher
+        const markiAppIconsList = [
         { name: "bar-chart-4", display: "bar-chart-4-duo-tone" },
         { name: "bookmark-1", display: "bookmark-1" },
         { name: "brush-1-rotated", display: "brush-1-rotated" },
@@ -507,9 +509,9 @@ block content %}
             .value.toLowerCase();
 
         if (searchTerm === "") {
-            displayIcons(lineIcons);
+            displayIcons(markiAppIconsList);
         } else {
-            const filteredIcons = lineIcons.filter(
+            const filteredIcons = markiAppIconsList.filter(
                 (icon) =>
                     icon.name.toLowerCase().includes(searchTerm) ||
                     icon.display.toLowerCase().includes(searchTerm),
@@ -519,7 +521,7 @@ block content %}
     }
 
     // Initial display
-    displayIcons(lineIcons);
+    displayIcons(markiAppIconsList);
 
     // Setup search
     document
@@ -547,5 +549,6 @@ block content %}
             }, 1500);
         }
     });
+})();
 </script>
 {% endblock %} {% endblock %}

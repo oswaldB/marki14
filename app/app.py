@@ -54,6 +54,16 @@ def test_html():
     return render_template("test-html.html")
 
 
+@app.route("/test-notifications")
+def test_notifications():
+    return render_template("test_notifications_simple.html")
+
+
+@app.route("/admin/configurations")
+def admin_configurations():
+    return render_template("admin-configurations.html")
+
+
 if __name__ == "__main__":
     # Démarre le serveur Flask avec livereload
     app.run(host="0.0.0.0", port=5000, debug=True)
