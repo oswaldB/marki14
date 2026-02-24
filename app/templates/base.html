@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="fr">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>{% block title %}Mon Application{% endblock %}</title>
+
+        <!-- Bulma CSS -->
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css">
+        <style>
+            :root {
+                --bulma-primary-h: 204deg;
+                --bulma-primary-l: 40%;
+                --bulma-link-h: 204deg;
+                --bulma-link-l: 40%;
+            }
+        </style>
+
+        <!-- Alpine.js CDN -->
+        <script
+            defer
+            src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"
+        ></script>
+
+        <!-- Font Awesome local -->
+        <link href="{{ url_for('static', filename='assets/fontawesome/css/fontawesome.css') }}" rel="stylesheet" />
+        <link href="{{ url_for('static', filename='assets/fontawesome/css/regular.css') }}" rel="stylesheet" />
+        <!-- Line Icons pour les icônes utilisées dans les fonctionnalités -->
+        <link href="https://cdn.lineicons.com/4.0/lineicons.css" rel="stylesheet" />
+        <!-- Axios CDN -->
+        <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+        <!-- parseAxios configuration -->
+        <script src="{{ url_for('static', filename='js/parseAxios.js') }}"></script>
+
+        {% block head %}{% endblock %}
+    </head>
+    <body>
+        {% block content %}{% endblock %}
+        <!-- Système de notifications -->
+        {% include '_notifications.html' %}
+        <!-- Import script alpinejs  -->
+        {% block scripts %}{% endblock %}
+    </body>
+</html>

@@ -1,0 +1,129 @@
+{% extends "base-app.html" %} {% block title %}Super Admin - Gestion des
+Impayés{% endblock %} {% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/alpines/adminSuperadminState.js') }}"></script>
+{% endblock %} {% block content %}
+<div class="p-6" x-data="adminSuperadminState()">
+    <h1 class="title is-3">
+        Super Admin - Gestion des Impayés
+    </h1>
+
+    <div class="box mb-6">
+        <h2 class="title is-5">
+            Récupération des factures impayées
+        </h2>
+
+        <p class="mb-4">
+            Ce module permet de récupérer les factures impayées depuis la base
+            de données PostgreSQL et de les intégrer dans Parse Server.
+        </p>
+
+        <div class="notification is-info mb-6">
+            <p class="is-size-7">
+                Le script va récupérer les factures impayées des 30
+                derniers jours et les synchroniser avec la base Parse
+                Server.
+            </p>
+        </div>
+
+        <button
+            @click="runSynchronization()"
+            :disabled="isLoading"
+            class="button is-link"
+        >
+            <i class="fa-regular fa-sync mr-2"></i>
+            <span
+                x-text="isLoading ? 'Synchronisation...' : 'Lancer la synchronisation'"
+            ></span>
+        </button>
+
+        <template x-if="statusMessage">
+            <div class="mt-6">
+                <div
+                    x-show="isLoading"
+                    class="notification is-light"
+                >
+                    <div class="media">
+                        <div class="media-left">
+                            <i
+                                class="fa-regular fa-spinner fa-spin has-text-grey"
+                            ></i>
+                        </div>
+                        <div class="media-content">
+                            <p
+                                class="is-size-7"
+                                x-text="statusMessage"
+                            ></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div
+                    x-show="!isLoading && statusMessage.includes('succès')"
+                    class="notification is-success"
+                >
+                    <div class="media">
+                        <div class="media-left">
+                            <i
+                                class="fa-regular fa-check-circle has-text-success"
+                            ></i>
+                        </div>
+                        <div class="media-content">
+                            <p
+                                class="is-size-7"
+                                x-text="statusMessage"
+                            ></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div
+                    x-show="!isLoading && statusMessage.includes('Erreur')"
+                    class="notification is-danger"
+                >
+                    <div class="media">
+                        <div class="media-left">
+                            <i class="fa-regular fa-exclamation-triangle has-text-danger"></i>
+                        </div>
+                        <div class="media-content">
+                            <p
+                                class="is-size-7"
+                                x-text="statusMessage"
+                            ></p>
+                        </div>
+                    </div>
+                </div>
+
+                <template x-if="resultData">
+                    <div class="box mt-4">
+                        <h3 class="title is-5">
+                            Résultats de la synchronisation
+                        </h3>
+                        <p
+                            class="mb-4"
+                            x-text="resultData.message"
+                        ></p>
+
+                        <template
+                            x-if="resultData.data && resultData.data.filters_applied"
+                        >
+                            <div class="mt-4">
+                                <h4 class="title is-6">
+                                    Filtres appliqués:
+                                </h4>
+                                <pre
+                                    class="has-background-light p-3 rounded"
+                                    x-text="JSON.stringify(resultData.data.filters_applied, null, 2)"
+                                ></pre>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+            </div>
+        </template>
+    </div>
+</div>
+
+{% block scripts %} {{ super() }}
+<script src="{{ url_for('static', filename='js/alpines.js') }}"></script>
+{% endblock %}

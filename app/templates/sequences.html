@@ -1,0 +1,358 @@
+{% extends "base-app.html" %} {% block title %}Plan de relance{%
+endblock %} {% block head %}
+<script src="{{ url_for('static', filename='js/alpines/sequencesState.js') }}"></script>
+{% endblock %} {% block content %}
+<div x-data="sequencesState" x-init="loadSequences()" class="min-h-screen">
+    <!-- Header -->
+    <div class="box mb-4">
+        <div class="level">
+            <div class="level-left">
+                <div>
+                    <h1 class="title is-3">
+                        Plan de relance
+                    </h1>
+                    <p class="subtitle is-6">
+                        <span x-text="filteredSequences.length"></span> plan(s)
+                        de relance configuré(s)
+                    </p>
+                </div>
+            </div>
+            <div class="level-right">
+                <button
+                    @click="openCreateDrawer()"
+                    class="button is-link"
+                >
+                    <i class="fa-regular fa-plus-circle mr-2"></i>
+                    Créer un plan de relance
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="box mb-4">
+        <div class="columns">
+            <div class="column">
+                <div class="field">
+                    <label class="label">Recherche</label>
+                    <div class="control">
+                        <input
+                            type="text"
+                            x-model="searchTerm"
+                            @input="filterSequences"
+                            placeholder="Rechercher par nom..."
+                            class="input"
+                        />
+                    </div>
+                </div>
+            </div>
+            <div class="column">
+                <div class="field">
+                    <label class="label">Type</label>
+                    <div class="control">
+                        <div class="select is-fullwidth">
+                            <select
+                                x-model="selectedType"
+                                @change="filterSequences"
+                            >
+                                <option value="">Tous</option>
+                                <option value="manual">Manuelle</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="column">
+                <div class="field">
+                    <label class="label">Statut</label>
+                    <div class="control">
+                        <div class="select is-fullwidth">
+                            <select
+                                x-model="selectedStatus"
+                                @change="filterSequences"
+                            >
+                                <option value="">Tous</option>
+                                <option value="true">Active</option>
+                                <option value="false">Inactive</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Liste des plans de relance -->
+    <div class="box">
+        <div class="table-container">
+            <table class="table is-fullwidth is-striped">
+                <thead>
+                    <tr>
+                        <th>Nom</th>
+                        <th>Type</th>
+                        <th>Étapes</th>
+                        <th>Statut</th>
+                        <th>Date création</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <template
+                        x-for="sequence in paginatedSequences"
+                        :key="sequence.objectId"
+                    >
+                        <tr>
+                            <td>
+                                <div class="media">
+                                    <div class="media-left">
+                                        <i
+                                            x-show="!sequence.isAuto"
+                                            class="fa-regular fa-file-lines has-text-primary"
+                                        ></i>
+                                        <i
+                                            x-show="sequence.isAuto"
+                                            class="fa-regular fa-cog has-text-primary"
+                                        ></i>
+                                    </div>
+                                    <div class="media-content">
+                                        <span x-text="sequence.nom"></span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span
+                                    x-text="sequence.isAuto ? 'Automatique' : 'Manuelle'"
+                                    :class="sequence.isAuto ? 'has-text-success' : 'has-text-primary'"
+                                ></span>
+                            </td>
+                            <td>
+                                <span
+                                    x-text="sequence.actions ? sequence.actions.length : 0"
+                                ></span>
+                            </td>
+                            <td>
+                                <span
+                                    class="tag"
+                                    :class="sequence.isActif ? 'is-success' : 'is-light'"
+                                    x-text="sequence.isActif ? 'Active' : 'Inactive'"
+                                ></span>
+                            </td>
+                            <td>
+                                <span
+                                    x-text="formatDate(sequence.createdAt)"
+                                ></span>
+                            </td>
+                            <td>
+                                <div class="buttons is-right">
+                                    <a
+                                        :href="`/sequence/${sequence.objectId}`"
+                                        class="button is-small is-info"
+                                    >
+                                        <i class="fa-regular fa-edit"></i>
+                                    </a>
+                                    <button
+                                        @click="duplicateSequence(sequence)"
+                                        class="button is-small is-link"
+                                    >
+                                        <i class="fa-regular fa-copy"></i>
+                                    </button>
+                                    <button
+                                        @click="deleteSequence(sequence)"
+                                        class="button is-small is-danger"
+                                    >
+                                        <i class="fa-regular fa-trash-alt"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </template>
+                    <tr x-show="filteredSequences.length === 0">
+                        <td
+                            colspan="6"
+                            class="has-text-centered"
+                        >
+                            Aucun plan de relance trouvé
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="box">
+        <div class="level">
+            <div class="level-left">
+                <p class="is-size-7">
+                    Affichage de
+                    <span
+                        x-text="(currentPage - 1) * itemsPerPage + 1"
+                    ></span>
+                    à
+                    <span
+                        x-text="Math.min(currentPage * itemsPerPage, filteredSequences.length)"
+                    ></span>
+                    sur
+                    <span x-text="filteredSequences.length"></span> plans de
+                    relance
+                </p>
+            </div>
+            <div class="level-right">
+                <div class="buttons">
+                    <button
+                        @click="previousPage()"
+                        :disabled="currentPage === 1"
+                        class="button is-small"
+                    >
+                        Précédent
+                    </button>
+                    <button
+                        @click="nextPage()"
+                        :disabled="currentPage * itemsPerPage >= filteredSequences.length"
+                        class="button is-small"
+                    >
+                        Suivant
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Drawer pour création/édition de plan de relance -->
+    <div
+        x-show="drawerOpen"
+        class="modal is-active"
+    >
+        <!-- Overlay -->
+        <div
+            @click="closeDrawer()"
+            class="modal-background"
+        ></div>
+
+        <!-- Drawer -->
+        <div
+            class="modal-card"
+            style="width: 80%; max-width: 600px; margin: 0 auto;"
+        >
+            <header class="modal-card-head">
+                <p class="modal-card-title">
+                    <span
+                        x-text="editingSequence ? 'Éditer le plan de relance' : 'Créer un plan de relance'"
+                    ></span>
+                </p>
+                <button
+                    @click="closeDrawer()"
+                    class="delete"
+                    aria-label="close"
+                ></button>
+            </header>
+
+            <!-- Content -->
+            <section class="modal-card-body">
+                <form @submit.prevent="saveSequence">
+                    <div class="field">
+                        <label
+                            for="sequenceName"
+                            class="label"
+                        >
+                            Nom du plan de relance
+                            <span class="has-text-danger">*</span>
+                        </label>
+                        <div class="control">
+                            <input
+                                type="text"
+                                id="sequenceName"
+                                x-model="currentSequence.nom"
+                                required
+                                maxlength="100"
+                                class="input"
+                            />
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label
+                            for="sequenceDescription"
+                            class="label"
+                        >
+                            Description
+                        </label>
+                        <div class="control">
+                            <textarea
+                                id="sequenceDescription"
+                                x-model="currentSequence.description"
+                                maxlength="500"
+                                rows="4"
+                                class="textarea"
+                            ></textarea>
+                        </div>
+                    </div>
+
+                    <div class="field is-grouped is-grouped-right mt-6">
+                        <div class="control">
+                            <button
+                                type="button"
+                                @click="closeDrawer()"
+                                class="button is-light"
+                            >
+                                Annuler
+                            </button>
+                        </div>
+                        <div class="control">
+                            <button
+                                type="submit"
+                                class="button is-link"
+                            >
+                                Enregistrer
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </section>
+        </div>
+    </div>
+
+    <!-- Popup de confirmation de suppression -->
+    <div
+        x-show="deleteConfirmOpen"
+        class="modal is-active"
+    >
+        <div class="modal-background"></div>
+        <div class="modal-card" style="max-width: 400px; margin: 0 auto;">
+            <header class="modal-card-head has-background-danger-light">
+                <p class="modal-card-title has-text-danger">
+                    Confirmer la suppression
+                </p>
+            </header>
+            <section class="modal-card-body">
+                <div class="content has-text-centered">
+                    <i
+                        class="fa-regular fa-exclamation-triangle has-text-danger is-size-3 mb-4"
+                    ></i>
+                    <p class="mb-4">
+                        Êtes-vous sûr de vouloir supprimer le plan de relance
+                        "<span x-text="sequenceToDelete?.nom"></span>" ?<br />
+                        Cette action est irréversible.
+                    </p>
+                </div>
+            </section>
+            <footer class="modal-card-foot">
+                <div class="buttons is-centered">
+                    <button
+                        @click="cancelDelete()"
+                        class="button is-light"
+                    >
+                        Annuler
+                    </button>
+                    <button
+                        @click="confirmDelete()"
+                        class="button is-danger"
+                    >
+                        Supprimer
+                    </button>
+                </div>
+            </footer>
+        </div>
+    </div>
+</div>
+{% endblock %}

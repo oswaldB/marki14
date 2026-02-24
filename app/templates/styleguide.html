@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="fr">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Styleguide - Marki</title>
+
+        <!-- Bulma CSS -->
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css">
+        <!-- Marki Primary Color CSS -->
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/bulma-primary.css') }}">
+        
+        <!-- Font Awesome pour les icônes -->
+        <link href="{{ url_for('static', filename='assets/fontawesome/css/fontawesome.css') }}" rel="stylesheet" />
+        <link href="{{ url_for('static', filename='assets/fontawesome/css/regular.css') }}" rel="stylesheet" />
+        
+        <style>
+            /* Styleguide spécifique */
+            .section { padding: 2rem 0; }
+            .code-block { background: #f5f5f5; padding: 1rem; border-radius: 4px; overflow-x: auto; }
+            .example-box { border: 1px solid #ddd; padding: 1.5rem; border-radius: 6px; margin: 1rem 0; }
+        </style>
+    </head>
+    <body>
+        <section class="section">
+            <div class="container">
+                <h1 class="title is-2">Styleguide Marki</h1>
+                <p class="subtitle is-4">Guide de style et composants pour l'application Marki</p>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="container">
+                <h2 class="title is-3">Couleurs</h2>
+                
+                <div class="example-box mb-5">
+                    <h3 class="title is-4">Couleur primaire Marki - #007ACE</h3>
+                    <p class="mb-4">Couleur principale de l'application avec effet duotone et texte blanc.</p>
+                    
+                    <div class="columns">
+                        <div class="column is-4">
+                            <div class="box has-background-primary has-text-white p-5">
+                                <p class="has-text-weight-bold">Fond primaire</p>
+                                <p class="has-text-white">Texte blanc sur fond primaire</p>
+                            </div>
+                        </div>
+                        <div class="column is-4">
+                            <div class="box has-background-primary-duotone p-5">
+                                <p class="has-text-weight-bold has-text-white">Effet Duotone</p>
+                                <p class="has-text-white">Dégradé de bleu Marki</p>
+                            </div>
+                        </div>
+                        <div class="column is-4">
+                            <div class="box">
+                                <p><span class="has-text-primary-duotone has-text-weight-bold">Texte Duotone</span></p>
+                                <p class="has-text-primary">Texte standard bleu Marki</p>
+                                <p class="has-text-link">Texte lien bleu Marki</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="columns">
+                    <div class="column">
+                        <div class="example-box">
+                            <h3 class="title is-4">Primaires</h3>
+                            <div class="buttons">
+                                <span class="button is-primary">Primary</span>
+                                <span class="button is-link">Link</span>
+                                <span class="button is-info">Info</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="column">
+                        <div class="example-box">
+                            <h3 class="title is-4">Secondaires</h3>
+                            <div class="buttons">
+                                <span class="button is-success">Success</span>
+                                <span class="button is-warning">Warning</span>
+                                <span class="button is-danger">Danger</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="container">
+                <h2 class="title is-3">Typographie</h2>
+                
+                <div class="example-box">
+                    <h1 class="title is-1">Titre 1</h1>
+                    <h2 class="title is-2">Titre 2</h2>
+                    <h3 class="title is-3">Titre 3</h3>
+                    <h4 class="title is-4">Titre 4</h4>
+                    <h5 class="title is-5">Titre 5</h5>
+                    <h6 class="title is-6">Titre 6</h6>
+                    
+                    <p class="mt-4">Paragraphe avec <strong>texte en gras</strong>, <em>italique</em>, et <a href="#">lien</a>.</p>
+                    
+                    <div class="content mt-4">
+                        <ul>
+                            <li>Élément de liste 1</li>
+                            <li>Élément de liste 2</li>
+                            <li>Élément de liste 3</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="container">
+                <h2 class="title is-3">Composants</h2>
+                
+                <div class="example-box">
+                    <h3 class="title is-4 mb-4">Boutons</h3>
+                    <div class="buttons mb-4">
+                        <button class="button is-primary">Primaire</button>
+                        <button class="button is-link">Lien</button>
+                        <button class="button is-light">Light</button>
+                        <button class="button">Standard</button>
+                    </div>
+                </div>
+                
+                <div class="example-box">
+                    <h3 class="title is-4 mb-4">Cartes</h3>
+                    <div class="box">
+                        <div class="media">
+                            <div class="media-left">
+                                <span class="icon is-large has-text-primary">
+                                    <i class="fa-regular fa-info-circle fa-2x"></i>
+                                </span>
+                            </div>
+                            <div class="media-content">
+                                <p class="title is-4">Carte avec icône</p>
+                                <p class="subtitle is-6">Exemple de carte Bulma avec icône Font Awesome</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="example-box">
+                    <h3 class="title is-4 mb-4">Formulaires</h3>
+                    <form>
+                        <div class="field">
+                            <label class="label">Nom</label>
+                            <div class="control">
+                                <input class="input" type="text" placeholder="Votre nom">
+                            </div>
+                        </div>
+                        
+                        <div class="field">
+                            <label class="label">Email</label>
+                            <div class="control has-icons-left">
+                                <input class="input" type="email" placeholder="Votre email">
+                                <span class="icon is-small is-left">
+                                    <i class="fa-regular fa-envelope"></i>
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="field">
+                            <label class="label">Message</label>
+                            <div class="control">
+                                <textarea class="textarea" placeholder="Votre message..."></textarea>
+                            </div>
+                        </div>
+                        
+                        <div class="field">
+                            <div class="control">
+                                <button class="button is-primary">Envoyer</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                
+                <div class="example-box">
+                    <h3 class="title is-4 mb-4">Notifications</h3>
+                    <div class="notification is-primary">
+                        <i class="fa-regular fa-info-circle mr-2"></i>
+                        Notification primaire avec icône
+                    </div>
+                    <div class="notification is-success">
+                        <i class="fa-regular fa-check-circle mr-2"></i>
+                        Succès ! Opération terminée
+                    </div>
+                    <div class="notification is-warning">
+                        <i class="fa-regular fa-exclamation-triangle mr-2"></i>
+                        Attention : action requise
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="container">
+                <h2 class="title is-3">Icônes Font Awesome</h2>
+                
+                <div class="example-box">
+                    <h3 class="title is-4 mb-4">Icônes disponibles</h3>
+                    <div class="columns is-multiline">
+                        <div class="column is-3">
+                            <div class="has-text-centered">
+                                <i class="fa-regular fa-home fa-2x mb-2"></i>
+                                <p>Accueil</p>
+                            </div>
+                        </div>
+                        <div class="column is-3">
+                            <div class="has-text-centered">
+                                <i class="fa-regular fa-user fa-2x mb-2"></i>
+                                <p>Utilisateur</p>
+                            </div>
+                        </div>
+                        <div class="column is-3">
+                            <div class="has-text-centered">
+                                <i class="fa-regular fa-file-invoice-dollar fa-2x mb-2"></i>
+                                <p>Facture</p>
+                            </div>
+                        </div>
+                        <div class="column is-3">
+                            <div class="has-text-centered">
+                                <i class="fa-regular fa-envelope fa-2x mb-2"></i>
+                                <p>Email</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="container">
+                <h2 class="title is-3">Responsive</h2>
+                
+                <div class="example-box">
+                    <h3 class="title is-4 mb-4">Grille responsive</h3>
+                    <div class="columns">
+                        <div class="column">
+                            <div class="box has-text-centered">Colonne 1</div>
+                        </div>
+                        <div class="column">
+                            <div class="box has-text-centered">Colonne 2</div>
+                        </div>
+                        <div class="column">
+                            <div class="box has-text-centered">Colonne 3</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="example-box">
+                    <h3 class="title is-4 mb-4">Tableau</h3>
+                    <table class="table is-fullwidth">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nom</th>
+                                <th>Email</th>
+                                <th>Statut</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>1</td>
+                                <td>John Doe</td>
+                                <td>john@example.com</td>
+                                <td><span class="tag is-success">Actif</span></td>
+                            </tr>
+                            <tr>
+                                <td>2</td>
+                                <td>Jane Smith</td>
+                                <td>jane@example.com</td>
+                                <td><span class="tag is-warning">En attente</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="container">
+                <h2 class="title is-3">Utilisation</h2>
+                
+                <div class="example-box">
+                    <h3 class="title is-4 mb-4">Classes de couleur Marki</h3>
+                    <div class="content">
+                        <p>Classes CSS disponibles pour la couleur primaire #007ACE :</p>
+                        <ul>
+                            <li><code>.has-text-primary</code> - Texte bleu Marki</li>
+                            <li><code>.has-text-link</code> - Texte bleu Marki (lien)</li>
+                            <li><code>.has-background-primary</code> - Fond bleu Marki avec texte blanc</li>
+                            <li><code>.has-text-primary-duotone</code> - Texte avec effet duotone</li>
+                            <li><code>.has-background-primary-duotone</code> - Fond avec effet duotone</li>
+                            <li><code>.is-primary</code> - Boutons et éléments primaires</li>
+                            <li><code>.is-link</code> - Boutons et éléments de lien</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="example-box">
+                    <h3 class="title is-4 mb-4">Comment étendre ce template</h3>
+                    <div class="content">
+                        <pre class="code-block"><code>{% extends "base-app.html" %}
+
+{% block title %}Ma Page{% endblock %}
+
+{% block content %}
+    &lt;!-- Votre contenu ici --&gt;
+    &lt;div class="box"&gt;
+        &lt;h1 class="title"&gt;Titre&lt;/h1&gt;
+        &lt;p&gt;Contenu...&lt;/p&gt;
+    &lt;/div&gt;
+{% endblock %}</code></pre>
+                    </div>
+                </div>
+                
+                <div class="example-box">
+                    <h3 class="title is-4 mb-4">Composants disponibles</h3>
+                    <ul>
+                        <li><strong>Sidebar</strong> : Navigation latérale avec icônes Font Awesome</li>
+                        <li><strong>Cartes</strong> : Conteneurs stylisés pour le contenu</li>
+                        <li><strong>Boutons</strong> : Styles primaire, secondaire, etc.</li>
+                        <li><strong>Formulaires</strong> : Champs avec validation</li>
+                        <li><strong>Notifications</strong> : Alertes et messages</li>
+                        <li><strong>Tableaux</strong> : Affichage de données</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <footer class="footer">
+            <div class="content has-text-centered">
+                <p>
+                    <strong>Marki</strong> - Styleguide &copy; {{ "now"|date("Y") }}
+                </p>
+            </div>
+        </footer>
+    </body>
+</html>

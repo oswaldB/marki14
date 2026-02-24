@@ -1,0 +1,155 @@
+<!-- app/templates/partials/_notifications.html -->
+<div
+    id="notifications-container"
+    x-data="{ notifications: $store.notifications.notifications }"
+    class="fixed top-4 left-0 right-0 z-50 pointer-events-none px-4"
+>
+    <template x-for="notification in notifications">
+        <div
+            x-show="notification.show"
+            x-transition:enter="transition-all ease-out duration-300"
+            x-transition:enter-start="opacity-0 transform translate-y-4"
+            x-transition:enter-end="opacity-100 transform translate-y-0"
+            x-transition:leave="transition-all ease-in duration-200"
+            x-transition:leave-start="opacity-100 transform translate-y-0"
+            x-transition:leave-end="opacity-0 transform-translate-y-2"
+            class="w-screen max-w-full mx-auto mb-3 pointer-events-auto"
+        >
+            <!-- Notification Success -->
+            <div
+                x-show="notification.type === 'success'"
+                class="notification is-success"
+            >
+                <div class="media">
+                    <div class="media-left">
+                        <i class="fa-regular fa-check-circle"></i>
+                    </div>
+                    <div class="media-content">
+                        <p x-text="notification.message"></p>
+                    </div>
+                    <div class="media-right">
+                        <button
+                            @click="$store.notifications.removeNotification(notification.id)"
+                            class="delete"
+                            aria-label="Fermer"
+                        ></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notification Info -->
+            <div
+                x-show="notification.type === 'info'"
+                class="notification is-info"
+            >
+                <div class="media">
+                    <div class="media-left">
+                        <i class="fa-regular fa-question-circle"></i>
+                    </div>
+                    <div class="media-content">
+                        <p x-text="notification.message"></p>
+                    </div>
+                    <div class="media-right">
+                        <button
+                            @click="$store.notifications.removeNotification(notification.id)"
+                            class="delete"
+                            aria-label="Fermer"
+                        ></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notification Warning -->
+            <div
+                x-show="notification.type === 'warning'"
+                class="notification is-warning"
+            >
+                <div class="media">
+                    <div class="media-left">
+                        <i class="fa-regular fa-meh"></i>
+                    </div>
+                    <div class="media-content">
+                        <p x-text="notification.message"></p>
+                    </div>
+                    <div class="media-right">
+                        <button
+                            @click="$store.notifications.removeNotification(notification.id)"
+                            class="delete"
+                            aria-label="Fermer"
+                        ></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notification Error -->
+            <div
+                x-show="notification.type === 'error'"
+                class="notification is-danger"
+            >
+                <div class="media">
+                    <div class="media-left">
+                        <i class="fa-regular fa-circle-exclamation"></i>
+                    </div>
+                    <div class="media-content">
+                        <p x-text="notification.message"></p>
+                    </div>
+                    <div class="media-right">
+                        <button
+                            @click="$store.notifications.removeNotification(notification.id)"
+                            class="delete"
+                            aria-label="Fermer"
+                        ></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+</div>
+
+<script>
+    document.addEventListener("alpine:init", () => {
+        Alpine.store("notifications", {
+            notifications: [],
+            counter: 0,
+
+            init() {
+                // Écouter les événements personnalisés pour ajouter des notifications
+                document.addEventListener("add-notification", (e) => {
+                    this.addNotification(
+                        e.detail.message,
+                        e.detail.type,
+                        e.detail.duration,
+                    );
+                });
+            },
+
+            addNotification(message, type = "info", duration) {
+                const id = this.counter++;
+                const notification = {
+                    id,
+                    message,
+                    type,
+                    show: true,
+                };
+                this.notifications.push(notification);
+
+                // Masquer automatiquement après la durée spécifiée
+                if (duration && duration > 0) {
+                    setTimeout(() => {
+                        this.removeNotification(id);
+                    }, duration);
+                }
+            },
+
+            removeNotification(id) {
+                const index = this.notifications.findIndex((n) => n.id === id);
+                if (index !== -1) {
+                    this.notifications[index].show = false;
+                    setTimeout(() => {
+                        this.notifications.splice(index, 1);
+                    }, 200);
+                }
+            },
+        });
+    });
+</script>

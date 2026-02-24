@@ -1,0 +1,95 @@
+{% extends "base.html" %} {% block title %}Bienvenue sur Marki{%
+endblock %} {% block content %}
+<main class="container" style="min-height: 80vh; display: flex; flex-direction: column; justify-content: center;">
+    <section class="hero is-medium" x-data="indexState()" x-init="initialize(); console.log('State initialized:', $data)">
+        <div class="hero-body">
+            <div class="container has-text-centered">
+                <img
+                    src="{{ url_for('static', filename='marki-logo.png') }}"
+                    alt="Marki Logo"
+                    style="height: 8rem; width: auto; margin: 0 auto 2rem; display: block;"
+                />
+                <h1 class="title" x-text="pageTitle">Bienvenue sur Marki</h1>
+                <p class="subtitle" x-text="pageDescription">Plateforme de diagnostic et de gestion</p>
+
+                <div class="buttons is-centered" style="margin-top: 2rem;">
+                    <a href="/login" class="button is-link is-medium">Se connecter</a>
+                    <a href="/styleguide" class="button is-light is-medium">Voir le Styleguide</a>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Section des fonctionnalités -->
+    <section class="section">
+        <div class="container">
+            <div class="columns is-multiline">
+                <template x-for="feature in features" :key="feature.title">
+                    <div class="column is-4">
+                        <div class="box has-text-centered">
+                            <div style="font-size: 2.5rem; margin-bottom: 1rem; color: var(--primary);">
+                                <i :class="feature.icon" aria-hidden="true"></i>
+                            </div>
+                            <h3 class="title is-4" x-text="feature.title"></h3>
+                            <p class="subtitle is-6" x-text="feature.description"></p>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </section>
+    
+    <div class="has-text-centered" style="margin: 3rem 0;">
+        <hello-world></hello-world>
+    </div>
+    
+    <!-- Composants Lit avancés -->
+    <section class="section">
+        <div class="container">
+            <h2 class="title is-3 has-text-centered">Composants Avancés</h2>
+            
+            <!-- Marki Card -->
+            <marki-card
+                title="Statistiques Clés"
+                subtitle="Performance du système"
+                icon="fa-regular fa-chart-line"
+                type="info"
+                elevated
+            >
+                <p>Ce composant utilise Bulma pour un design cohérent avec le reste de l'application.</p>
+                <p>Il supporte les slots pour un contenu personnalisé et des propriétés réactives.</p>
+                
+                <div slot="footer" class="buttons is-right">
+                    <button class="button is-small is-link">Voir plus</button>
+                    <button class="button is-small is-light">Exporter</button>
+                </div>
+            </marki-card>
+            
+            <!-- Marki Stats -->
+            <marki-stats
+                .items="${JSON.stringify([
+                    { icon: 'fa-regular fa-users', label: 'Clients actifs', value: '42', trend: 12.5, type: 'primary' },
+                    { icon: 'fa-regular fa-file-invoice', label: 'Factures', value: '12', trend: -5.2, type: 'info' },
+                    { icon: 'fa-regular fa-dollar-sign', label: 'Revenu', value: '24.5K', trend: 8.7, type: 'success' },
+                    { icon: 'fa-regular fa-clock', label: 'Temps moyen', value: '2.4h', trend: -2.1, type: 'warning' }
+                ])}"
+                columns="4"
+            ></marki-stats>
+            
+            <!-- Hello World mis à jour -->
+            <hello-world></hello-world>
+        </div>
+    </section>
+</main>
+
+<footer class="footer">
+    <div class="content has-text-centered">
+        <p><small>© 2026 Marki. Tous droits réservés.</small></p>
+    </div>
+</footer>
+{% endblock %} {% block scripts %}
+<script src="/static/js/indexState.js"></script>
+<script type="module" src="/static/js/lit/hello-world.js"></script>
+<script type="module" src="/static/js/lit/marki-card.js"></script>
+<script type="module" src="/static/js/lit/marki-stats.js"></script>
+{% endblock %}

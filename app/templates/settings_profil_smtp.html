@@ -1,0 +1,414 @@
+{% extends "base-app.html" %} {% block title %}Paramètres -
+Profils SMTP{% endblock %} {% block head %}
+<script src="{{ url_for('static', filename='js/alpines/smtpProfilesState.js') }}"></script>
+{% endblock %} {% block content %}
+<div x-data="smtpProfilesState()" class="min-h-screen">
+    <!-- Header -->
+    <div class="box mb-4">
+        <div class="level">
+            <div class="level-left">
+                <div>
+                    <h1 class="title is-3">
+                        Profils SMTP
+                    </h1>
+                    <p class="subtitle is-6">
+                        <span x-text="filteredProfiles.length"></span> profil(s)
+                        SMTP configuré(s)
+                    </p>
+                </div>
+            </div>
+            <div class="level-right">
+                <button
+                    @click="openCreateDrawer()"
+                    class="button is-link"
+                >
+                    <i class="fa-regular fa-plus-circle mr-2"></i>
+                    Créer un profil SMTP
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="box mb-4">
+        <div class="columns">
+            <div class="column">
+                <div class="field">
+                    <label class="label">Recherche</label>
+                    <div class="control">
+                        <input
+                            type="text"
+                            x-model="searchTerm"
+                            @input="filterProfiles"
+                            placeholder="Rechercher par nom ou email..."
+                            class="input"
+                        />
+                    </div>
+                </div>
+            </div>
+            <div class="column">
+                <div class="field">
+                    <label class="label">Statut</label>
+                    <div class="control">
+                        <div class="select is-fullwidth">
+                            <select
+                                x-model="selectedStatus"
+                                @change="filterProfiles"
+                            >
+                                <option value="">Tous</option>
+                                <option value="true">Actif</option>
+                                <option value="false">Inactif</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Liste des profils SMTP -->
+    <div class="box">
+        <div class="table-container">
+            <table class="table is-fullwidth is-striped">
+                <thead>
+                    <tr>
+                        <th>Nom</th>
+                        <th>Email</th>
+                        <th>Hôte</th>
+                        <th>Port</th>
+                        <th>Statut</th>
+                        <th>Date création</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <template
+                        x-for="profile in paginatedProfiles"
+                        :key="profile.objectId"
+                    >
+                        <tr>
+                            <td>
+                                <div class="media">
+                                    <div class="media-left">
+                                        <i class="fa-regular fa-envelope has-text-primary"></i>
+                                    </div>
+                                    <div class="media-content">
+                                        <span x-text="profile.name"></span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td x-text="profile.email"></td>
+                            <td x-text="profile.host"></td>
+                            <td x-text="profile.port"></td>
+                            <td>
+                                <span
+                                    class="tag"
+                                    :class="profile.isActive ? 'is-success' : 'is-danger'"
+                                >
+                                    <span x-text="profile.isActive ? 'Actif' : 'Inactif'"></span>
+                                </span>
+                            </td>
+                            <td>
+                                <span
+                                    x-text="new Date(profile.createdAt).toLocaleDateString()"
+                                ></span>
+                            </td>
+                            <td>
+                                <div class="buttons is-right">
+                                    <button
+                                        @click="openEditDrawer(profile)"
+                                        class="button is-small is-info"
+                                    >
+                                        <i class="fa-regular fa-edit"></i>
+                                    </button>
+                                    <button
+                                        @click="toggleArchiveProfile(profile)"
+                                        class="button is-small is-danger"
+                                    >
+                                        <i
+                                            x-show="!profile.isArchived"
+                                            class="fa-regular fa-archive"
+                                        ></i>
+                                        <i
+                                            x-show="profile.isArchived"
+                                            class="fa-regular fa-trash-restore"
+                                        ></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </template>
+                    <tr x-show="filteredProfiles.length === 0">
+                        <td
+                            colspan="7"
+                            class="has-text-centered"
+                        >
+                            Aucun profil SMTP trouvé
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="level mt-4">
+            <div class="level-left">
+                <p class="is-size-7">
+                    <span x-text="(currentPage - 1) * itemsPerPage + 1"></span>-
+                    <span
+                        x-text="Math.min(currentPage * itemsPerPage, filteredProfiles.length)"
+                    ></span>
+                    sur
+                    <span x-text="filteredProfiles.length"></span>
+                </p>
+            </div>
+            <div class="level-right">
+                <div class="buttons">
+                    <button
+                        @click="previousPage"
+                        :disabled="currentPage === 1"
+                        class="button is-small"
+                    >
+                        Précédent
+                    </button>
+                    <button
+                        @click="nextPage"
+                        :disabled="currentPage * itemsPerPage >= filteredProfiles.length"
+                        class="button is-small"
+                    >
+                        Suivant
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Drawer de création/édition -->
+    <div
+        x-show="showDrawer"
+        class="modal is-active"
+    >
+        <!-- Overlay -->
+        <div
+            @click="closeDrawer"
+            class="modal-background"
+        ></div>
+
+        <!-- Drawer -->
+        <div
+            class="modal-card"
+            style="width: 80%; max-width: 600px; margin: 0 auto;"
+        >
+            <header class="modal-card-head">
+                <p class="modal-card-title">
+                    <span
+                        x-text="editingProfile ? 'Modifier le profil SMTP' : 'Créer un profil SMTP'"
+                    ></span>
+                </p>
+                <button
+                    @click="closeDrawer"
+                    class="delete"
+                    aria-label="close"
+                ></button>
+            </header>
+
+            <!-- Content -->
+            <section class="modal-card-body">
+                <form
+                    @submit.prevent="editingProfile ? updateProfile() : createProfile()"
+                >
+                    <div class="field">
+                        <label
+                            for="name"
+                            class="label"
+                        >
+                            Nom du profil
+                        </label>
+                        <div class="control">
+                            <input
+                                type="text"
+                                x-model="currentProfile.name"
+                                required
+                                class="input"
+                            />
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label
+                            for="email"
+                            class="label"
+                        >
+                            Email
+                        </label>
+                        <div class="control">
+                            <input
+                                type="email"
+                                x-model="currentProfile.email"
+                                required
+                                class="input"
+                            />
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label
+                            for="fromName"
+                            class="label"
+                        >
+                            Nom de l'expéditeur
+                        </label>
+                        <div class="control">
+                            <input
+                                type="text"
+                                x-model="currentProfile.fromName"
+                                class="input"
+                            />
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label
+                            for="host"
+                            class="label"
+                        >
+                            Hôte SMTP
+                        </label>
+                        <div class="control">
+                            <input
+                                type="text"
+                                x-model="currentProfile.host"
+                                required
+                                class="input"
+                            />
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label
+                            for="port"
+                            class="label"
+                        >
+                            Port
+                        </label>
+                        <div class="control">
+                            <input
+                                type="text"
+                                x-model="currentProfile.port"
+                                required
+                                class="input"
+                            />
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label
+                            for="username"
+                            class="label"
+                        >
+                            Nom d'utilisateur
+                        </label>
+                        <div class="control">
+                            <input
+                                type="text"
+                                x-model="currentProfile.username"
+                                required
+                                class="input"
+                            />
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label
+                            for="password"
+                            class="label"
+                        >
+                            Mot de passe
+                        </label>
+                        <div class="control">
+                            <input
+                                type="password"
+                                x-model="currentProfile.password"
+                                :required="!editingProfile"
+                                class="input"
+                            />
+                        </div>
+                        <p class="help">
+                            Laissez vide pour ne pas modifier le
+                            mot de passe
+                        </p>
+                    </div>
+
+                    <div class="field is-grouped is-grouped-multiline">
+                        <div class="control">
+                            <label class="checkbox">
+                                <input
+                                    type="checkbox"
+                                    x-model="currentProfile.useSSL"
+                                />
+                                Utiliser SSL
+                            </label>
+                        </div>
+                        <div class="control">
+                            <label class="checkbox">
+                                <input
+                                    type="checkbox"
+                                    x-model="currentProfile.useTLS"
+                                />
+                                Utiliser TLS
+                            </label>
+                        </div>
+                        <div class="control">
+                            <label class="checkbox">
+                                <input
+                                    type="checkbox"
+                                    x-model="currentProfile.isActive"
+                                />
+                                Profil actif
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label
+                            for="htmlSignature"
+                            class="label"
+                        >
+                            Signature HTML
+                        </label>
+                        <div class="control">
+                            <textarea
+                                x-model="currentProfile.htmlSignature"
+                                rows="4"
+                                class="textarea"
+                            ></textarea>
+                        </div>
+                    </div>
+
+                    <div class="field is-grouped is-grouped-right mt-6">
+                        <div class="control">
+                            <button
+                                type="button"
+                                @click="closeDrawer"
+                                class="button is-light"
+                            >
+                                Annuler
+                            </button>
+                        </div>
+                        <div class="control">
+                            <button
+                                type="submit"
+                                class="button is-link"
+                            >
+                                <span
+                                    x-text="editingProfile ? 'Mettre à jour' : 'Créer'"
+                                ></span>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </section>
+        </div>
+    </div>
+    {% endblock %}
+</div>

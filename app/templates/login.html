@@ -1,0 +1,97 @@
+{% extends "base.html" %} {% block title %}Connexion - Marki{%
+endblock %} {% block content %}
+<main class="container">
+    <section class="section">
+        <div class="columns is-centered">
+            <div class="column is-4">
+                <div class="box has-text-centered">
+                    <img
+                        src="/static/marki-logo.png"
+                        alt="Marki Logo"
+                        style="height: 5rem; width: auto; margin: 0 auto 1rem"
+                    />
+                    <h2 class="title is-4">Connectez-vous à votre compte</h2>
+                </div>
+                <form
+                    x-data="loginState()"
+                    @submit.prevent="login()"
+                    class="box"
+                >
+                    <div class="field">
+                        <label class="label">Identifiant</label>
+                        <div class="control">
+                            <input
+                                id="username"
+                                name="username"
+                                type="text"
+                                required
+                                x-model="username"
+                                autocomplete="username"
+                                placeholder="Votre identifiant"
+                                class="input"
+                            />
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label class="label">Mot de passe</label>
+                        <div class="control">
+                            <input
+                                id="password"
+                                name="password"
+                                type="password"
+                                required
+                                x-model="password"
+                                autocomplete="current-password"
+                                placeholder="Votre mot de passe"
+                                class="input"
+                            />
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <div class="control">
+                            <label class="checkbox">
+                                <input
+                                    id="remember-me"
+                                    name="remember-me"
+                                    type="checkbox"
+                                    x-model="rememberMe"
+                                />
+                                Se souvenir de moi
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <div class="control">
+                            <button
+                                type="submit"
+                                class="button is-link is-fullwidth"
+                            >
+                                Connexion
+                            </button>
+                        </div>
+                    </div>
+
+                    <div
+                        x-show="errorMessage"
+                        x-text="errorMessage"
+                        class="has-text-danger has-text-centered is-size-7"
+                        style="margin-top: 1rem"
+                    ></div>
+                    {% if error %}
+                    <div
+                        class="has-text-danger has-text-centered is-size-7"
+                        style="margin-top: 1rem"
+                    >
+                        {{ error }}
+                    </div>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+    </section>
+</main>
+{% endblock %} {% block scripts %}
+<script src="{{ url_for('static', filename='js/alpines/loginState.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,155 @@
+/* Bulma Primary Color Customization - #007ACE Marki Blue */
+:root {
+    --bulma-primary: #007ACE;
+    --bulma-primary-light: #3399e6;
+    --bulma-primary-dark: #005bb5;
+    --bulma-primary-invert: #ffffff;
+    
+    --bulma-primary-h: 204deg;
+    --bulma-primary-s: 100%;
+    --bulma-primary-l: 40%;
+    
+    --bulma-link: #007ACE;
+    --bulma-link-light: #3399e6;
+    --bulma-link-dark: #005bb5;
+    --bulma-link-invert: #ffffff;
+    
+    --bulma-link-h: 204deg;
+    --bulma-link-s: 100%;
+    --bulma-link-l: 40%;
+}
+
+/* Primary color classes */
+.is-primary {
+    background-color: var(--bulma-primary) !important;
+    color: var(--bulma-primary-invert) !important;
+    border-color: transparent !important;
+}
+
+.is-primary:hover, .is-primary.is-hovered {
+    background-color: var(--bulma-primary-dark) !important;
+    color: var(--bulma-primary-invert) !important;
+}
+
+.is-primary:focus, .is-primary.is-focused {
+    border-color: transparent !important;
+    box-shadow: 0 0 0 0.125em rgba(var(--bulma-primary-rgb), 0.25) !important;
+}
+
+.is-primary:active, .is-primary.is-active {
+    background-color: var(--bulma-primary-dark) !important;
+    color: var(--bulma-primary-invert) !important;
+}
+
+.is-primary[disabled], fieldset[disabled] .is-primary {
+    background-color: var(--bulma-primary) !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+    opacity: 0.5 !important;
+}
+
+/* Link color classes */
+.is-link {
+    background-color: var(--bulma-link) !important;
+    color: var(--bulma-link-invert) !important;
+}
+
+.is-link:hover, .is-link.is-hovered {
+    background-color: var(--bulma-link-dark) !important;
+    color: var(--bulma-primary-invert) !important;
+}
+
+/* Text color classes */
+.has-text-primary {
+    color: var(--bulma-primary) !important;
+}
+
+.has-text-link {
+    color: var(--bulma-link) !important;
+}
+
+.has-background-primary {
+    background-color: var(--bulma-primary) !important;
+    color: var(--bulma-primary-invert) !important;
+}
+
+.has-background-link {
+    background-color: var(--bulma-link) !important;
+    color: var(--bulma-link-invert) !important;
+}
+
+/* Button text color fix */
+.button.is-primary, .button.is-link {
+    color: white !important;
+}
+
+/* Notification primary */
+.notification.is-primary {
+    background-color: var(--bulma-primary) !important;
+    color: var(--bulma-primary-invert) !important;
+}
+
+/* Tag primary */
+.tag.is-primary {
+    background-color: var(--bulma-primary) !important;
+    color: var(--bulma-primary-invert) !important;
+}
+
+/* Panel primary */
+.panel.is-primary {
+    border-color: var(--bulma-primary) !important;
+}
+
+.panel-heading.is-primary {
+    background-color: var(--bulma-primary) !important;
+    color: var(--bulma-primary-invert) !important;
+}
+
+/* Menu primary */
+.menu-label.is-primary {
+    color: var(--bulma-primary) !important;
+}
+
+/* Tabs primary */
+.tabs li.is-active a {
+    border-bottom-color: var(--bulma-primary) !important;
+    color: var(--bulma-primary) !important;
+}
+
+/* Pagination primary */
+.pagination-link.is-current {
+    background-color: var(--bulma-primary) !important;
+    border-color: var(--bulma-primary) !important;
+    color: var(--bulma-primary-invert) !important;
+}
+
+/* Progress bar primary */
+.progress.is-primary::-webkit-progress-value {
+    background-color: var(--bulma-primary) !important;
+}
+
+.progress.is-primary::-moz-progress-bar {
+    background-color: var(--bulma-primary) !important;
+}
+
+/* Table primary */
+.table td.is-selected, .table tr.is-selected td, .table tr.is-selected th {
+    background-color: rgba(var(--bulma-primary-rgb), 0.1) !important;
+}
+
+/* Duotone effect for primary color */
+@supports (--css: variables) {
+    :root {
+        --bulma-primary-rgb: 0, 122, 206;
+    }
+    
+    .has-text-primary-duotone {
+        color: rgba(var(--bulma-primary-rgb), 0.8) !important;
+        text-shadow: 1px 1px 2px rgba(var(--bulma-primary-rgb), 0.3) !important;
+    }
+    
+    .has-background-primary-duotone {
+        background: linear-gradient(135deg, rgba(var(--bulma-primary-rgb), 0.9), rgba(var(--bulma-primary-rgb), 0.7)) !important;
+        color: white !important;
+    }
+}
