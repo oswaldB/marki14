@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="fr" x-data="baseAppState()">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>{% block title %}Mon Application{% endblock %}</title>
+
+        <!-- Tailwind CSS CDN -->
+        <script src="https://cdn.tailwindcss.com"></script>
+
+        <!-- Font Awesome local -->
+        <link href="{{ url_for('static', filename='assets/fontawesome/css/fontawesome.css') }}" rel="stylesheet" />
+        <link href="{{ url_for('static', filename='assets/fontawesome/css/regular.css') }}" rel="stylesheet" />
+        <!-- Axios CDN -->
+        <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+        <!-- parseAxios configuration - must be loaded before Alpine -->
+        <script src="{{ url_for('static', filename='js/parseAxios.js') }}"></script>
+
+        <!-- Base app state - doit être chargé avant Alpine -->
+        {%- include 'base-app/alpinejs/baseAppState.js' -%}
+
+        <!-- Alpine.js CDN -->
+        <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+        {% block head %}{% endblock %}
+    </head>
+    <body class="bg-gray-100">
+        <!-- Dock pour mobile (visible uniquement sur les petits écrans) -->
+        <nav
+            class="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 sm:hidden dark:bg-gray-800 dark:border-gray-700"
+            x-data="{
+                activeTab: window.location.pathname,
+                settingsOpen: false,
+                tabs: [
+                    { path: '/', icon: 'fa-regular fa-home', label: 'Accueil' },
+                    { path: '/impayes', icon: 'fa-regular fa-file-invoice-dollar', label: 'Impayés' },
+                    { path: '/sequences', icon: 'fa-regular fa-list-check', label: 'Séquences' },
+                    { path: '/relances', icon: 'fa-regular fa-paper-plane', label: 'Relances' }
+                ],
+                toggleSettings() {
+                    this.settingsOpen = !this.settingsOpen;
+                },
+                logout() {
+                    window.location.href = '/login';
+                }
+            }"
+        >
+            <div class="grid grid-cols-5 gap-1 p-2 relative">
+                <template x-for="tab in tabs" :key="tab.path">
+                    <a
+                        :href="tab.path"
+                        class="flex flex-col items-center justify-center px-2 py-2 text-gray-500 rounded-lg dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700"
+                        :class="{
+                            'bg-sky-50 text-sky-900 dark:bg-gray-700 dark:text-white': activeTab === tab.path,
+                            'text-gray-500 dark:text-gray-400': activeTab !== tab.path
+                        }"
+                        @click="activeTab = tab.path"
+                    >
+                        <i :class="`far ${tab.icon} text-xl mb-1`"></i>
+                        <span class="text-xs font-medium">
+                            <span x-text="tab.label"></span>
+                        </span>
+                    </a>
+                </template>
+                <a
+                    href="/settings/profil-smtp"
+                    class="flex flex-col items-center justify-center px-2 py-2 text-gray-500 rounded-lg dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700"
+                    :class="{
+                        'bg-sky-50 text-sky-900 dark:bg-gray-700 dark:text-white': activeTab === '/settings/profil-smtp',
+                        'text-gray-500 dark:text-gray-400': activeTab !== '/settings/profil-smtp'
+                    }"
+                    @click="activeTab = '/settings/profil-smtp'"
+                >
+                    <i class="fa-regular fa-envelope text-xl mb-1"></i>
+                    <span class="text-xs font-medium">SMTP</span>
+                </a>
+                
+                <!-- Bouton Paramètres/Déconnexion -->
+                <div class="relative">
+                    <button
+                        @click="toggleSettings"
+                        class="flex flex-col items-center justify-center px-2 py-2 text-gray-500 rounded-lg dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 w-full"
+                    >
+                        <i class="fa-regular fa-cog text-xl mb-1"></i>
+                        <span class="text-xs font-medium">Plus</span>
+                    </button>
+                    
+                    <!-- Menu déroulant -->
+                    <div
+                        x-show="settingsOpen"
+                        x-transition
+                        @click.away="settingsOpen = false"
+                        class="absolute bottom-16 right-2 z-50 w-48 bg-white rounded-lg shadow-lg dark:bg-gray-700 border border-gray-200 dark:border-gray-600"
+                    >
+                        <div class="py-1">
+                            <a
+                                href="/admin/superadmin"
+                                class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-600"
+                            >
+                                <i class="fa-regular fa-crown mr-2"></i>Admin
+                            </a>
+                            <a
+                                href="/settings/profil-smtp"
+                                class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-600"
+                            >
+                                <i class="fa-regular fa-envelope mr-2"></i>Profils SMTP
+                            </a>
+                            <a
+                                href="/parametres"
+                                class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-600"
+                            >
+                                <i class="fa-regular fa-cog mr-2"></i>Settings
+                            </a>
+                            <button
+                                @click="logout()"
+                                class="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-600"
+                            >
+                                <i class="fa-regular fa-sign-out mr-2"></i>Déconnexion
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Sidebar pour desktop (visible uniquement sur les écrans moyens et larges) -->
+        <aside
+            id="logo-sidebar"
+            class="fixed top-0 left-0 z-40 w-64 h-screen transition-transform -translate-x-full sm:translate-x-0"
+            aria-label="Sidebar"
+        >
+            <div
+                class="h-full px-3 py-4 overflow-y-auto bg-gray-50 dark:bg-gray-800"
+            >
+                <a href="/" class="flex items-center ps-2.5 mb-5">
+                    <img
+                        src="/static/marki-logo.png"
+                        class="h-10 me-3"
+                        alt="Marki Logo"
+                    />
+                </a>
+                <ul class="space-y-2 font-medium">
+                    <li>
+                        <a
+                            href="/"
+                            class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
+                        >
+                            <i class="fa-regular fa-home text-sky-900 text-xl"></i>
+                            <span class="ms-3">Tableau de bord</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a
+                            href="/impayes"
+                            class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
+                        >
+                            <i class="fa-regular fa-file-invoice-dollar text-sky-900 text-xl"></i>
+                            <span class="ms-3">Impayés</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a
+                            href="/sequences"
+                            class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
+                        >
+                            <i class="fa-regular fa-list-check text-sky-900 text-xl"></i>
+                            <span class="ms-3">Séquences</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a
+                            href="/relances"
+                            class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
+                        >
+                            <i class="fa-regular fa-paper-plane text-sky-900 text-xl"></i>
+                            <span class="ms-3">Relances</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a
+                            href="/admin/superadmin"
+                            class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
+                        >
+                            <i class="fa-regular fa-crown text-sky-900 text-xl"></i>
+                            <span class="ms-3">Super Admin</span>
+                        </a>
+                    </li>
+                </ul>
+                <div class="border-t border-gray-200 my-4"></div>
+                <ul class="space-y-2 font-medium">
+                    <li>
+                        <a
+                            href="/settings/profil-smtp"
+                            class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
+                        >
+                            <i class="fa-regular fa-envelope text-sky-900 text-xl"></i>
+                            <span class="ms-3">Profils SMTP</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a
+                            href="/parametres"
+                            class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
+                        >
+                            <i class="fa-regular fa-cog text-sky-900 text-xl"></i>
+                            <span class="ms-3">Settings</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a
+                            href="#"
+                            @click.prevent="logout()"
+                            class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
+                        >
+                            <i class="fa-regular fa-sign-out text-sky-900 text-xl"></i>
+                            <span class="ms-3">Déconnexion</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </aside>
+
+        <!-- Contenu principal -->
+        <div class="p-4 sm:ml-64">
+            <div
+                class="p-4 border border-gray-200 border-dashed rounded-lg dark:border-gray-700 min-h-screen"
+            >
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+        
+
+
+        {% block scripts %}
+        {% endblock %}
+        <!-- Système de notifications -->
+        {% include 'partials/html/_notifications.html' %}
+    </body>
+</html>

@@ -138,6 +138,253 @@ def execute_script(script_name):
         ), 500
 
 
+@script_bp.route("/getInvoice", methods=["POST"])
+def get_invoice():
+    """
+    Route pour récupérer une facture depuis FTP
+    """
+    try:
+        # Importer le script
+        from . import getInvoice
+        
+        # Récupérer les données de la requête
+        data = request.get_json()
+        invoice_url = data.get("invoice_url")
+        
+        if not invoice_url:
+            return jsonify({
+                "status": "error",
+                "message": "URL de facture manquante"
+            }), 400
+        
+        # Exécuter le script
+        result = getInvoice.execute(invoice_url)
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": f"Erreur lors de l'exécution du script: {str(e)}"
+        }), 500
+
+
+@script_bp.route("/populateImpayes", methods=["POST"])
+def run_impayes():
+    """
+    Route spécifique pour exécuter le script populateImpayes
+
+    Cette route permet d'exécuter le workflow de récupération des factures impayées
+    avec des paramètres spécifiques.
+
+    Exemple d'utilisation:
+        POST /api/scripts/run-impayes
+        Content-Type: application/json
+
+        {
+            "filters": {
+                "payeur_type": "Propriétaire",
+                "idDossier": 12345
+            },
+            "global_search": "terme de recherche",
+            "debug": false
+        }
+
+        Réponse:
+        {
+            "status": "success",
+            "message": "Workflow exécuté avec succès",
+            "data": {
+                "status": "completed",
+                "filters_applied": {...},
+                "global_search_used": true
+            },
+            "timestamp": "..."
+        }
+    """
+    try:
+        # Importer le module populateImpayes
+        from scripts.populateImpayes import execute
+
+        # Extraire les paramètres de la requête
+        params = request.get_json() if request.is_json else {}
+
+        # Exécuter le script
+        result = execute(params)
+
+        # S'assurer que le résultat a le format attendu
+        if not isinstance(result, dict):
+            result = {
+                "status": "error",
+                "message": "Format de réponse invalide",
+                "data": {"raw_response": str(result)},
+                "timestamp": datetime.now().isoformat(),
+            }
+
+        # Ajouter des métadonnées si non présentes
+        if "timestamp" not in result:
+            result["timestamp"] = datetime.now().isoformat()
+
+        return jsonify(result), 200
+
+    except ImportError as e:
+        return jsonify(
+            {
+                "status": "error",
+                "message": f"Erreur d'import du script populateImpayes: {str(e)}",
+                "timestamp": datetime.now().isoformat(),
+            }
+        ), 400
+
+    except Exception as e:
+        return jsonify(
+            {
+                "status": "error",
+                "message": f"Erreur lors de l'exécution de populateImpayes: {str(e)}",
+                "error_details": str(e),
+                "timestamp": datetime.now().isoformat(),
+            }
+        ), 500
+
+
+@script_bp.route("/populateSequences", methods=["POST"])
+def run_populate_sequences():
+    """
+    Route spécifique pour exécuter le script populateSequences
+
+    Cette route permet d'exécuter le peuplement automatique des séquences
+    qui associe les Impayes aux séquences automatiques selon leurs critères.
+
+    Exemple d'utilisation:
+        POST /script/populateSequences
+        Content-Type: application/json
+
+        {}
+
+        Réponse:
+        {
+            "status": "success",
+            "message": "Peuplement automatique des séquences terminé avec succès",
+            "data": {
+                "associations_created": 15
+            },
+            "timestamp": "..."
+        }
+    """
+    try:
+        # Importer le module populateSequences
+        from scripts.populateSequences import execute
+
+        # Extraire les paramètres de la requête
+        params = request.get_json() if request.is_json else {}
+
+        # Exécuter le script
+        result = execute(params)
+
+        # S'assurer que le résultat a le format attendu
+        if not isinstance(result, dict):
+            result = {
+                "status": "error",
+                "message": "Format de réponse invalide",
+                "data": {"raw_response": str(result)},
+                "timestamp": datetime.now().isoformat(),
+            }
+
+        # Ajouter des métadonnées si non présentes
+        if "timestamp" not in result:
+            result["timestamp"] = datetime.now().isoformat()
+
+        return jsonify(result), 200
+
+    except ImportError as e:
+        return jsonify(
+            {
+                "status": "error",
+                "message": f"Erreur d'import du script populateSequences: {str(e)}",
+                "timestamp": datetime.now().isoformat(),
+            }
+        ), 400
+
+    except Exception as e:
+        return jsonify(
+            {
+                "status": "error",
+                "message": f"Erreur lors de l'exécution de populateSequences: {str(e)}",
+                "error_details": str(e),
+                "timestamp": datetime.now().isoformat(),
+            }
+        ), 500
+
+
+@script_bp.route("/peuplerRelances", methods=["POST"])
+def run_peupler_relances():
+    """
+    Route spécifique pour exécuter le script peuplerRelances
+
+    Cette route permet de générer automatiquement les relances pour les impayés
+    qui ont une séquence automatique mais pas encore de relances créées.
+
+    Exemple d'utilisation:
+        POST /script/peuplerRelances
+        Content-Type: application/json
+
+        {}
+
+        Réponse:
+        {
+            "status": "success",
+            "message": "Relances générées avec succès",
+            "data": {
+                "relances_created": 25
+            },
+            "timestamp": "..."
+        }
+    """
+    try:
+        # Importer le module peuplerRelance
+        from scripts.peuplerRelance import execute
+
+        # Extraire les paramètres de la requête
+        params = request.get_json() if request.is_json else {}
+
+        # Exécuter le script
+        result = execute(params)
+
+        # S'assurer que le résultat a le format attendu
+        if not isinstance(result, dict):
+            result = {
+                "status": "error",
+                "message": "Format de réponse invalide",
+                "data": {"raw_response": str(result)},
+                "timestamp": datetime.now().isoformat(),
+            }
+
+        # Ajouter des métadonnées si non présentes
+        if "timestamp" not in result:
+            result["timestamp"] = datetime.now().isoformat()
+
+        return jsonify(result), 200
+
+    except ImportError as e:
+        return jsonify(
+            {
+                "status": "error",
+                "message": f"Erreur d'import du script peuplerRelance: {str(e)}",
+                "timestamp": datetime.now().isoformat(),
+            }
+        ), 400
+
+    except Exception as e:
+        return jsonify(
+            {
+                "status": "error",
+                "message": f"Erreur lors de l'exécution de peuplerRelances: {str(e)}",
+                "error_details": str(e),
+                "timestamp": datetime.now().isoformat(),
+            }
+        ), 500
+
+
 @script_bp.route("/list", methods=["GET"])
 def list_scripts():
     """

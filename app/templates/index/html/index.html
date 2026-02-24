@@ -1,0 +1,44 @@
+{% extends "base/html/base.html" %} {% block title %}Bienvenue sur Marki{% endblock %} {%
+block content %}
+<div
+    class="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8"
+>
+    <div class="max-w-md w-full space-y-8 text-center">
+        <div>
+            <img
+                src="{{ url_for('static', filename='marki-logo.png') }}"
+                alt="Marki Logo"
+                class="mx-auto h-32 w-auto mb-8"
+            />
+            <h1 class="text-4xl font-bold text-gray-900 mb-4">
+                Bienvenue sur Marki
+            </h1>
+            <p class="text-xl text-gray-600">
+                La plateforme de gestion de contenu et d'analyse de données
+            </p>
+        </div>
+
+        <div class="mt-8 space-y-4">
+            <a
+                href="/login"
+                class="inline-block bg-sky-500 hover:bg-sky-600 text-white font-medium py-3 px-6 rounded-lg transition-colors text-lg w-full"
+            >
+                Se connecter
+            </a>
+
+            <a
+                href="/styleguide"
+                class="inline-block bg-white hover:bg-gray-50 text-gray-700 font-medium py-3 px-6 rounded-lg transition-colors text-lg w-full border border-gray-300"
+            >
+                Voir le Styleguide
+            </a>
+        </div>
+
+        <div class="mt-12 text-sm text-gray-500">
+            <p>© 2023 Marki. Tous droits réservés.</p>
+        </div>
+    </div>
+</div>
+{% endblock %} {% block scripts %}
+{%- include 'index/alpinejs/indexState.js' -%}
+{% endblock %}
