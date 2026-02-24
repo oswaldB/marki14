@@ -97,10 +97,6 @@ def sequences():
 def sequence_manual(sequence_id):
     return render_template("sequence_manual/html/sequence_manual.html", sequence_id=sequence_id)
 
-@app.route("/sequence/<sequence_id>/man2")
-def sequence_manual2(sequence_id):
-    return render_template("sequence_manual2/html/sequence_manual2.html", sequence_id=sequence_id)
-
 
 
 

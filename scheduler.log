@@ -5,3 +5,12 @@
 2026-02-24 17:03:00,083 - ERROR - [2026-02-24 17:03:00.083754] Erreur lors de l'appel de populateImpayes : 400
 2026-02-24 17:10:00,180 - ERROR - [2026-02-24 17:10:00.180551] Erreur lors de l'appel de populateSequences : 400
 2026-02-24 17:15:00,290 - ERROR - [2026-02-24 17:15:00.290229] Erreur lors de l'appel de peuplerRelances : 400
+2026-02-24 18:00:00,748 - ERROR - [2026-02-24 18:00:00.748746] Erreur lors de l'appel de getImpayesColumns : 400
+2026-02-24 18:03:00,818 - ERROR - [2026-02-24 18:03:00.818697] Erreur lors de l'appel de populateImpayes : 400
+2026-02-24 18:10:00,934 - ERROR - [2026-02-24 18:10:00.934068] Erreur lors de l'appel de populateSequences : 400
+2026-02-24 18:15:01,056 - ERROR - [2026-02-24 18:15:01.056725] Erreur lors de l'appel de peuplerRelances : 400
+2026-02-24 19:00:00,632 - ERROR - [2026-02-24 19:00:00.632546] Erreur lors de l'appel de getImpayesColumns : 400
+2026-02-24 19:03:00,712 - ERROR - [2026-02-24 19:03:00.712794] Erreur lors de l'appel de populateImpayes : 400
+2026-02-24 19:10:00,861 - ERROR - [2026-02-24 19:10:00.861533] Erreur lors de l'appel de populateSequences : 400
+2026-02-24 19:15:00,979 - ERROR - [2026-02-24 19:15:00.979934] Erreur lors de l'appel de peuplerRelances : 400
+2026-02-24 20:00:00,519 - ERROR - [2026-02-24 20:00:00.519240] Erreur lors de l'appel de getImpayesColumns : 400

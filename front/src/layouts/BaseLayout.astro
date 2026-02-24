@@ -1,0 +1,162 @@
+---
+export const prerender = true;
+
+interface Props {
+  title: string;
+  withAuth?: boolean;
+  hideSidebar?: boolean;
+  Alpinefile?: string;}
+
+const { title, withAuth = false, hideSidebar = false, Alpinefile } = Astro.props;
+
+// Debug: Log the props to ensure they're being passed correctly
+console.log('BaseLayout props:', { title, withAuth, hideSidebar });
+
+import SideMenu from '../components/SideMenu.astro';
+---
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{title} — Marki</title>
+  <link rel="icon" href="/favicon.ico" type="image/x-icon">
+  <style is:global>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    [x-cloak] { display: none !important; }
+  </style>
+  <!-- Font Awesome CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <!-- Font Awesome Icons - Nouvelle bibliothèque d'icônes -->
+  <script>
+    // Font Awesome est chargé via imports dans les composants
+    // Utilisation via imports ES6 dans chaque composant
+    console.log('📦 Icônes Font Awesome: chargement via imports ES6 dans les composants');
+  </script>
+  <!-- Approche REST: Parse Auth via Axios -->
+  <script is:inline src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script is:inline>
+    // Configuration REST: Parse Auth (Axios)
+    if (typeof window !== 'undefined') {
+      // 1. Configurer Parse Auth via REST API (harmonisé avec parse-api.js)
+      window.PARSE_AUTH_CONFIG = {
+        appId: 'marki',
+        restApiKey: 'Careless7-Gore4-Guileless0-Jogger5-Clubbed9',
+        serverUrl: 'https://dev.parse.markidiags.com/',
+        masterKey: null // Non utilisé côté client
+      };
+      console.log('✅ Parse REST configuré pour AUTH:', window.PARSE_AUTH_CONFIG.serverUrl);
+      
+      // 2. Fonctions utilitaires Parse REST
+      window.ParseRest = {
+        async becomeSession(sessionToken) {
+          try {
+            const response = await axios.get(`${window.PARSE_AUTH_CONFIG.serverUrl}/users/me`, {
+              headers: {
+                'X-Parse-Application-Id': window.PARSE_AUTH_CONFIG.appId,
+                'X-Parse-REST-API-Key': window.PARSE_AUTH_CONFIG.restApiKey,
+                'X-Parse-Session-Token': sessionToken
+              }
+            });
+            return {
+              user: response.data,
+              sessionToken: sessionToken // Le token reste le même pour REST
+            };
+          } catch (error) {
+            console.error('❌ Erreur Parse REST becomeSession:', error.response?.data || error.message);
+            throw error;
+          }
+        }
+      };
+    }
+  </script>
+</head>
+<body class="bg-gray-50">
+  <!-- Script d'authentification conditionnel -->
+  <script is:inline define:vars={{withAuth: withAuth}}>
+    // Code d'authentification - uniquement côté client
+    if (typeof window !== 'undefined') {
+      // S'assurer que withAuth est défini et est un booléen
+      const authEnabled = Boolean(withAuth);
+      console.log('Authentification:', authEnabled ? 'activée' : 'désactivée');
+      
+      if (authEnabled) {
+        window.addEventListener('DOMContentLoaded', async () => {
+          // Attendre que Parse REST soit complètement initialisé (pour AUTH)
+          await new Promise(resolve => {
+            if (typeof window.ParseRest !== 'undefined' && window.PARSE_AUTH_CONFIG) {
+              resolve();
+            } else {
+              const checkParseRest = setInterval(() => {
+                if (typeof window.ParseRest !== 'undefined' && window.PARSE_AUTH_CONFIG) {
+                  clearInterval(checkParseRest);
+                  resolve();
+                }
+              }, 50);
+            }
+          });
+
+          const sessionToken = sessionStorage.getItem('parseSessionToken') || localStorage.getItem('parseSessionToken');
+          const isPersistent = !!localStorage.getItem('parseSessionToken');
+
+          if (sessionToken) {
+            try {
+              // Restaurer la session avec le token (Parse REST)
+              const result = await window.ParseRest.becomeSession(sessionToken);
+              const user = result.user; // Utilisation de la variable user
+              const newToken = result.sessionToken; // Pour REST, le token ne change pas
+              
+              // Log des informations utilisateur pour le débogage
+              console.log('✅ Utilisateur authentifié:', user?.username || 'Unknown');
+              
+              // Re-sauvegarder le token dans le bon stockage selon l'origine
+              if (isPersistent) {
+                localStorage.setItem('parseSessionToken', newToken);
+                console.log('✅ Session persistante restaurée (Parse REST Auth)');
+              } else {
+                sessionStorage.setItem('parseSessionToken', newToken);
+                console.log('✅ Session temporaire restaurée (Parse REST Auth)');
+              }
+            } catch (error) {
+              console.error('❌ Token invalide (Parse REST Auth):', error);
+              // Supprimer le token invalide des deux stockages
+              sessionStorage.removeItem('parseSessionToken');
+              localStorage.removeItem('parseSessionToken');
+              const currentPath = window.location.pathname;
+              window.location.href = '/login?redirect=' + encodeURIComponent(currentPath);
+            }
+          } else {
+            // Pas de token, redirection vers login
+            const currentPath = window.location.pathname;
+            window.location.href = '/login?redirect=' + encodeURIComponent(currentPath);
+          }
+        });
+      }
+    }
+  </script>
+  
+  <!-- Script Alpine.js conditionnel -->
+  {Alpinefile && (
+    <script is:inline type="module" src={Alpinefile}></script>
+  )}
+  
+  <!-- Chargement des states Alpine.js - supprimé le chargement dynamique problématique -->
+  <!-- Layout principal avec sidebar -->
+  <div class="flex min-h-screen h-screen">
+    <!-- Sidebar - conditionnellement affichée -->
+    {hideSidebar ? null : (
+      <aside class="w-80 bg-white border-r border-gray-200 hidden md:block flex-shrink-0 h-screen relative">
+        <SideMenu />
+      </aside>
+    )}
+    
+    <!-- Contenu principal -->
+    <main class={"flex-1 flex flex-col " + (hideSidebar ? " w-full" : "") + " overflow-y-auto pb-3 md:pb-0"}>
+      <slot />
+    </main>
+  </div>
+  
+
+  
+</html>

@@ -1,5 +1,5 @@
-{% extends "base/html/base.html" %} {% block title %}Bienvenue sur Marki{% endblock %} {%
-block content %}
+{% extends "base/html/base.html" %} {% block title %}Bienvenue sur Marki{%
+endblock %} {% block content %}
 <div
     class="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8"
 >
@@ -37,8 +37,11 @@ block content %}
         <div class="mt-12 text-sm text-gray-500">
             <p>© 2023 Marki. Tous droits réservés.</p>
         </div>
+        <hello-world></hello-world>
     </div>
 </div>
-{% endblock %} {% block scripts %}
-{%- include 'index/alpinejs/indexState.js' -%}
+{% endblock %} {% block scripts %} {%- include 'index/alpinejs/indexState.js'
+-%}
+<script src="https://cdn.tailwindcss.com"></script>
+<script type="module" src="/static/js/lit/hello-world.js"></script>
 {% endblock %}
