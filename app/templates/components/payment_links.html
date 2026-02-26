@@ -6,31 +6,36 @@
         linksConfigOpen: false,
         selectedLink: null,
         availableLinks: [],
-        newLink: ''
+        newLink: '',
+        newLinkName: '',
+        newLinkDescription: '',
+        customMessage: 'Veuillez trouver ci-dessous le lien pour effectuer votre paiement en ligne.'
     },
 
     async init() {
         await this.loadPaymentLinks();
     },
 
+    getParseAxios() {
+      const parseAxios = Alpine.store('parseAxios');
+      if (!parseAxios) {
+        throw new Error('parseAxios is not available. Please reload the page.');
+      }
+      return parseAxios;
+    },
+
     async loadPaymentLinks() {
         try {
-            // TODO: Implement Parse query for lienPayment class
             console.log('Loading payment links from Parse...');
+            const parseAxios = this.getParseAxios();
+            const response = await parseAxios.get('/classes/PaymentLink');
 
-            // Mock data - will be replaced with actual Parse query
-            this.paymentLinks.availableLinks = [
-                {
-                    id: 'link1',
-                    url: 'https://payment.example.com/invoice/12345',
-                    name: 'Paiement en ligne (CB)'
-                },
-                {
-                    id: 'link2',
-                    url: 'https://payment.example.com/sepa/12345',
-                    name: 'Prélèvement SEPA'
-                }
-            ];
+            this.paymentLinks.availableLinks = response.data.results.map(link => ({
+                id: link.objectId,
+                url: link.url,
+                name: link.name || 'Lien de paiement',
+                description: link.description || ''
+            }));
 
             // Select first link by default
             if (this.paymentLinks.availableLinks.length > 0) {
@@ -40,10 +45,6 @@
             console.error('Error loading payment links:', error);
             this.paymentLinks.availableLinks = [];
         }
-    },
-
-    togglePaymentLink() {
-        this.paymentLinks.showLink = !this.paymentLinks.showLink;
     },
 
     openLinksConfig() {
@@ -59,21 +60,35 @@
         this.closeLinksConfig();
     },
 
-    addNewLink() {
-        if (this.paymentLinks.newLink.trim() === '') return;
+    async addNewLink() {
+        if (this.paymentLinks.newLink.trim() === '' || this.paymentLinks.newLinkName.trim() === '') return;
 
-        const newLink = {
-            id: 'new-' + Date.now(),
-            url: this.paymentLinks.newLink,
-            name: 'Nouveau lien de paiement'
-        };
+        try {
+            const parseAxios = this.getParseAxios();
+            const response = await parseAxios.post('/classes/PaymentLink', {
+                url: this.paymentLinks.newLink,
+                name: this.paymentLinks.newLinkName,
+                description: this.paymentLinks.newLinkDescription || ''
+            });
 
-        this.paymentLinks.availableLinks.push(newLink);
-        this.paymentLinks.selectedLink = newLink.url;
-        this.paymentLinks.newLink = '';
+            const newLink = {
+                id: response.data.objectId,
+                url: response.data.url,
+                name: response.data.name,
+                description: response.data.description || ''
+            };
 
-        // TODO: Save to Parse database
-        console.log('New payment link added (TODO: save to Parse):', newLink);
+            this.paymentLinks.availableLinks.push(newLink);
+            this.paymentLinks.selectedLink = newLink.url;
+            this.paymentLinks.newLink = '';
+            this.paymentLinks.newLinkName = '';
+            this.paymentLinks.newLinkDescription = '';
+
+            console.log('New payment link saved to Parse:', newLink);
+        } catch (error) {
+            console.error('Error saving payment link to Parse:', error);
+            alert('Erreur lors de la sauvegarde du lien de paiement. Veuillez réessayer.');
+        }
     }
 }"
     class="payment-links-container mb-4"
@@ -81,24 +96,43 @@
     <!-- Header des liens de paiement avec toggle -->
     <div class="flex flex-wrap items-center justify-between mb-3">
         <div class="flex items-center">
-            <label class="switch">
-                <input
-                    type="checkbox"
-                    x-model="paymentLinks.showLink"
-                    @change="togglePaymentLink()"
-                />
-                <span class="slider round"></span>
+            <input
+                id="paymentLinkSwitch"
+                type="checkbox"
+                name="switch"
+                class="hidden"
+                :checked="paymentLinks.showLink"
+            />
+
+            <button
+                type="button"
+                @click="paymentLinks.showLink = !paymentLinks.showLink"
+                :class="paymentLinks.showLink ? 'bg-blue-600' : 'bg-neutral-200'"
+                class="relative inline-flex h-6 py-0.5 ml-4 focus:outline-none rounded-full w-10"
+                x-cloak
+            >
+                <span
+                    :class="paymentLinks.showLink ? 'translate-x-[18px]' : 'translate-x-0.5'"
+                    class="w-5 h-5 duration-200 ease-in-out bg-white rounded-full shadow-md"
+                ></span>
+            </button>
+
+            <label
+                @click="$refs.switchButton.click(); $refs.switchButton.focus()"
+                :id="$id('switch')"
+                :class="{ 'text-blue-600': paymentLinks.showLink, 'text-gray-400': !paymentLinks.showLink }"
+                class="text-sm select-none ml-3"
+                x-cloak
+            >
+                Inclure le lien de paiement
             </label>
-            <span class="ml-3">Inclure le lien de paiement</span>
         </div>
         <div class="flex items-center">
             <button
-                @click="openLinksConfig()"
-                class="bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600 border border-green-500 flex items-center"
+                @click="paymentLinks.linksConfigOpen = !paymentLinks.linksConfigOpen"
+                class="text-sm text-blue-600 hover:text-blue-800"
             >
-                <span class="text-sm mr-1">
-                    <i class="fa-regular fa-link"></i>
-                </span>
+                <i class="fa-regular fa-link mr-1"></i>
                 <span>Gérer les liens</span>
             </button>
         </div>
@@ -106,11 +140,24 @@
 
     <!-- Affichage du lien sélectionné -->
     <div
-        x-show="paymentLinks.showLink && paymentLinks.selectedLink"
+        x-show="paymentLinks.showLink"
         x-transition
         class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm"
     >
         <div>
+            <div class="mb-4">
+                <textarea
+                    x-model="paymentLinks.customMessage"
+                    class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-marki-primary focus:border-transparent"
+                    rows="3"
+                    placeholder="Message personnalisé pour accompagner le lien de paiement..."
+                ></textarea>
+            </div>
+
+            <div class="mb-4 p-3 bg-gray-50 rounded">
+                <p class="text-sm text-gray-700" x-text="paymentLinks.customMessage"></p>
+            </div>
+
             <p class="mb-3">
                 <strong>Lien de paiement :</strong>
             </p>
@@ -137,11 +184,13 @@
         </div>
     </div>
 
-    <!-- Drawer de gestion des liens -->
-    <div
-        x-show="paymentLinks.linksConfigOpen"
-        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-    >
+    <!-- Template de gestion des liens (inline) -->
+    <template x-if="paymentLinks.linksConfigOpen">
+        <div
+            x-show="paymentLinks.linksConfigOpen"
+            x-transition
+            class="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200"
+        >
         <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
             <header
                 class="border-b border-gray-200 p-4 flex justify-between items-center"
@@ -163,7 +212,25 @@
                     <div class="mb-4">
                         <label
                             class="block text-sm font-medium text-gray-700 mb-1"
-                            >Ajouter un nouveau lien</label
+                            >Nom du lien</label
+                        >
+                        <div>
+                            <input
+                                type="text"
+                                x-model="paymentLinks.newLinkName"
+                                class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-marki-primary focus:border-transparent"
+                                placeholder="Ex: Paiement CB, Prélèvement SEPA, etc."
+                            />
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">
+                            Nom descriptif pour identifier le lien
+                        </p>
+                    </div>
+
+                    <div class="mb-4">
+                        <label
+                            class="block text-sm font-medium text-gray-700 mb-1"
+                            >URL du lien</label
                         >
                         <div>
                             <input
@@ -178,10 +245,28 @@
                         </p>
                     </div>
 
+                    <div class="mb-4">
+                        <label
+                            class="block text-sm font-medium text-gray-700 mb-1"
+                            >Description (optionnelle)</label
+                        >
+                        <div>
+                            <textarea
+                                x-model="paymentLinks.newLinkDescription"
+                                class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-marki-primary focus:border-transparent"
+                                placeholder="Description supplémentaire du lien de paiement"
+                                rows="2"
+                            ></textarea>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">
+                            Informations supplémentaires sur ce lien
+                        </p>
+                    </div>
+
                     <button
-                        @click="addNewLink()"
+                        @click="await addNewLink()"
                         class="bg-marki-primary text-white px-4 py-2 rounded hover:bg-marki-primary-dark mb-5"
-                        :disabled="!paymentLinks.newLink.trim()"
+                        :disabled="!paymentLinks.newLink.trim() || !paymentLinks.newLinkName.trim()"
                     >
                         <span class="text-sm mr-1">
                             <i class="fa-regular fa-plus"></i>
@@ -213,8 +298,13 @@
                                                 ></strong>
                                             </p>
                                             <p
-                                                class="text-sm text-gray-500"
+                                                class="text-sm text-gray-500 mb-1"
                                                 x-text="link.url"
+                                            ></p>
+                                            <p
+                                                class="text-xs text-gray-400 italic"
+                                                x-text="link.description"
+                                                x-show="link.description"
                                             ></p>
                                         </div>
                                     </div>
@@ -243,12 +333,12 @@
             </section>
             <footer class="border-t border-gray-200 p-4">
                 <button
-                    @click="closeLinksConfig()"
+                    @click="paymentLinks.linksConfigOpen = false"
                     class="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-50"
                 >
                     Fermer
                 </button>
             </footer>
         </div>
-    </div>
+    </template>
 </div>
