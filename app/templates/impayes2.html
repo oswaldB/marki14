@@ -1,34 +1,28 @@
-{% extends "base-app.html" %} {% block title %}Impayés{% endblock %}
-n{% block head %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/impayes-custom.css') }}">
-    <script src="{{ url_for('static', filename='js/alpines/impayesState.js') }}"></script>
-{% endblock %}
-%} {% block content %}
-<div x-data="impayesState" class="min-height-screen">
+{% extends "base-app.html" %} {% block title %}Impayés{% endblock %} {% block
+head %}
+
+<script src="{{ url_for('static', filename='js/alpines/impayesState.js') }}"></script>
+{% endblock %} {% block content %}
+<div x-data="impayesState" class="min-h-screen">
     <!-- Header -->
-    <div class="box mb-4">
-        <div class="level">
-            <div class="level-left">
+    <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm mb-4">
+        <div class="flex flex-wrap items-center justify-between">
+            <div class="flex-1 min-w-0 mb-4 md:mb-0">
                 <div>
-                    <h1 class="title is-3">
-                        Impayés
-                    </h1>
-                    <p class="subtitle is-6">
+                    <h1 class="text-2xl font-bold">Impayés</h1>
+                    <p class="text-sm text-gray-600">
                         <span x-text="impayes.length"></span> facture(s)
                         impayée(s)
                     </p>
                 </div>
             </div>
-            <div class="level-right">
+            <div class="flex-shrink-0">
                 <button
                     @click="refreshData()"
                     :disabled="isLoading"
-                    class="button is-link"
+                    class="bg-marki-primary text-white px-4 py-2 rounded hover:bg-marki-primary-dark disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                    <i
-                        x-show="!isLoading"
-                        class="fa-regular fa-sync mr-2"
-                    ></i>
+                    <i x-show="!isLoading" class="fa-regular fa-sync mr-2"></i>
                     <i
                         x-show="isLoading"
                         class="fa-regular fa-spinner fa-spin mr-2"
@@ -40,56 +34,63 @@ n{% block head %}
     </div>
 
     <!-- Filtres -->
-    <div class="box mb-4">
-        <div class="columns">
-            <div class="column">
-                <div class="field">
-                    <label class="label">Recherche</label>
-                    <div class="control">
+    <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm mb-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+                <div class="mb-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1"
+                        >Recherche</label
+                    >
+                    <div>
                         <input
                             type="text"
                             x-model="searchTerm"
                             @input="filterImpayes()"
                             placeholder="Rechercher par payeur, référence, montant..."
-                            class="input"
+                            class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-marki-primary focus:border-transparent"
                         />
                     </div>
                 </div>
             </div>
-            <div class="column">
-                <div class="field">
-                    <label class="label">Payeur</label>
-                    <div class="control">
-                        <div class="select is-fullwidth">
-                            <select
-                                x-model="selectedPayeur"
-                                @change="filterImpayes()"
-                            >
-                                <option value="">Tous les payeurs</option>
-                                <template x-for="payeur in payeurs" :key="payeur">
-                                    <option :value="payeur" x-text="payeur"></option>
-                                </template>
-                            </select>
-                        </div>
+            <div>
+                <div class="mb-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1"
+                        >Payeur</label
+                    >
+                    <div>
+                        <select
+                            x-model="selectedPayeur"
+                            @change="filterImpayes()"
+                            class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-marki-primary focus:border-transparent"
+                        >
+                            <option value="">Tous les payeurs</option>
+                            <template x-for="payeur in payeurs" :key="payeur">
+                                <option
+                                    :value="payeur"
+                                    x-text="payeur"
+                                ></option>
+                            </template>
+                        </select>
                     </div>
                 </div>
             </div>
-            <div class="column">
-                <div class="field">
-                    <label class="label">Trier par</label>
-                    <div class="control">
-                        <div class="select is-fullwidth">
-                            <select
-                                x-model="sortBy"
-                                @change="sortImpayes()"
-                            >
-                                <option value="datepiece">Date de facture</option>
-                                <option value="delais">Délais (jours)</option>
-                                <option value="totalttcnet">Montant TTC</option>
-                                <option value="payeur_nom">Payeur</option>
-                                <option value="refpiece">Référence</option>
-                            </select>
-                        </div>
+            <div>
+                <div class="mb-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1"
+                        >Trier par</label
+                    >
+                    <div>
+                        <select
+                            x-model="sortBy"
+                            @change="sortImpayes()"
+                            class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-marki-primary focus:border-transparent"
+                        >
+                            <option value="datepiece">Date de facture</option>
+                            <option value="delais">Délais (jours)</option>
+                            <option value="totalttcnet">Montant TTC</option>
+                            <option value="payeur_nom">Payeur</option>
+                            <option value="refpiece">Référence</option>
+                        </select>
                     </div>
                 </div>
             </div>
@@ -97,23 +98,25 @@ n{% block head %}
     </div>
 
     <!-- Contenu principal -->
-    <div class="container">
+    <div class="container mx-auto">
         <!-- Message de chargement -->
-        <div x-show="isLoading" class="has-text-centered py-6">
-            <div class="loader is-large"></div>
+        <div x-show="isLoading" class="text-center py-6">
+            <div
+                class="inline-block w-8 h-8 border-4 border-marki-primary border-t-transparent rounded-full animate-spin"
+            ></div>
         </div>
 
         <!-- Message d'erreur -->
         <div
             x-show="error"
-            class="notification is-danger mb-6"
+            class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6"
         >
-            <div class="media">
-                <div class="media-left">
+            <div class="flex items-center">
+                <div class="mr-3">
                     <i class="fa-regular fa-ban"></i>
                 </div>
-                <div class="media-content">
-                    <p class="is-size-6" x-text="error"></p>
+                <div>
+                    <p class="text-sm" x-text="error"></p>
                 </div>
             </div>
         </div>
@@ -121,50 +124,55 @@ n{% block head %}
         <!-- Liste des impayés groupés par payeur -->
         <div x-show="!isLoading && !error">
             <template x-for="(group, payeur) in groupedImpayes" :key="payeur">
-                <div class="box mb-6">
+                <div
+                    class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm mb-6"
+                >
                     <!-- Header du payeur -->
-                    <div class="level">
-                        <div class="level-left">
-                            <div class="level-item">
-                                <div class="media">
-                                    <div class="media-left">
-                                        <figure class="image is-48x48">
-                                            <div class="has-background-primary-light is-flex is-justify-content-center is-align-items-center" style="width: 48px; height: 48px; border-radius: 50%;">
-                                                <i
-                                                    :class="group[0].payeur_typePersonne === 'P' ? 'fa-regular fa-user' : 'fa-regular fa-building'"
-                                                    class="has-text-primary"
-                                                ></i>
-                                            </div>
-                                        </figure>
+                    <div class="flex flex-wrap items-center justify-between">
+                        <div class="flex-1 min-w-0 mb-4 md:mb-0">
+                            <div class="flex items-center">
+                                <div class="mr-3">
+                                    <div
+                                        class="w-12 h-12 bg-marki-primary bg-opacity-10 rounded-full flex items-center justify-center"
+                                    >
+                                        <i
+                                            :class="group[0].payeur_typePersonne === 'P' ? 'fa-regular fa-user' : 'fa-regular fa-building'"
+                                            class="text-marki-primary text-xl"
+                                        ></i>
                                     </div>
-                                    <div class="media-content">
-                                        <p class="title is-5" x-text="payeur"></p>
-                                        <p class="subtitle is-6">
-                                            <span x-text="group.length"></span>
-                                            facture(s) - Total:
-                                            <span
-                                                x-text="formatCurrency(group.reduce((sum, imp) => sum + (imp.totalttcnet || 0), 0))"
-                                            ></span>
-                                        </p>
-                                        <p
-                                            class="has-text-warning"
-                                            x-show="calculateMaxDaysLate(group) > 0"
-                                        >
-                                            <i class="fa-regular fa-exclamation-triangle mr-1"></i>
-                                            Retard max:
-                                            <span
-                                                x-text="calculateMaxDaysLate(group)"
-                                            ></span>
-                                            jour(s)
-                                        </p>
-                                    </div>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <p
+                                        class="text-lg font-bold"
+                                        x-text="payeur"
+                                    ></p>
+                                    <p class="text-sm text-gray-600">
+                                        <span x-text="group.length"></span>
+                                        facture(s) - Total:
+                                        <span
+                                            x-text="formatCurrency(group.reduce((sum, imp) => sum + (imp.totalttcnet || 0), 0))"
+                                        ></span>
+                                    </p>
+                                    <p
+                                        class="text-yellow-600 text-sm"
+                                        x-show="calculateMaxDaysLate(group) > 0"
+                                    >
+                                        <i
+                                            class="fa-regular fa-exclamation-triangle mr-1"
+                                        ></i>
+                                        Retard max:
+                                        <span
+                                            x-text="calculateMaxDaysLate(group)"
+                                        ></span>
+                                        jour(s)
+                                    </p>
                                 </div>
                             </div>
                         </div>
-                        <div class="level-right">
+                        <div class="flex-shrink-0">
                             <button
                                 @click="togglePayeur(payeur)"
-                                class="button is-white"
+                                class="bg-white border border-gray-300 text-gray-700 px-3 py-1 rounded hover:bg-gray-50"
                             >
                                 <i
                                     :class="{'fa-chevron-up': expandedPayeurs.includes(payeur), 'fa-chevron-down': !expandedPayeurs.includes(payeur)}"
@@ -176,81 +184,95 @@ n{% block head %}
 
                     <!-- Liste des factures du payeur -->
                     <div x-show="expandedPayeurs.includes(payeur)" x-transition>
-                        <div class="content">
+                        <div class="mt-4">
                             <template
                                 x-for="impaye in group"
                                 :key="impaye.objectId"
                             >
-                                <div class="box mb-4">
-                                    <div class="level">
-                                        <div class="level-left">
-                                            <div class="level-item">
-                                                <div class="media">
-                                                    <div class="media-left">
+                                <div
+                                    class="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4"
+                                >
+                                    <div
+                                        class="flex flex-wrap items-center justify-between"
+                                    >
+                                        <div
+                                            class="flex-1 min-w-0 mb-4 md:mb-0"
+                                        >
+                                            <div class="flex items-center">
+                                                <div class="mr-3">
+                                                    <span
+                                                        class="inline-block px-2 py-1 rounded text-xs font-medium"
+                                                        :class="impaye.facturesoldee ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
+                                                    >
                                                         <span
-                                                            class="tag"
-                                                            :class="impaye.facturesoldee ? 'is-success' : 'is-danger'"
-                                                        >
-                                                            <span
-                                                                x-text="impaye.facturesoldee ? 'Soldée' : 'Impayée'"
-                                                            ></span>
-                                                        </span>
-                                                    </div>
-                                                    <div class="media-content">
-                                                        <p class="is-size-5" x-text="impaye.refpiece"></p>
-                                                        <p class="is-size-6">
-                                                            N°
-                                                            <span
-                                                                x-text="impaye.nfacture"
-                                                            ></span>
-                                                            -
-                                                            <span
-                                                                x-text="formatDate(impaye.datepiece)"
-                                                            ></span>
-                                                        </p>
-                                                        <p class="is-size-7">
-                                                            <i class="fa-regular fa-location-dot mr-1"></i>
-                                                            <span
-                                                                x-text="(impaye.numVoie || '') + ' ' + (impaye.typeVoie || '') + ' ' + (impaye.cptNumVoie || '') + ' ' + (impaye.adresse || '') + ', ' + (impaye.codepostal || '') + ' ' + (impaye.ville || '')"
-                                                            ></span>
-                                                        </p>
-                                                    </div>
+                                                            x-text="impaye.facturesoldee ? 'Soldée' : 'Impayée'"
+                                                        ></span>
+                                                    </span>
+                                                </div>
+                                                <div class="flex-1 min-w-0">
+                                                    <p
+                                                        class="text-lg font-medium"
+                                                        x-text="impaye.refpiece"
+                                                    ></p>
+                                                    <p
+                                                        class="text-sm text-gray-600"
+                                                    >
+                                                        N°
+                                                        <span
+                                                            x-text="impaye.nfacture"
+                                                        ></span>
+                                                        -
+                                                        <span
+                                                            x-text="formatDate(impaye.datepiece)"
+                                                        ></span>
+                                                    </p>
+                                                    <p
+                                                        class="text-sm text-gray-500"
+                                                    >
+                                                        <i
+                                                            class="fa-regular fa-location-dot mr-1"
+                                                        ></i>
+                                                        <span
+                                                            x-text="(impaye.numVoie || '') + ' ' + (impaye.typeVoie || '') + ' ' + (impaye.cptNumVoie || '') + ' ' + (impaye.adresse || '') + ', ' + (impaye.codepostal || '') + ' ' + (impaye.ville || '')"
+                                                        ></span>
+                                                    </p>
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="level-right">
-                                            <div class="level-item">
-                                                <p class="title is-5" x-text="formatCurrency(impaye.totalttcnet)"></p>
-                                                <p class="subtitle is-6">
-                                                    Reste:
-                                                    <span
-                                                        x-text="formatCurrency(impaye.resteapayer)"
-                                                    ></span>
-                                                </p>
-                                            </div>
+                                        <div class="flex-shrink-0 text-right">
+                                            <p
+                                                class="text-lg font-bold"
+                                                x-text="formatCurrency(impaye.totalttcnet)"
+                                            ></p>
+                                            <p class="text-sm text-gray-600">
+                                                Reste:
+                                                <span
+                                                    x-text="formatCurrency(impaye.resteapayer)"
+                                                ></span>
+                                            </p>
                                         </div>
                                     </div>
 
                                     <!-- Actions -->
-                                    <div class="level mt-3">
-                                        <div class="level-left">
-                                            <div class="buttons">
-                                                <button
-                                                    x-show="impaye.invoice_url"
-                                                    @click="openInvoice(impaye.invoice_url)"
-                                                    class="button is-small is-info"
-                                                >
-                                                    <i class="fa-regular fa-eye mr-1"></i>
-                                                    Voir la facture
-                                                </button>
-                                                <button
-                                                    @click="openDetails(impaye)"
-                                                    class="button is-small is-link"
-                                                >
-                                                    Détails
-                                                </button>
-                                            </div>
-                                        </div>
+                                    <div
+                                        class="flex justify-start space-x-2 mt-3"
+                                    >
+                                        <button
+                                            x-show="impaye.invoice_url"
+                                            @click="openInvoice(impaye.invoice_url)"
+                                            class="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600"
+                                        >
+                                            <i
+                                                class="fa-regular fa-eye mr-1"
+                                            ></i>
+                                            Voir la facture
+                                        </button>
+                                        <button
+                                            @click="openDetails(impaye)"
+                                            class="bg-gray-500 text-white px-3 py-1 rounded text-sm hover:bg-gray-600"
+                                        >
+                                            Détails
+                                        </button>
                                     </div>
                                 </div>
                             </template>
@@ -263,13 +285,13 @@ n{% block head %}
         <!-- Message si aucun résultat -->
         <div
             x-show="!isLoading && !error && filteredImpayes.length === 0"
-            class="has-text-centered py-6"
+            class="text-center py-6"
         >
-            <i class="fa-regular fa-file-invoice-dollar is-size-1 has-text-grey-light"></i>
-            <h3 class="title is-5">
-                Aucun impayé trouvé
-            </h3>
-            <p class="subtitle is-6">
+            <i
+                class="fa-regular fa-file-invoice-dollar text-4xl text-gray-300"
+            ></i>
+            <h3 class="text-xl font-bold mt-2">Aucun impayé trouvé</h3>
+            <p class="text-gray-600">
                 Aucune facture impayée ne correspond à vos critères de
                 recherche.
             </p>
@@ -279,315 +301,380 @@ n{% block head %}
     <!-- Drawer pour afficher les détails d'une facture -->
     <div
         x-show="isDetailsDrawerOpen"
-        class="modal is-active"
+        class="fixed inset-0 z-50 overflow-y-auto"
     >
         <!-- Overlay -->
         <div
             @click="closeDetailsDrawer()"
-            class="modal-background"
+            class="fixed inset-0 bg-black bg-opacity-50"
         ></div>
 
         <!-- Drawer -->
         <div
-            class="modal-card"
-            style="width: 80%; max-width: 800px; margin: 0 auto;"
+            class="relative bg-white rounded-lg shadow-xl mx-auto mt-8 mb-8 max-w-2xl w-full"
+            style="width: 80%; max-width: 800px; margin: 0 auto"
         >
-            <header class="modal-card-head">
-                <p class="modal-card-title">
+            <header
+                class="bg-gray-100 border-b border-gray-200 rounded-t-lg px-4 py-3 flex justify-between items-center"
+            >
+                <h3 class="text-lg font-medium text-gray-900">
                     Détails de la facture
-                </p>
+                </h3>
                 <button
                     @click="closeDetailsDrawer()"
-                    class="delete"
+                    class="text-gray-400 hover:text-gray-600 focus:outline-none"
                     aria-label="close"
-                ></button>
+                >
+                    <i class="fas fa-times"></i>
+                </button>
             </header>
 
             <!-- Content -->
-            <section class="modal-card-body">
+            <section class="p-4">
                 <div
                     x-show="!selectedImpayeForDetails"
-                    class="has-text-centered py-6"
+                    class="text-center py-6"
                 >
-                    <p class="has-text-grey">Aucune facture sélectionnée</p>
+                    <p class="text-gray-500">Aucune facture sélectionnée</p>
                 </div>
 
                 <div x-show="selectedImpayeForDetails" class="content">
                     <!-- Informations principales -->
-                    <div class="box mb-4">
-                        <h3 class="title is-5">
+                    <div
+                        class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm mb-4"
+                    >
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">
                             Informations principales
                         </h3>
-                        <div class="columns is-multiline">
-                            <div class="column is-6">
-                                <p class="is-size-7 has-text-grey">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-xs text-gray-500">
                                     Numéro de facture
                                 </p>
-                                <p class="is-size-5" x-text="selectedImpayeForDetails?.nfacture || 'N/A'"></p>
+                                <p
+                                    class="text-base font-medium"
+                                    x-text="selectedImpayeForDetails?.nfacture || 'N/A'"
+                                ></p>
                             </div>
-                            <div class="column is-6">
-                                <p class="is-size-7 has-text-grey">
+                            <div class="">
+                                <p class="text-xs text-gray-500">
                                     Référence pièce
                                 </p>
-                                <p class="is-size-5" x-text="selectedImpayeForDetails?.refpiece || 'N/A'"></p>
+                                <p
+                                    class="text-base font-medium"
+                                    x-text="selectedImpayeForDetails?.refpiece || 'N/A'"
+                                ></p>
                             </div>
-                            <div class="column is-6">
-                                <p class="is-size-7 has-text-grey">
+                            <div class="">
+                                <p class="text-xs text-gray-500">
                                     Date de facture
                                 </p>
-                                <p class="is-size-5" x-text="formatDate(selectedImpayeForDetails?.datepiece)"></p>
+                                <p
+                                    class="text-base font-medium"
+                                    x-text="formatDate(selectedImpayeForDetails?.datepiece)"
+                                ></p>
                             </div>
-                            <div class="column is-6">
-                                <p class="is-size-7 has-text-grey">
+                            <div class="">
+                                <p class="text-xs text-gray-500">
                                     Date de création
                                 </p>
-                                <p class="is-size-5" x-text="formatDate(selectedImpayeForDetails?.datecre)"></p>
+                                <p
+                                    class="text-base font-medium"
+                                    x-text="formatDate(selectedImpayeForDetails?.datecre)"
+                                ></p>
                             </div>
-                            <div class="column is-6">
-                                <p class="is-size-7 has-text-grey">
+                            <div class="">
+                                <p class="text-xs text-gray-500">
                                     Date d'intervention
                                 </p>
-                                <p class="is-size-5" x-text="formatDate(selectedImpayeForDetails?.dateDebutMission)"></p>
+                                <p
+                                    class="text-base font-medium"
+                                    x-text="formatDate(selectedImpayeForDetails?.dateDebutMission)"
+                                ></p>
                             </div>
-                            <div class="column is-6">
-                                <p class="is-size-7 has-text-grey">
-                                    Statut
-                                </p>
+                            <div class="">
+                                <p class="text-xs text-gray-500">Statut</p>
                                 <span
                                     class="tag"
-                                    :class="selectedImpayeForDetails?.facturesoldee ? 'is-success' : 'is-danger'"
+                                    :class="selectedImpayeForDetails?.facturesoldee ? 'bg-green-100 text-green-800 border border-green-300' : 'bg-red-100 text-red-800 border border-red-300'"
                                 >
                                     <span
                                         x-text="selectedImpayeForDetails?.facturesoldee ? 'Soldée' : 'Impayée'"
                                     ></span>
                                 </span>
                             </div>
-                            <div class="column is-6">
-                                <p class="is-size-7 has-text-grey">
-                                    ID Dossier
-                                </p>
-                                <p class="is-size-5" x-text="selectedImpayeForDetails?.idDossier || 'N/A'"></p>
+                            <div class="">
+                                <p class="text-xs text-gray-500">ID Dossier</p>
+                                <p
+                                    class="text-base font-medium"
+                                    x-text="selectedImpayeForDetails?.idDossier || 'N/A'"
+                                ></p>
                             </div>
-                            <div class="column is-6">
-                                <p class="is-size-7 has-text-grey">
+                            <div class="">
+                                <p class="text-xs text-gray-500">
                                     Référence dossier
                                 </p>
-                                <p class="is-size-5" x-text="selectedImpayeForDetails?.reference || 'N/A'"></p>
+                                <p
+                                    class="text-base font-medium"
+                                    x-text="selectedImpayeForDetails?.reference || 'N/A'"
+                                ></p>
                             </div>
-                            <div class="column is-6">
-                                <p class="is-size-7 has-text-grey">
+                            <div class="">
+                                <p class="text-xs text-gray-500">
                                     Numéro dossier
                                 </p>
-                                <p class="is-size-5" x-text="selectedImpayeForDetails?.numero || 'N/A'"></p>
+                                <p
+                                    class="text-base font-medium"
+                                    x-text="selectedImpayeForDetails?.numero || 'N/A'"
+                                ></p>
                             </div>
-                            <div class="column is-6">
-                                <p class="is-size-7 has-text-grey">
+                            <div class="">
+                                <p class="text-xs text-gray-500">
                                     Statut dossier
                                 </p>
-                                <p class="is-size-5" x-text="selectedImpayeForDetails?.statut_intitule || 'N/A'"></p>
+                                <p
+                                    class="text-base font-medium"
+                                    x-text="selectedImpayeForDetails?.statut_intitule || 'N/A'"
+                                ></p>
                             </div>
                         </div>
                     </div>
 
                     <!-- Montants -->
                     <div class="box mb-4">
-                        <h3 class="title is-5">
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">
                             Montants
                         </h3>
                         <div class="columns">
                             <div class="column">
-                                <p class="is-size-7 has-text-grey">
-                                    Total HT
-                                </p>
-                                <p class="is-size-5" x-text="formatCurrency(selectedImpayeForDetails?.totalhtnet)"></p>
+                                <p class="text-xs text-gray-500">Total HT</p>
+                                <p
+                                    class="text-base font-medium"
+                                    x-text="formatCurrency(selectedImpayeForDetails?.totalhtnet)"
+                                ></p>
                             </div>
                             <div class="column">
-                                <p class="is-size-7 has-text-grey">
-                                    Total TTC
-                                </p>
-                                <p class="is-size-5" x-text="formatCurrency(selectedImpayeForDetails?.totalttcnet)"></p>
+                                <p class="text-xs text-gray-500">Total TTC</p>
+                                <p
+                                    class="text-base font-medium"
+                                    x-text="formatCurrency(selectedImpayeForDetails?.totalttcnet)"
+                                ></p>
                             </div>
                             <div class="column">
-                                <p class="is-size-7 has-text-grey">
+                                <p class="text-xs text-gray-500">
                                     Reste à payer
                                 </p>
-                                <p class="is-size-5 has-text-danger" x-text="formatCurrency(selectedImpayeForDetails?.resteapayer)"></p>
+                                <p
+                                    class="text-base font-medium text-red-600"
+                                    x-text="formatCurrency(selectedImpayeForDetails?.resteapayer)"
+                                ></p>
                             </div>
                         </div>
                     </div>
 
                     <!-- Adresse du chantier -->
                     <div class="box mb-4">
-                        <h3 class="title is-5">
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">
                             Adresse du chantier
                         </h3>
-                        <div class="columns is-multiline">
-                            <div class="column is-6">
-                                <p class="is-size-7 has-text-grey">
-                                    Adresse
-                                </p>
-                                <p class="is-size-5" x-text="(selectedImpayeForDetails?.numVoie || '') + ' ' + (selectedImpayeForDetails?.typeVoie || '') + ' ' + (selectedImpayeForDetails?.cptNumVoie || '') + ' ' + (selectedImpayeForDetails?.adresse || '')"></p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="">
+                                <p class="text-xs text-gray-500">Adresse</p>
+                                <p
+                                    class="text-base font-medium"
+                                    x-text="(selectedImpayeForDetails?.numVoie || '') + ' ' + (selectedImpayeForDetails?.typeVoie || '') + ' ' + (selectedImpayeForDetails?.cptNumVoie || '') + ' ' + (selectedImpayeForDetails?.adresse || '')"
+                                ></p>
                             </div>
-                            <div class="column is-6">
-                                <p class="is-size-7 has-text-grey">
-                                    Complément
-                                </p>
-                                <p class="is-size-5" x-text="selectedImpayeForDetails?.cptAdresse || 'N/A'"></p>
+                            <div class="">
+                                <p class="text-xs text-gray-500">Complément</p>
+                                <p
+                                    class="text-base font-medium"
+                                    x-text="selectedImpayeForDetails?.cptAdresse || 'N/A'"
+                                ></p>
                             </div>
-                            <div class="column is-6">
-                                <p class="is-size-7 has-text-grey">
-                                    Code postal
-                                </p>
-                                <p class="is-size-5" x-text="selectedImpayeForDetails?.codePostal || 'N/A'"></p>
+                            <div class="">
+                                <p class="text-xs text-gray-500">Code postal</p>
+                                <p
+                                    class="text-base font-medium"
+                                    x-text="selectedImpayeForDetails?.codePostal || 'N/A'"
+                                ></p>
                             </div>
-                            <div class="column is-6">
-                                <p class="is-size-7 has-text-grey">
-                                    Ville
-                                </p>
-                                <p class="is-size-5" x-text="selectedImpayeForDetails?.ville || 'N/A'"></p>
+                            <div class="">
+                                <p class="text-xs text-gray-500">Ville</p>
+                                <p
+                                    class="text-base font-medium"
+                                    x-text="selectedImpayeForDetails?.ville || 'N/A'"
+                                ></p>
                             </div>
-                            <div class="column is-6">
-                                <p class="is-size-7 has-text-grey">
-                                    Lot
-                                </p>
-                                <p class="is-size-5" x-text="selectedImpayeForDetails?.numeroLot || 'N/A'"></p>
+                            <div class="">
+                                <p class="text-xs text-gray-500">Lot</p>
+                                <p
+                                    class="text-base font-medium"
+                                    x-text="selectedImpayeForDetails?.numeroLot || 'N/A'"
+                                ></p>
                             </div>
-                            <div class="column is-6">
-                                <p class="is-size-7 has-text-grey">
-                                    Étage
-                                </p>
-                                <p class="is-size-5" x-text="selectedImpayeForDetails?.etage || 'N/A'"></p>
+                            <div class="">
+                                <p class="text-xs text-gray-500">Étage</p>
+                                <p
+                                    class="text-base font-medium"
+                                    x-text="selectedImpayeForDetails?.etage || 'N/A'"
+                                ></p>
                             </div>
-                            <div class="column is-6">
-                                <p class="is-size-7 has-text-grey">
-                                    Entrée
-                                </p>
-                                <p class="is-size-5" x-text="selectedImpayeForDetails?.entree || 'N/A'"></p>
+                            <div class="">
+                                <p class="text-xs text-gray-500">Entrée</p>
+                                <p
+                                    class="text-base font-medium"
+                                    x-text="selectedImpayeForDetails?.entree || 'N/A'"
+                                ></p>
                             </div>
-                            <div class="column is-6">
-                                <p class="is-size-7 has-text-grey">
-                                    Escalier
-                                </p>
-                                <p class="is-size-5" x-text="selectedImpayeForDetails?.escalier || 'N/A'"></p>
+                            <div class="">
+                                <p class="text-xs text-gray-500">Escalier</p>
+                                <p
+                                    class="text-base font-medium"
+                                    x-text="selectedImpayeForDetails?.escalier || 'N/A'"
+                                ></p>
                             </div>
-                            <div class="column is-6">
-                                <p class="is-size-7 has-text-grey">
-                                    Porte
-                                </p>
-                                <p class="is-size-5" x-text="selectedImpayeForDetails?.porte || 'N/A'"></p>
+                            <div class="">
+                                <p class="text-xs text-gray-500">Porte</p>
+                                <p
+                                    class="text-base font-medium"
+                                    x-text="selectedImpayeForDetails?.porte || 'N/A'"
+                                ></p>
                             </div>
                         </div>
                     </div>
 
                     <!-- Payeur -->
                     <div class="box mb-4">
-                        <h3 class="title is-5">
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">
                             Payeur
                         </h3>
                         <div class="columns">
                             <div class="column">
-                                <p class="is-size-7 has-text-grey">
+                                <p class="text-xs text-gray-500">
                                     Nom du payeur
                                 </p>
-                                <p class="is-size-5" x-text="selectedImpayeForDetails?.payeur_nom || 'N/A'"></p>
+                                <p
+                                    class="text-base font-medium"
+                                    x-text="selectedImpayeForDetails?.payeur_nom || 'N/A'"
+                                ></p>
                             </div>
                             <div class="column">
-                                <p class="is-size-7 has-text-grey">
+                                <p class="text-xs text-gray-500">
                                     Type de personne
                                 </p>
-                                <p class="is-size-5" x-text="selectedImpayeForDetails?.payeur_typePersonne === 'P' ? 'Particulier' : 'Professionnel'"></p>
+                                <p
+                                    class="text-base font-medium"
+                                    x-text="selectedImpayeForDetails?.payeur_typePersonne === 'P' ? 'Particulier' : 'Professionnel'"
+                                ></p>
                             </div>
                             <div class="column">
-                                <p class="is-size-7 has-text-grey">
-                                    Email
-                                </p>
-                                <p class="is-size-5" x-text="selectedImpayeForDetails?.payeur_email || 'N/A'"></p>
+                                <p class="text-xs text-gray-500">Email</p>
+                                <p
+                                    class="text-base font-medium"
+                                    x-text="selectedImpayeForDetails?.payeur_email || 'N/A'"
+                                ></p>
                             </div>
                             <div class="column">
-                                <p class="is-size-7 has-text-grey">
-                                    Téléphone
-                                </p>
-                                <p class="is-size-5" x-text="selectedImpayeForDetails?.payeur_telephone || 'N/A'"></p>
+                                <p class="text-xs text-gray-500">Téléphone</p>
+                                <p
+                                    class="text-base font-medium"
+                                    x-text="selectedImpayeForDetails?.payeur_telephone || 'N/A'"
+                                ></p>
                             </div>
                         </div>
                     </div>
 
                     <!-- Intervention -->
                     <div class="box mb-4">
-                        <h3 class="title is-5">
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">
                             Intervention
                         </h3>
                         <div class="columns">
                             <div class="column">
-                                <p class="is-size-7 has-text-grey">
+                                <p class="text-xs text-gray-500">
                                     Employé intervention
                                 </p>
-                                <p class="is-size-5" x-text="selectedImpayeForDetails?.employe_intervention || 'N/A'"></p>
+                                <p
+                                    class="text-base font-medium"
+                                    x-text="selectedImpayeForDetails?.employe_intervention || 'N/A'"
+                                ></p>
                             </div>
                             <div class="column">
-                                <p class="is-size-7 has-text-grey">
-                                    ID Employé
-                                </p>
-                                <p class="is-size-5" x-text="selectedImpayeForDetails?.idEmployeIntervention || 'N/A'"></p>
+                                <p class="text-xs text-gray-500">ID Employé</p>
+                                <p
+                                    class="text-base font-medium"
+                                    x-text="selectedImpayeForDetails?.idEmployeIntervention || 'N/A'"
+                                ></p>
                             </div>
                         </div>
                     </div>
 
                     <!-- Commentaires -->
                     <div class="box mb-4">
-                        <h3 class="title is-5">
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">
                             Commentaires
                         </h3>
                         <div class="content">
                             <div class="mb-4">
-                                <p class="is-size-7 has-text-grey mb-2">
+                                <p class="text-xs text-gray-500 mb-2">
                                     Commentaire pièce
                                 </p>
-                                <p x-text="selectedImpayeForDetails?.commentaire_piece || 'Aucun commentaire'"></p>
+                                <p
+                                    x-text="selectedImpayeForDetails?.commentaire_piece || 'Aucun commentaire'"
+                                ></p>
                             </div>
                             <div>
-                                <p class="is-size-7 has-text-grey mb-2">
+                                <p class="text-xs text-gray-500 mb-2">
                                     Commentaire dossier
                                 </p>
-                                <p x-text="selectedImpayeForDetails?.commentaire_dossier || 'Aucun commentaire'"></p>
+                                <p
+                                    x-text="selectedImpayeForDetails?.commentaire_dossier || 'Aucun commentaire'"
+                                ></p>
                             </div>
                         </div>
                     </div>
 
                     <!-- Contact -->
                     <div class="box mb-4">
-                        <h3 class="title is-5">
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">
                             Contact
                         </h3>
                         <div class="columns">
                             <div class="column">
-                                <p class="is-size-7 has-text-grey">
+                                <p class="text-xs text-gray-500">
                                     Contact désigné
                                 </p>
-                                <p class="is-size-5" x-text="selectedImpayeForDetails?.contactPlace || 'N/A'"></p>
+                                <p
+                                    class="text-base font-medium"
+                                    x-text="selectedImpayeForDetails?.contactPlace || 'N/A'"
+                                ></p>
                             </div>
                             <div class="column">
-                                <p class="is-size-7 has-text-grey">
+                                <p class="text-xs text-gray-500">
                                     Référence externe
                                 </p>
-                                <p class="is-size-5" x-text="selectedImpayeForDetails?.referenceExterne || 'N/A'"></p>
+                                <p
+                                    class="text-base font-medium"
+                                    x-text="selectedImpayeForDetails?.referenceExterne || 'N/A'"
+                                ></p>
                             </div>
                         </div>
                     </div>
 
                     <!-- Actions -->
-                    <div class="buttons is-right mt-4">
+                    <div class="flex justify-end mt-4 space-x-2">
                         <button
                             x-show="selectedImpayeForDetails?.invoice_url"
                             @click="closeDetailsDrawer(); openInvoice(selectedImpayeForDetails?.invoice_url)"
-                            class="button is-link"
+                            class="bg-marki-primary text-white px-4 py-2 rounded hover:bg-marki-primary-dark"
                         >
                             <i class="fa-regular fa-eye mr-2"></i>
                             Voir la facture
                         </button>
                         <button
                             @click="closeDetailsDrawer()"
-                            class="button is-light"
+                            class="bg-gray-100 text-gray-800 px-4 py-2 rounded hover:bg-gray-200 border border-gray-300"
                         >
                             <i class="fa-regular fa-times mr-2"></i>
                             Fermer
@@ -601,69 +688,80 @@ n{% block head %}
     <!-- Drawer pour afficher les factures PDF -->
     <div
         x-show="isInvoiceDrawerOpen"
-        class="modal is-active"
+        class="fixed inset-0 z-50 overflow-y-auto"
     >
         <!-- Overlay -->
         <div
             @click="closeInvoiceDrawer()"
-            class="modal-background"
+            class="fixed inset-0 bg-black bg-opacity-50"
         ></div>
 
         <!-- Drawer -->
         <div
-            class="modal-card"
-            style="width: 80%; max-width: 900px; margin: 0 auto;"
+            class="relative bg-white rounded-lg shadow-xl mx-auto mt-8 mb-8 max-w-3xl w-full"
+            style="width: 80%; max-width: 900px; margin: 0 auto"
         >
-            <header class="modal-card-head">
-                <p class="modal-card-title" x-text="invoiceDrawerTitle"></p>
+            <header
+                class="bg-gray-100 border-b border-gray-200 rounded-t-lg px-4 py-3 flex justify-between items-center"
+            >
+                <h3
+                    class="text-lg font-medium text-gray-900"
+                    x-text="invoiceDrawerTitle"
+                ></h3>
                 <button
                     @click="closeInvoiceDrawer()"
-                    class="delete"
+                    class="text-gray-400 hover:text-gray-600 focus:outline-none"
                     aria-label="close"
-                ></button>
+                >
+                    <i class="fas fa-times"></i>
+                </button>
             </header>
 
             <!-- Content -->
-            <section class="modal-card-body">
+            <section class="p-4">
                 <!-- Message de chargement -->
-                <div
-                    x-show="invoiceDrawerLoading"
-                    class="has-text-centered py-6"
-                >
-                    <div class="loader is-large"></div>
-                    <p class="has-text-grey">Chargement de la facture...</p>
+                <div x-show="invoiceDrawerLoading" class="text-center py-6">
+                    <div
+                        class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"
+                    ></div>
+                    <p class="text-gray-500 mt-2">
+                        Chargement de la facture...
+                    </p>
                 </div>
 
                 <!-- Message d'erreur -->
                 <div
                     x-show="invoiceDrawerError"
-                    class="notification is-danger mb-6"
+                    class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg shadow-sm mb-6"
                 >
-                    <div class="media">
-                        <div class="media-left">
+                    <div class="flex items-center">
+                        <div class="mr-3">
                             <i class="fa-regular fa-ban"></i>
                         </div>
-                        <div class="media-content">
-                            <p class="is-size-6" x-text="invoiceDrawerError"></p>
+                        <div class="flex-1">
+                            <p
+                                class="text-base"
+                                x-text="invoiceDrawerError"
+                            ></p>
                         </div>
                     </div>
                 </div>
 
                 <!-- Affichage du PDF -->
-                <div x-show="invoiceDrawerPdfContent" class="has-text-centered">
+                <div x-show="invoiceDrawerPdfContent" class="text-center">
                     <object
                         x-bind:data="'data:application/pdf;base64,' + invoiceDrawerPdfContent"
                         type="application/pdf"
                         class="pdf-viewer"
-                        style="width: 100%; height: 600px;"
+                        style="width: 100%; height: 600px"
                     >
-                        <p class="has-text-centered py-6">
+                        <p class="text-center py-6">
                             Votre navigateur ne supporte pas l'affichage des
                             PDF.
                             <a
                                 x-bind:href="'data:application/pdf;base64,' + invoiceDrawerPdfContent"
                                 x-bind:download="invoiceDrawerFilename"
-                                class="has-text-primary"
+                                class="text-marki-primary hover:underline"
                             >
                                 Cliquez ici pour télécharger la facture
                             </a>
@@ -674,20 +772,22 @@ n{% block head %}
                 <!-- Message si aucun PDF -->
                 <div
                     x-show="!invoiceDrawerLoading && !invoiceDrawerError && !invoiceDrawerPdfContent"
-                    class="has-text-centered py-6"
+                    class="text-center py-6"
                 >
-                    <i class="fa-regular fa-file is-size-1 has-text-grey-light"></i>
-                    <h3 class="title is-5">
+                    <i class="fa-regular fa-file text-2xl text-gray-400"></i>
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">
                         Aucune facture disponible
                     </h3>
-                    <p class="subtitle is-6">
+                    <p class="text-sm text-gray-600">
                         Aucun contenu de facture à afficher.
                     </p>
                 </div>
             </section>
 
             <!-- Footer avec bouton de téléchargement -->
-            <footer class="modal-card-foot">
+            <footer
+                class="bg-gray-50 border-t border-gray-200 rounded-b-lg px-4 py-3 flex justify-end"
+            >
                 <button
                     x-show="invoiceDrawerPdfContent"
                     x-bind:disabled="!invoiceDrawerPdfContent"
@@ -697,7 +797,7 @@ n{% block head %}
                         link.download = invoiceDrawerFilename;
                         link.click();
                     }"
-                    class="button is-link"
+                    class="bg-marki-primary text-white px-4 py-2 rounded hover:bg-marki-primary-dark disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     <i class="fa-regular fa-download mr-2"></i>
                     Télécharger la facture

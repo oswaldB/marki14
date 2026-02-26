@@ -1,0 +1,254 @@
+<!-- payment_links.html - Composant pour la gestion des liens de paiement -->
+<div
+    x-data="{
+    paymentLinks: {
+        showLink: true,
+        linksConfigOpen: false,
+        selectedLink: null,
+        availableLinks: [],
+        newLink: ''
+    },
+
+    async init() {
+        await this.loadPaymentLinks();
+    },
+
+    async loadPaymentLinks() {
+        try {
+            // TODO: Implement Parse query for lienPayment class
+            console.log('Loading payment links from Parse...');
+
+            // Mock data - will be replaced with actual Parse query
+            this.paymentLinks.availableLinks = [
+                {
+                    id: 'link1',
+                    url: 'https://payment.example.com/invoice/12345',
+                    name: 'Paiement en ligne (CB)'
+                },
+                {
+                    id: 'link2',
+                    url: 'https://payment.example.com/sepa/12345',
+                    name: 'Prélèvement SEPA'
+                }
+            ];
+
+            // Select first link by default
+            if (this.paymentLinks.availableLinks.length > 0) {
+                this.paymentLinks.selectedLink = this.paymentLinks.availableLinks[0].url;
+            }
+        } catch (error) {
+            console.error('Error loading payment links:', error);
+            this.paymentLinks.availableLinks = [];
+        }
+    },
+
+    togglePaymentLink() {
+        this.paymentLinks.showLink = !this.paymentLinks.showLink;
+    },
+
+    openLinksConfig() {
+        this.paymentLinks.linksConfigOpen = true;
+    },
+
+    closeLinksConfig() {
+        this.paymentLinks.linksConfigOpen = false;
+    },
+
+    selectLink(link) {
+        this.paymentLinks.selectedLink = link.url;
+        this.closeLinksConfig();
+    },
+
+    addNewLink() {
+        if (this.paymentLinks.newLink.trim() === '') return;
+
+        const newLink = {
+            id: 'new-' + Date.now(),
+            url: this.paymentLinks.newLink,
+            name: 'Nouveau lien de paiement'
+        };
+
+        this.paymentLinks.availableLinks.push(newLink);
+        this.paymentLinks.selectedLink = newLink.url;
+        this.paymentLinks.newLink = '';
+
+        // TODO: Save to Parse database
+        console.log('New payment link added (TODO: save to Parse):', newLink);
+    }
+}"
+    class="payment-links-container mb-4"
+>
+    <!-- Header des liens de paiement avec toggle -->
+    <div class="flex flex-wrap items-center justify-between mb-3">
+        <div class="flex items-center">
+            <label class="switch">
+                <input
+                    type="checkbox"
+                    x-model="paymentLinks.showLink"
+                    @change="togglePaymentLink()"
+                />
+                <span class="slider round"></span>
+            </label>
+            <span class="ml-3">Inclure le lien de paiement</span>
+        </div>
+        <div class="flex items-center">
+            <button
+                @click="openLinksConfig()"
+                class="bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600 border border-green-500 flex items-center"
+            >
+                <span class="text-sm mr-1">
+                    <i class="fa-regular fa-link"></i>
+                </span>
+                <span>Gérer les liens</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Affichage du lien sélectionné -->
+    <div
+        x-show="paymentLinks.showLink && paymentLinks.selectedLink"
+        x-transition
+        class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm"
+    >
+        <div>
+            <p class="mb-3">
+                <strong>Lien de paiement :</strong>
+            </p>
+            <div class="flex">
+                <div class="flex-1">
+                    <input
+                        type="text"
+                        :value="paymentLinks.selectedLink"
+                        class="w-full border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-marki-primary focus:border-transparent"
+                        readonly
+                    />
+                </div>
+                <div class="ml-2">
+                    <button
+                        @click="navigator.clipboard.writeText(paymentLinks.selectedLink).then(() => alert('Lien copié!'))"
+                        class="bg-blue-500 text-white px-2 py-1 rounded text-sm hover:bg-blue-600"
+                    >
+                        <span class="text-sm">
+                            <i class="fa-regular fa-copy"></i>
+                        </span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Drawer de gestion des liens -->
+    <div
+        x-show="paymentLinks.linksConfigOpen"
+        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+    >
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+            <header
+                class="border-b border-gray-200 p-4 flex justify-between items-center"
+            >
+                <p class="text-lg font-semibold">
+                    Gestion des liens de paiement
+                </p>
+                <button
+                    @click="closeLinksConfig()"
+                    class="text-gray-400 hover:text-gray-600"
+                    aria-label="close"
+                >
+                    <i class="fa-regular fa-times text-xl"></i>
+                </button>
+            </header>
+            <section class="p-4">
+                <div>
+                    <!-- Ajout d'un nouveau lien -->
+                    <div class="mb-4">
+                        <label
+                            class="block text-sm font-medium text-gray-700 mb-1"
+                            >Ajouter un nouveau lien</label
+                        >
+                        <div>
+                            <input
+                                type="url"
+                                x-model="paymentLinks.newLink"
+                                class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-marki-primary focus:border-transparent"
+                                placeholder="https://votre-lien-de-paiement.com"
+                            />
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">
+                            Saisissez l'URL complète du lien de paiement
+                        </p>
+                    </div>
+
+                    <button
+                        @click="addNewLink()"
+                        class="bg-marki-primary text-white px-4 py-2 rounded hover:bg-marki-primary-dark mb-5"
+                        :disabled="!paymentLinks.newLink.trim()"
+                    >
+                        <span class="text-sm mr-1">
+                            <i class="fa-regular fa-plus"></i>
+                        </span>
+                        <span>Ajouter le lien</span>
+                    </button>
+
+                    <!-- Liste des liens existants -->
+                    <h5 class="text-lg font-bold mb-3">Liens disponibles</h5>
+                    <div
+                        class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm"
+                    >
+                        <template
+                            x-for="link in paymentLinks.availableLinks"
+                            :key="link.id"
+                        >
+                            <div
+                                class="mb-3 pb-3"
+                                style="border-bottom: 1px solid #eee"
+                            >
+                                <div
+                                    class="flex flex-wrap items-center justify-between"
+                                >
+                                    <div class="flex-1">
+                                        <div>
+                                            <p class="mb-1">
+                                                <strong
+                                                    x-text="link.name"
+                                                ></strong>
+                                            </p>
+                                            <p
+                                                class="text-sm text-gray-500"
+                                                x-text="link.url"
+                                            ></p>
+                                        </div>
+                                    </div>
+                                    <div class="flex-shrink-0">
+                                        <button
+                                            @click="selectLink(link)"
+                                            class="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600"
+                                        >
+                                            Sélectionner
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+
+                        <div
+                            x-show="paymentLinks.availableLinks.length === 0"
+                            class="text-center"
+                        >
+                            <p class="text-gray-500">
+                                Aucun lien de paiement disponible
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <footer class="border-t border-gray-200 p-4">
+                <button
+                    @click="closeLinksConfig()"
+                    class="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-50"
+                >
+                    Fermer
+                </button>
+            </footer>
+        </div>
+    </div>
+</div>

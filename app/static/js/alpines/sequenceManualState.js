@@ -27,12 +27,6 @@ document.addEventListener('alpine:init', () => {
     selectedPayeurType: "",
     selectedCodePostal: "",
     
-    // Gestion des variables
-    availableVariables: [],
-    filteredVariables: [],
-    variableSearchTerm: "",
-    variableCopied: false,
-    
     // Gestion SMTP
     smtpProfiles: [],
     defaultSmtpProfileId: "",
@@ -44,6 +38,9 @@ document.addEventListener('alpine:init', () => {
     error: null,
     activeTab: 'actions',
     addImpayeDrawerOpen: false,
+    deleteConfirmOpen: false,
+    itemToDelete: null,
+    deleteType: null, // 'impaye'
     
     // ============================================
     // CYCLE DE VIE
@@ -68,9 +65,6 @@ document.addEventListener('alpine:init', () => {
         
         // Charger les impayés associés
         await this.loadAssociatedImpayes();
-        
-        // Charger les variables disponibles
-        await this.loadAvailableVariables();
         
         // Charger les profils SMTP
         await this.loadSmtpProfiles();
@@ -142,32 +136,10 @@ document.addEventListener('alpine:init', () => {
       }
     },
     
-    async loadAvailableVariables() {
-      try {
-        const response = await fetch('/static/configs/variables.json');
-        if (!response.ok) {
-          throw new Error("Fichier variables.json non trouvé");
-        }
-        
-        const variables = await response.json();
-        this.availableVariables = Object.keys(variables).map(key => ({
-          name: key,
-          description: variables[key].description || "",
-          example: variables[key].example || ""
-        }));
-        
-        this.filteredVariables = [...this.availableVariables];
-      } catch (error) {
-        console.error("Erreur lors du chargement des variables:", error);
-        this.availableVariables = [];
-        this.filteredVariables = [];
-      }
-    },
-    
     async loadSmtpProfiles() {
       try {
         const parseAxios = this.getParseAxios();
-        const response = await parseAxios.get('/classes/SMTPProfiles');
+        const response = await parseAxios.get('/classes/SMTPProfile');
         
         this.smtpProfiles = response.data.results.map(profile => ({
           objectId: profile.objectId,
@@ -179,6 +151,7 @@ document.addEventListener('alpine:init', () => {
         
         // Définir un email expéditeur par défaut si disponible
         if (this.smtpProfiles.length > 0) {
+          this.defaultSmtpProfileId = this.smtpProfiles[0].objectId;
           this.defaultSenderEmail = this.smtpProfiles[0].email;
         }
       } catch (error) {
@@ -188,36 +161,43 @@ document.addEventListener('alpine:init', () => {
     },
     
     // ============================================
-    // GESTION DES ACTIONS
+    // SYNCHRONISATION AVEC LE COMPOSANT ACTIONS
     // ============================================
     
-    addAction(type) {
-      if (type !== 'email') return; // Ne permet que les emails
-      
-      const newAction = {
-        id: Date.now().toString(),
-        type: 'email',
-        subject: 'Rappel de paiement',
-        body: this.getDefaultEmailBody(),
-        delay: 0
+    onActionDeleted(index) {
+      // Synchroniser la suppression dans la séquence principale
+      this.sequence.actions.splice(index, 1);
+    },
+    
+    getSequenceDataForActions() {
+      return {
+        actions: this.sequence.actions
       };
-      
-      this.sequence.actions.push(newAction);
     },
     
-    getDefaultEmailBody() {
-      return `Bonjour {{client_nom}},\n\nCeci est un rappel pour le paiement de votre facture {{facture_numero}} d'un montant de {{facture_montant}}.\n\n{{lien_paiement}}\n\nCordialement,\nVotre équipe`;
-    },
-    
-    editAction(index) {
-      // Logique d'édition à implémenter
-      console.log("Édition de l'action", index);
-    },
-    
-    deleteAction(index) {
-      if (confirm('Êtes-vous sûr de vouloir supprimer cette étape ?')) {
-        this.sequence.actions.splice(index, 1);
+    async confirmDelete() {
+      if (this.deleteType === 'impaye' && this.itemToDelete) {
+        try {
+          const parseAxios = this.getParseAxios();
+          await parseAxios.put(`/classes/Impayes/${this.itemToDelete.objectId}`, {
+            sequence: null
+          });
+          
+          // Recharger les impayés associés
+          await this.loadAssociatedImpayes();
+        } catch (error) {
+          this.error = "Erreur lors de la dissociation de l'impayé";
+          console.error("Erreur:", error);
+        }
       }
+      
+      this.cancelDelete();
+    },
+    
+    cancelDelete() {
+      this.deleteConfirmOpen = false;
+      this.itemToDelete = null;
+      this.deleteType = null;
     },
     
     // ============================================
@@ -277,43 +257,9 @@ document.addEventListener('alpine:init', () => {
     },
     
     async removeImpaye(impaye) {
-      if (confirm(`Êtes-vous sûr de vouloir dissocier l'impayé ${impaye.nfacture} ?`)) {
-        try {
-          const parseAxios = this.getParseAxios();
-          await parseAxios.put(`/classes/Impayes/${impaye.objectId}`, {
-            sequence: null
-          });
-          
-          // Recharger les impayés associés
-          await this.loadAssociatedImpayes();
-        } catch (error) {
-          this.error = "Erreur lors de la dissociation de l'impayé";
-          console.error("Erreur:", error);
-        }
-      }
-    },
-    
-    // ============================================
-    // GESTION DES VARIABLES
-    // ============================================
-    
-    filterVariables() {
-      this.filteredVariables = this.availableVariables.filter(variable => {
-        return variable.name.toLowerCase().includes(this.variableSearchTerm.toLowerCase()) ||
-               variable.description.toLowerCase().includes(this.variableSearchTerm.toLowerCase());
-      });
-    },
-    
-    copyVariable(variable) {
-      navigator.clipboard.writeText(variable.name)
-        .then(() => {
-          this.variableCopied = true;
-          setTimeout(() => this.variableCopied = false, 3000);
-        })
-        .catch(err => {
-          console.error("Échec de la copie:", err);
-          alert("Copie dans le presse-papiers non supportée par votre navigateur.");
-        });
+      this.itemToDelete = impaye;
+      this.deleteType = 'impaye';
+      this.deleteConfirmOpen = true;
     },
     
     // ============================================

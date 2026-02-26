@@ -1,0 +1,179 @@
+<!-- sequence_variables.html - Composant pour l'affichage des variables disponibles -->
+<div
+    x-data="{
+    variables: [],
+    searchTerm: '',
+    isLoading: false,
+    error: null,
+
+    async init() {
+        await this.loadVariables();
+    },
+
+    async loadVariables() {
+        try {
+            this.isLoading = true;
+            this.error = null;
+
+            const response = await fetch('/static/configs/variables.json');
+            if (!response.ok) {
+                throw new Error('Variables file not found');
+            }
+
+            const data = await response.json();
+            this.variables = data.columns || [];
+        } catch (error) {
+            this.error = 'Erreur lors du chargement des variables';
+            console.error('Error loading variables:', error);
+            this.variables = [];
+        } finally {
+            this.isLoading = false;
+        }
+    },
+
+    get filteredVariables() {
+        if (!this.searchTerm) return this.variables;
+
+        return this.variables.filter(variable =>
+            variable.toLowerCase().includes(this.searchTerm.toLowerCase())
+        );
+    },
+
+    copyVariable(variable) {
+        navigator.clipboard.writeText(`[[${variable}]]`)
+            .then(() => {
+                console.log(`Variable [[${variable}]] copied to clipboard`);
+            })
+            .catch(err => {
+                console.error('Copy failed:', err);
+            });
+    }
+}"
+    class="sequence-variables-container"
+>
+    <!-- Header des variables -->
+    <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm mb-4">
+        <h4 class="text-lg font-bold mb-3">
+            <span class="text-marki-primary text-sm">
+                <i class="fa-regular fa-code"></i>
+            </span>
+            Variables disponibles
+        </h4>
+
+        <!-- Champ de recherche -->
+        <div class="mb-4">
+            <div class="relative">
+                <input
+                    type="text"
+                    x-model="searchTerm"
+                    placeholder="Rechercher une variable..."
+                    class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-marki-primary focus:border-transparent pl-8"
+                />
+                <span
+                    class="absolute left-2 top-1/2 transform -translate-y-1/2 text-sm"
+                >
+                    <i class="fa-regular fa-search"></i>
+                </span>
+            </div>
+        </div>
+
+        <!-- Notification d'erreur -->
+        <div
+            x-show="error"
+            class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded text-sm"
+        >
+            <button
+                @click="error = null"
+                class="text-gray-400 hover:text-gray-600 ml-2"
+            >
+                <i class="fa-regular fa-times"></i>
+            </button>
+            <span x-text="error"></span>
+        </div>
+    </div>
+
+    <!-- Liste des variables -->
+    <div
+        class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm"
+        style="max-height: 400px; overflow-y: auto"
+    >
+        <div x-show="isLoading" class="text-center">
+            <i class="fa-regular fa-spinner fa-spin text-marki-primary"></i>
+            <p class="text-sm text-gray-500 mt-2">Chargement...</p>
+        </div>
+
+        <div
+            x-show="!isLoading && filteredVariables.length === 0"
+            class="text-center"
+        >
+            <p class="text-sm text-gray-500">
+                <span x-show="searchTerm"
+                    >Aucune variable trouvée pour "{{ searchTerm }}"</span
+                >
+                <span x-show="!searchTerm">Aucune variable disponible</span>
+            </p>
+        </div>
+
+        <!-- Variables simples -->
+        <template x-for="variable in filteredVariables" :key="variable">
+            <div
+                class="bg-gray-50 border border-gray-200 rounded p-2 mb-2 variable-item"
+                style="border-left: 3px solid #3b82f6"
+            >
+                <div class="flex items-center">
+                    <div class="flex-1">
+                        <div class="flex">
+                            <div>
+                                <button
+                                    @click="copyVariable(variable)"
+                                    class="bg-blue-500 text-white px-2 py-1 rounded text-sm hover:bg-blue-600 border border-blue-500"
+                                    :title="`Copier [[${variable}]]`"
+                                >
+                                    <span class="text-sm">
+                                        <i class="fa-regular fa-copy"></i>
+                                    </span>
+                                </button>
+                            </div>
+                            <div class="ml-2">
+                                <code
+                                    class="text-sm"
+                                    style="
+                                        background: none;
+                                        padding: 0.25rem 0.5rem;
+                                    "
+                                >
+                                    [[<span x-text="variable"></span>]]
+                                </code>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </template>
+    </div>
+
+    <!-- Aide -->
+    <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+        <h5 class="text-sm font-semibold mb-2">
+            <span class="text-blue-500 text-sm">
+                <i class="fa-regular fa-question-circle"></i>
+            </span>
+            Comment utiliser ?
+        </h5>
+        <div class="text-sm">
+            <ul class="list-disc pl-5">
+                <li>
+                    Cliquez sur le bouton
+                    <i class="fa-regular fa-copy"></i> pour copier la variable
+                </li>
+                <li>
+                    Collez-la directement dans le sujet ou le corps de l'email
+                </li>
+                <li>
+                    Les variables seront remplacées automatiquement lors de
+                    l'envoi
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>

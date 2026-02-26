@@ -1,0 +1,136 @@
+<!-- email_table.html - Composant pour le tableau récapitulatif des factures (datatable) -->
+<div x-data="emailTableState()" class="email-table-container mb-4">
+    <div x-data="{ configOpen: false }" class="relative">
+        <!-- Header du tableau avec toggle -->
+        <div class="flex flex-wrap items-center justify-between mb-3">
+            <div class="flex items-center">
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input
+                        type="checkbox"
+                        x-model="tableConfig.showTable"
+                        @click="tableConfig.showTable = !tableConfig.showTable"
+                        class="sr-only peer"
+                    />
+                    <div
+                        class="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-2 peer-focus:ring-marki-primary peer-checked:bg-marki-primary peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"
+                    ></div>
+                </label>
+                <span class="ml-3">Inclure le tableau récapitulatif</span>
+            </div>
+            <div class="flex items-center">
+                <button
+                    @click="configOpen = !configOpen"
+                    class="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600 border border-blue-500 flex items-center"
+                >
+                    <span class="text-sm mr-1">
+                        <i class="fa-regular fa-cog"></i>
+                    </span>
+                    <span>Configurer</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Messages d'état -->
+        <div
+            x-show="isLoading"
+            class="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded mb-4"
+        >
+            <span class="text-sm mr-2">
+                <i class="fa-regular fa-spinner fa-spin"></i>
+            </span>
+            Chargement du tableau en cours...
+        </div>
+
+        <div
+            x-show="error"
+            class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4"
+        >
+            <span class="text-sm mr-2">
+                <i class="fa-regular fa-exclamation-triangle"></i>
+            </span>
+            <span x-text="error"></span>
+            <button
+                @click="error = null"
+                class="text-gray-400 hover:text-gray-600 ml-2"
+            >
+                <i class="fa-regular fa-times"></i>
+            </button>
+        </div>
+
+        <!-- Debug info -->
+        <div
+            class="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4"
+            style="font-size: 0.8em"
+        >
+            <strong>Debug:</strong>
+            showTable: <span x-text="tableConfig.showTable"></span> | isLoading:
+            <span x-text="isLoading"></span> | columns:
+            <span x-text="tableConfig.columns.length"></span>
+        </div>
+
+        <!-- Tableau récapitulatif -->
+        <div
+            x-show="tableConfig.showTable && !isLoading"
+            x-transition
+            class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm"
+            style="max-width: 1200px; margin: 0 auto"
+        >
+            <table class="w-full">
+                <thead>
+                    <tr>
+                        <th
+                            colspan="100%"
+                            class="text-center bg-marki-primary bg-opacity-10"
+                        >
+                            <strong>Récapitulatif de votre facture</strong>
+                        </th>
+                    </tr>
+                    <tr>
+                        <template
+                            x-for="column in tableConfig.columns.filter(c => c.visible)"
+                            :key="column.id"
+                        >
+                            <th x-text="column.label" class="text-center"></th>
+                        </template>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr x-show="tableConfig.invoiceData">
+                        <template
+                            x-for="column in tableConfig.columns.filter(c => c.visible)"
+                            :key="column.id"
+                        >
+                            <td
+                                x-text="tableConfig.invoiceData ? getFormattedValue(column.id, tableConfig.invoiceData[column.id]) : 'N/A'"
+                            ></td>
+                        </template>
+                    </tr>
+                    <tr x-show="!tableConfig.invoiceData">
+                        <td colspan="100%" class="text-center text-gray-500">
+                            <span class="text-sm mr-2">
+                                <i class="fa-regular fa-spinner fa-spin"></i>
+                            </span>
+                            Chargement des données...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Message quand le tableau est masqué -->
+        <div
+            x-show="!tableConfig.showTable"
+            x-transition
+            class="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded"
+        >
+            <span class="text-sm mr-2">
+                <i class="fa-regular fa-info-circle"></i>
+            </span>
+            Le tableau récapitulatif est masqué. Activez le toggle pour
+            l'afficher.
+        </div>
+
+        <!-- Modal de configuration des colonnes -->
+        {% include 'components/column_config_drawer.html' %}
+    </div>
+</div>

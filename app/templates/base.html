@@ -5,14 +5,26 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>{% block title %}Mon Application{% endblock %}</title>
 
-        <!-- Bulma CSS -->
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css">
+        <!-- Tailwind CSS via CDN -->
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script src="{{ url_for('static', filename='js/tailwind-config.js') }}"></script>
         <style>
-            :root {
-                --bulma-primary-h: 204deg;
-                --bulma-primary-l: 40%;
-                --bulma-link-h: 204deg;
-                --bulma-link-l: 40%;
+            /* Custom styles for Marki brand */
+            .bg-marki-primary {
+                background-color: #007ace;
+            }
+            .text-marki-primary {
+                color: #007ace;
+            }
+            .border-marki-primary {
+                border-color: #007ace;
+            }
+            .hover\:bg-marki-primary-dark:hover {
+                background-color: #005bb5;
+            }
+            .focus\:ring-marki-primary:focus {
+                box-shadow: 0 0 0 3px rgba(0, 122, 206, 0.5);
+                border-color: #007ace;
             }
         </style>
 
@@ -23,10 +35,19 @@
         ></script>
 
         <!-- Font Awesome local -->
-        <link href="{{ url_for('static', filename='assets/fontawesome/css/fontawesome.css') }}" rel="stylesheet" />
-        <link href="{{ url_for('static', filename='assets/fontawesome/css/regular.css') }}" rel="stylesheet" />
+        <link
+            href="{{ url_for('static', filename='assets/fontawesome/css/fontawesome.css') }}"
+            rel="stylesheet"
+        />
+        <link
+            href="{{ url_for('static', filename='assets/fontawesome/css/regular.css') }}"
+            rel="stylesheet"
+        />
         <!-- Line Icons pour les icônes utilisées dans les fonctionnalités -->
-        <link href="https://cdn.lineicons.com/4.0/lineicons.css" rel="stylesheet" />
+        <link
+            href="https://cdn.lineicons.com/4.0/lineicons.css"
+            rel="stylesheet"
+        />
         <!-- Axios CDN -->
         <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 

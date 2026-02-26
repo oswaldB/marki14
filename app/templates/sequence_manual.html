@@ -1,45 +1,55 @@
-{% extends "base-app.html" %}
-
-{% block title %}Plan de relance manuel - {{ sequence_id }}{% endblock %}
-
-{% block head %}
+{% extends "base-app.html" %} {% block title %}Plan de relance manuel - {{
+sequence_id }}{% endblock %} {% block head %}
 <script src="{{ url_for('static', filename='js/alpines/sequenceManualState.js') }}"></script>
-{% endblock %}
-
-{% block content %}
-<div x-data="sequenceManual" x-init="loadSequenceData()" class="sequence-container">
+<script src="{{ url_for('static', filename='js/alpines/sequenceActionsState.js') }}"></script>
+<script src="{{ url_for('static', filename='js/alpines/emailCardState.js') }}"></script>
+<script src="{{ url_for('static', filename='js/alpines/emailTableState.js') }}"></script>
+{% endblock %} {% block content %}
+<div
+    x-data="sequenceManual"
+    x-init="loadSequenceData()"
+    class="sequence-container"
+>
     <!-- Header avec titre et boutons d'action -->
-    <div class="box mb-4">
-        <div class="level">
-            <div class="level-left">
+    <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm mb-4">
+        <div class="flex flex-wrap items-center justify-between">
+            <div class="flex-1 min-w-0">
                 <div>
-                    <div class="field mb-2">
-                        <div class="control">
+                    <div class="mb-2">
+                        <div>
                             <input
                                 type="text"
                                 x-model="sequence.nom"
                                 placeholder="Nom de la séquence..."
-                                class="input is-medium"
-                                style="border: none; box-shadow: none; padding: 0; font-size: 1.5rem; font-weight: 600;"
+                                class="text-2xl font-semibold border-none shadow-none p-0 focus:outline-none focus:ring-0"
+                                style="font-size: 1.5rem; font-weight: 600"
                             />
                         </div>
                     </div>
-                    <div class="field">
-                        <div class="control">
+                    <div>
+                        <div>
                             <textarea
                                 x-model="sequence.description"
                                 placeholder="Description de la séquence..."
-                                class="textarea"
-                                style="border: none; box-shadow: none; resize: none; height: auto; min-height: 2rem;"
+                                class="border-none shadow-none resize-none h-auto min-h-[2rem] focus:outline-none focus:ring-0 w-full"
+                                style="
+                                    resize: none;
+                                    height: auto;
+                                    min-height: 2rem;
+                                "
                             ></textarea>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="level-right">
-                <div class="buttons">
-                    <button @click="saveSequence" class="button is-link" :disabled="isSaving">
-                        <span class="icon is-small">
+            <div class="flex-shrink-0">
+                <div class="flex space-x-2">
+                    <button
+                        @click="saveSequence"
+                        class="bg-marki-primary text-white px-4 py-2 rounded hover:bg-marki-primary-dark disabled:opacity-50 disabled:cursor-not-allowed"
+                        :disabled="isSaving"
+                    >
+                        <span class="text-sm mr-1">
                             <i class="fa-regular fa-save"></i>
                         </span>
                         <span>Enregistrer</span>
@@ -50,122 +60,58 @@
     </div>
 
     <!-- Onglets de navigation -->
-    <div class="tabs is-boxed mb-4">
-        <ul>
-            <li :class="{'is-active': activeTab === 'actions'}">
-                <a @click="activeTab = 'actions'">
-                    <span class="icon is-small"><i class="fa-regular fa-list-check"></i></span>
+    <div class="border-b border-gray-200 mb-4">
+        <ul class="flex space-x-4">
+            <li>
+                <a
+                    @click="activeTab = 'actions'"
+                    :class="{'border-marki-primary text-marki-primary border-b-2 pb-2': activeTab === 'actions', 'text-gray-500 hover:text-gray-700': activeTab !== 'actions'}"
+                    class="inline-flex items-center px-4 py-2 text-sm font-medium cursor-pointer"
+                >
+                    <span class="text-sm mr-2"
+                        ><i class="fa-regular fa-list-check"></i
+                    ></span>
                     <span>Étapes</span>
                 </a>
             </li>
-            <li :class="{'is-active': activeTab === 'impayes'}">
-                <a @click="activeTab = 'impayes'">
-                    <span class="icon is-small"><i class="fa-regular fa-file-invoice"></i></span>
+            <li>
+                <a
+                    @click="activeTab = 'impayes'"
+                    :class="{'border-marki-primary text-marki-primary border-b-2 pb-2': activeTab === 'impayes', 'text-gray-500 hover:text-gray-700': activeTab !== 'impayes'}"
+                    class="inline-flex items-center px-4 py-2 text-sm font-medium cursor-pointer"
+                >
+                    <span class="text-sm mr-2"
+                        ><i class="fa-regular fa-file-invoice"></i
+                    ></span>
                     <span>Impayés</span>
-                    <span class="tag is-rounded is-info ml-2" x-text="associatedImpayes.length"></span>
+                    <span
+                        class="inline-block px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 ml-2"
+                        x-text="associatedImpayes.length"
+                    ></span>
                 </a>
             </li>
         </ul>
     </div>
 
     <!-- Contenu des onglets -->
-    <div class="box">
+    <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
         <!-- Onglet Étapes -->
-    <div x-show="activeTab === 'actions'">
-        <div class="buttons mb-4">
-            <button @click="addAction('email')" class="button is-success">
-                <span class="icon is-small">
-                    <i class="fa-regular fa-plus"></i>
-                </span>
-                <span>Ajouter un email</span>
-            </button>
+        <div x-show="activeTab === 'actions'">
+            {% include 'components/sequence_actions.html' %}
         </div>
-
-        <!-- Liste des étapes -->
-        <div class="content">
-            <template x-for="(action, index) in sequence.actions" :key="action.id || index">
-                <!-- Composant Etape -->
-                <div class="box mb-4" x-show="action.type === 'email'">
-                    <div class="level">
-                        <div class="level-left">
-                            <div>
-                                <h3 class="title is-6">Étape <span x-text="index + 1"></span>: Email</h3>
-                            </div>
-                        </div>
-                        <div class="level-right">
-                            <div class="buttons">
-                                <button @click="editAction(index)" class="button is-small is-info">
-                                    <span class="icon is-small">
-                                        <i class="fa-regular fa-edit"></i>
-                                    </span>
-                                </button>
-                                <button @click="deleteAction(index)" class="button is-small is-danger">
-                                    <span class="icon is-small">
-                                        <i class="fa-regular fa-trash-alt"></i>
-                                    </span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Composant EmailMessage -->
-                    <div class="content mt-4">
-                        <div class="field">
-                            <label class="label">Sujet</label>
-                            <div class="control">
-                                <input
-                                    type="text"
-                                    x-model="action.subject"
-                                    class="input"
-                                    placeholder="Sujet de l'email..."
-                                />
-                            </div>
-                        </div>
-
-                        <div class="field">
-                            <label class="label">Corps du message</label>
-                            <div class="control">
-                                <textarea
-                                    x-model="action.body"
-                                    class="textarea"
-                                    placeholder="Contenu de l'email..."
-                                    rows="8"
-                                ></textarea>
-                            </div>
-                        </div>
-
-                        <div class="field">
-                            <label class="label">Délai (jours)</label>
-                            <div class="control">
-                                <input
-                                    type="number"
-                                    x-model="action.delay"
-                                    class="input"
-                                    min="0"
-                                    placeholder="0"
-                                />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </template>
-
-            <div x-show="sequence.actions.length === 0" class="has-text-centered">
-                <p class="has-text-grey">Aucune étape définie pour cette séquence.</p>
-                <p class="has-text-grey">Ajoutez des étapes en utilisant le bouton ci-dessus.</p>
-            </div>
-        </div>
-    </div>
 
         <!-- Onglet Impayés -->
         <div x-show="activeTab === 'impayes'">
-            <div class="level mb-4">
-                <div class="level-left">
-                    <h3 class="title is-5">Impayés associés</h3>
+            <div class="flex flex-wrap items-center justify-between mb-4">
+                <div class="flex-1 min-w-0">
+                    <h3 class="text-lg font-bold">Impayés associés</h3>
                 </div>
-                <div class="level-right">
-                    <button @click="addImpayeDrawerOpen = true" class="button is-link">
-                        <span class="icon is-small">
+                <div class="flex-shrink-0">
+                    <button
+                        @click="addImpayeDrawerOpen = true"
+                        class="bg-marki-primary text-white px-4 py-2 rounded hover:bg-marki-primary-dark"
+                    >
+                        <span class="text-sm mr-1">
                             <i class="fa-regular fa-plus"></i>
                         </span>
                         <span>Associer des impayés</span>
@@ -174,35 +120,72 @@
             </div>
 
             <!-- Tableau des impayés associés -->
-            <div class="table-container">
-                <table class="table is-fullwidth is-striped">
+            <div class="overflow-x-auto">
+                <table class="w-full">
                     <thead>
-                        <tr>
-                            <th>Facture</th>
-                            <th>Client</th>
-                            <th>Montant</th>
-                            <th>Date</th>
-                            <th>Actions</th>
+                        <tr class="bg-gray-50">
+                            <th
+                                class="text-left p-2 font-semibold text-sm text-gray-700"
+                            >
+                                Facture
+                            </th>
+                            <th
+                                class="text-left p-2 font-semibold text-sm text-gray-700"
+                            >
+                                Client
+                            </th>
+                            <th
+                                class="text-left p-2 font-semibold text-sm text-gray-700"
+                            >
+                                Montant
+                            </th>
+                            <th
+                                class="text-left p-2 font-semibold text-sm text-gray-700"
+                            >
+                                Date
+                            </th>
+                            <th
+                                class="text-left p-2 font-semibold text-sm text-gray-700"
+                            >
+                                Actions
+                            </th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <template x-for="impaye in associatedImpayes" :key="impaye.objectId">
+                    <tbody class="divide-y divide-gray-200">
+                        <template
+                            x-for="impaye in associatedImpayes"
+                            :key="impaye.objectId"
+                        >
                             <tr>
-                                <td x-text="impaye.nfacture"></td>
-                                <td x-text="impaye.payeur_nom"></td>
-                                <td x-text="formatCurrency(impaye.montant)"></td>
-                                <td x-text="formatDate(impaye.date)"></td>
-                                <td>
-                                    <button @click="removeImpaye(impaye)" class="button is-small is-danger">
-                                        <span class="icon is-small">
-                                            <i class="fa-regular fa-trash-alt"></i>
+                                <td class="p-2" x-text="impaye.nfacture"></td>
+                                <td class="p-2" x-text="impaye.payeur_nom"></td>
+                                <td
+                                    class="p-2"
+                                    x-text="formatCurrency(impaye.montant)"
+                                ></td>
+                                <td
+                                    class="p-2"
+                                    x-text="formatDate(impaye.date)"
+                                ></td>
+                                <td class="p-2">
+                                    <button
+                                        @click="removeImpaye(impaye)"
+                                        class="bg-red-500 text-white px-2 py-1 rounded text-sm hover:bg-red-600"
+                                    >
+                                        <span class="text-sm mr-1">
+                                            <i
+                                                class="fa-regular fa-trash-alt"
+                                            ></i>
                                         </span>
                                     </button>
                                 </td>
                             </tr>
                         </template>
                         <tr x-show="associatedImpayes.length === 0">
-                            <td colspan="5" class="has-text-centered">
+                            <td
+                                colspan="5"
+                                class="text-center p-4 text-gray-500"
+                            >
                                 Aucun impayé associé à cette séquence.
                             </td>
                         </tr>
@@ -213,56 +196,109 @@
     </div>
 
     <!-- Drawer pour ajouter des impayés -->
-    <div x-show="addImpayeDrawerOpen" class="modal is-active">
-        <div class="modal-background" @click="addImpayeDrawerOpen = false"></div>
-        <div class="modal-card" style="width: 80%; max-width: 800px;">
-            <header class="modal-card-head">
-                <p class="modal-card-title">Associer des impayés</p>
-                <button @click="addImpayeDrawerOpen = false" class="delete" aria-label="close"></button>
+    <div
+        x-show="addImpayeDrawerOpen"
+        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+    >
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4">
+            <header
+                class="border-b border-gray-200 p-4 flex justify-between items-center"
+            >
+                <p class="text-lg font-semibold">Associer des impayés</p>
+                <button
+                    @click="addImpayeDrawerOpen = false"
+                    class="text-gray-400 hover:text-gray-600"
+                    aria-label="close"
+                >
+                    <i class="fa-regular fa-times text-xl"></i>
+                </button>
             </header>
-            <section class="modal-card-body">
-                <div class="field mb-4">
-                    <label class="label">Rechercher</label>
-                    <div class="control">
+            <section class="p-4">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1"
+                        >Rechercher</label
+                    >
+                    <div>
                         <input
                             type="text"
                             x-model="impayeSearchTerm"
                             @input="filterAvailableImpayes"
                             placeholder="Rechercher par facture ou client..."
-                            class="input"
+                            class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-marki-primary focus:border-transparent"
                         />
                     </div>
                 </div>
 
-                <div class="table-container">
-                    <table class="table is-fullwidth is-striped">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
                         <thead>
-                            <tr>
-                                <th><input type="checkbox" @change="toggleSelectAllImpayes"></th>
-                                <th>Facture</th>
-                                <th>Client</th>
-                                <th>Montant</th>
-                                <th>Date</th>
+                            <tr class="bg-gray-50">
+                                <th
+                                    class="text-left p-2 font-semibold text-sm text-gray-700"
+                                >
+                                    <input
+                                        type="checkbox"
+                                        @change="toggleSelectAllImpayes"
+                                    />
+                                </th>
+                                <th
+                                    class="text-left p-2 font-semibold text-sm text-gray-700"
+                                >
+                                    Facture
+                                </th>
+                                <th
+                                    class="text-left p-2 font-semibold text-sm text-gray-700"
+                                >
+                                    Client
+                                </th>
+                                <th
+                                    class="text-left p-2 font-semibold text-sm text-gray-700"
+                                >
+                                    Montant
+                                </th>
+                                <th
+                                    class="text-left p-2 font-semibold text-sm text-gray-700"
+                                >
+                                    Date
+                                </th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <template x-for="impaye in filteredAvailableImpayes" :key="impaye.objectId">
+                        <tbody class="divide-y divide-gray-200">
+                            <template
+                                x-for="impaye in filteredAvailableImpayes"
+                                :key="impaye.objectId"
+                            >
                                 <tr>
-                                    <td>
+                                    <td class="p-2">
                                         <input
                                             type="checkbox"
                                             :value="impaye.objectId"
                                             x-model="selectedImpayes"
                                         />
                                     </td>
-                                    <td x-text="impaye.nfacture"></td>
-                                    <td x-text="impaye.payeur_nom"></td>
-                                    <td x-text="formatCurrency(impaye.montant)"></td>
-                                    <td x-text="formatDate(impaye.date)"></td>
+                                    <td
+                                        class="p-2"
+                                        x-text="impaye.nfacture"
+                                    ></td>
+                                    <td
+                                        class="p-2"
+                                        x-text="impaye.payeur_nom"
+                                    ></td>
+                                    <td
+                                        class="p-2"
+                                        x-text="formatCurrency(impaye.montant)"
+                                    ></td>
+                                    <td
+                                        class="p-2"
+                                        x-text="formatDate(impaye.date)"
+                                    ></td>
                                 </tr>
                             </template>
                             <tr x-show="filteredAvailableImpayes.length === 0">
-                                <td colspan="5" class="has-text-centered">
+                                <td
+                                    colspan="5"
+                                    class="text-center p-4 text-gray-500"
+                                >
                                     Aucun impayé disponible.
                                 </td>
                             </tr>
@@ -270,33 +306,110 @@
                     </table>
                 </div>
             </section>
-            <footer class="modal-card-foot">
-                <button @click="addSelectedImpayes" class="button is-link" :disabled="selectedImpayes.length === 0">
-                    <span class="icon is-small">
+            <footer class="border-t border-gray-200 p-4">
+                <button
+                    @click="addSelectedImpayes"
+                    class="bg-marki-primary text-white px-4 py-2 rounded hover:bg-marki-primary-dark disabled:opacity-50 disabled:cursor-not-allowed"
+                    :disabled="selectedImpayes.length === 0"
+                >
+                    <span class="text-sm mr-1">
                         <i class="fa-regular fa-plus"></i>
                     </span>
-                    <span>Associer <span x-text="selectedImpayes.length"></span> impayé(s)</span>
+                    <span
+                        >Associer
+                        <span x-text="selectedImpayes.length"></span>
+                        impayé(s)</span
+                    >
                 </button>
-                <button @click="addImpayeDrawerOpen = false" class="button">Annuler</button>
+                <button
+                    @click="addImpayeDrawerOpen = false"
+                    class="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-50 ml-2"
+                >
+                    Annuler
+                </button>
             </footer>
         </div>
     </div>
 
     <!-- Notification de chargement -->
-    <div x-show="isLoading" class="modal is-active">
-        <div class="modal-background"></div>
-        <div class="modal-content has-text-centered">
-            <div class="box">
-                <i class="fa-regular fa-spinner fa-spin fa-2x has-text-primary mb-4"></i>
-                <p>Chargement en cours...</p>
-            </div>
+    <div
+        x-show="isLoading"
+        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+    >
+        <div class="bg-white rounded-lg shadow-xl p-6 text-center">
+            <i
+                class="fa-regular fa-spinner fa-spin fa-2x text-marki-primary mb-4"
+            ></i>
+            <p>Chargement en cours...</p>
         </div>
     </div>
 
     <!-- Notification d'erreur -->
-    <div x-show="error" class="notification is-danger is-light">
-        <button @click="error = null" class="delete"></button>
+    <div
+        x-show="error"
+        class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded"
+    >
+        <button
+            @click="error = null"
+            class="text-gray-400 hover:text-gray-600 ml-2"
+        >
+            <i class="fa-regular fa-times"></i>
+        </button>
         <span x-text="error"></span>
+    </div>
+
+    <!-- Drawer de confirmation de suppression -->
+    <div
+        x-show="deleteConfirmOpen"
+        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+    >
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-sm mx-4">
+            <header
+                class="border-b border-gray-200 p-4 flex justify-between items-center"
+            >
+                <p class="text-lg font-semibold text-red-500">
+                    <span class="text-red-500 text-sm mr-2">
+                        <i class="fa-regular fa-exclamation-triangle"></i>
+                    </span>
+                    Confirmation de suppression
+                </p>
+                <button
+                    @click="cancelDelete()"
+                    class="text-gray-400 hover:text-gray-600"
+                    aria-label="close"
+                >
+                    <i class="fa-regular fa-times text-xl"></i>
+                </button>
+            </header>
+            <section class="p-4">
+                <div class="text-sm text-gray-600">
+                    <p x-show="deleteType === 'impaye'">
+                        Êtes-vous sûr de vouloir dissocier l'impayé
+                        <strong x-text="itemToDelete?.nfacture"></strong> ?
+                    </p>
+                    <p class="text-gray-500 text-sm">
+                        Cette action est irréversible.
+                    </p>
+                </div>
+            </section>
+            <footer class="border-t border-gray-200 p-4">
+                <button
+                    @click="confirmDelete()"
+                    class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+                >
+                    <span class="text-sm mr-1">
+                        <i class="fa-regular fa-trash-alt"></i>
+                    </span>
+                    <span>Supprimer</span>
+                </button>
+                <button
+                    @click="cancelDelete()"
+                    class="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-50 ml-2"
+                >
+                    Annuler
+                </button>
+            </footer>
+        </div>
     </div>
 </div>
 {% endblock %}

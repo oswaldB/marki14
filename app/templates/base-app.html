@@ -5,17 +5,28 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>{% block title %}Marki - Application{% endblock %}</title>
 
-        <!-- Bulma CSS -->
-        <link
-            rel="stylesheet"
-            href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css"
-        />
-        <!-- Marki Primary Color CSS -->
-        <link
-            rel="stylesheet"
-            href="{{ url_for('static', filename='css/bulma-primary.css') }}"
-        />
-        <!-- Pas de CSS personnalisé supplémentaire - uniquement Bulma + couleurs primaires -->
+        <!-- Tailwind CSS via CDN -->
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script src="{{ url_for('static', filename='js/tailwind-config.js') }}"></script>
+        <style>
+            /* Custom styles for Marki brand */
+            .bg-marki-primary {
+                background-color: #007ace;
+            }
+            .text-marki-primary {
+                color: #007ace;
+            }
+            .border-marki-primary {
+                border-color: #007ace;
+            }
+            .hover\:bg-marki-primary-dark:hover {
+                background-color: #005bb5;
+            }
+            .focus\:ring-marki-primary:focus {
+                box-shadow: 0 0 0 3px rgba(0, 122, 206, 0.5);
+                border-color: #007ace;
+            }
+        </style>
 
         <!-- Font Awesome local -->
         <link
@@ -44,17 +55,11 @@
         {% block head %}{% endblock %}
     </head>
     <body>
-        <!-- Layout principal avec Bulma -->
-        <div class="columns is-gapless">
+        <!-- Layout principal avec Tailwind -->
+        <div class="flex flex-nowrap min-h-screen">
             <!-- Sidebar - visible sur desktop -->
             <div
-                class="is-narrow is-hidden-mobile"
-                style="
-                    width: 200px;
-                    min-height: 100vh;
-                    background-color: white;
-                    border-right: 1px solid #dbdbdb;
-                "
+                class="hidden md:block w-[200px] min-h-screen bg-white border-r border-gray-200"
             >
                 <div class="p-4">
                     <!-- Logo -->
@@ -62,49 +67,45 @@
                         <img
                             src="/static/marki-logo.png"
                             alt="Marki Logo"
-                            style="height: 3rem"
+                            class="h-12"
                         />
                     </div>
 
                     <!-- Menu de navigation -->
-                    <aside class="menu">
-                        <ul class="menu-list">
-                            <template x-for="item in navItems" :key="item.path">
-                                <li>
-                                    <a
-                                        :href="item.path"
-                                        @click.prevent="navigateTo(item.path)"
-                                        class="is-flex is-align-items-center"
-                                        :class="{ 'is-active': item.active }"
-                                    >
-                                        <span class="icon is-small mr-3">
-                                            <i :class="item.icon"></i>
-                                        </span>
-                                        <span x-text="item.label"></span>
-                                    </a>
-                                </li>
-                            </template>
-                        </ul>
-                    </aside>
+                    <nav class="space-y-2">
+                        <template x-for="item in navItems" :key="item.path">
+                            <a
+                                :href="item.path"
+                                @click.prevent="navigateTo(item.path)"
+                                class="flex items-center p-2 rounded hover:bg-gray-100"
+                                :class="{ 'bg-marki-primary text-white': item.active, 'text-gray-700': !item.active }"
+                            >
+                                <span class="mr-3">
+                                    <i :class="item.icon"></i>
+                                </span>
+                                <span x-text="item.label"></span>
+                            </a>
+                        </template>
+                    </nav>
 
                     <!-- Section utilisateur -->
                     <div class="mt-auto pt-4">
-                        <div class="box">
-                            <div class="media">
-                                <div class="media-left">
-                                    <span class="icon is-medium">
-                                        <i
-                                            class="fa-regular fa-user fa-2x has-text-primary"
-                                        ></i>
+                        <div
+                            class="bg-white border border-gray-200 rounded-lg p-3 shadow-sm"
+                        >
+                            <div class="flex items-center">
+                                <div class="mr-3">
+                                    <span class="text-2xl text-marki-primary">
+                                        <i class="fa-regular fa-user"></i>
                                     </span>
                                 </div>
-                                <div class="media-content">
+                                <div>
                                     <p
-                                        class="is-size-6 has-text-weight-semibold"
+                                        class="text-sm font-semibold text-gray-900"
                                     >
                                         Utilisateur
                                     </p>
-                                    <p class="is-size-7 has-text-grey">
+                                    <p class="text-xs text-gray-500">
                                         Marki App
                                     </p>
                                 </div>
@@ -112,9 +113,9 @@
                         </div>
                         <button
                             @click="logout()"
-                            class="button is-fullwidth is-light"
+                            class="w-full mt-3 bg-marki-primary text-white py-2 px-4 rounded hover:bg-marki-primary-dark focus:outline-none focus:ring-2 focus:ring-marki-primary focus:ring-offset-2"
                         >
-                            <span class="icon is-small mr-2">
+                            <span class="mr-2">
                                 <i class="fa-regular fa-sign-out"></i>
                             </span>
                             <span>Déconnexion</span>
@@ -124,7 +125,7 @@
             </div>
 
             <!-- Contenu principal -->
-            <div class="column">
+            <div class="flex-1">
                 <!-- Contenu de la page -->
                 <main class="p-4">{% block content %}{% endblock %}</main>
             </div>

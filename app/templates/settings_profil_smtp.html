@@ -1,26 +1,24 @@
-{% extends "base-app.html" %} {% block title %}Paramètres -
-Profils SMTP{% endblock %} {% block head %}
+{% extends "base-app.html" %} {% block title %}Paramètres - Profils SMTP{%
+endblock %} {% block head %}
 <script src="{{ url_for('static', filename='js/alpines/smtpProfilesState.js') }}"></script>
 {% endblock %} {% block content %}
 <div x-data="smtpProfilesState()" class="min-h-screen">
     <!-- Header -->
-    <div class="box mb-4">
-        <div class="level">
-            <div class="level-left">
+    <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm mb-4">
+        <div class="flex flex-wrap items-center justify-between">
+            <div class="flex-1 min-w-0">
                 <div>
-                    <h1 class="title is-3">
-                        Profils SMTP
-                    </h1>
-                    <p class="subtitle is-6">
+                    <h1 class="text-2xl font-bold">Profils SMTP</h1>
+                    <p class="text-sm text-gray-600">
                         <span x-text="filteredProfiles.length"></span> profil(s)
                         SMTP configuré(s)
                     </p>
                 </div>
             </div>
-            <div class="level-right">
+            <div class="flex-shrink-0">
                 <button
                     @click="openCreateDrawer()"
-                    class="button is-link"
+                    class="bg-marki-primary text-white px-4 py-2 rounded hover:bg-marki-primary-dark"
                 >
                     <i class="fa-regular fa-plus-circle mr-2"></i>
                     Créer un profil SMTP
@@ -30,36 +28,39 @@ Profils SMTP{% endblock %} {% block head %}
     </div>
 
     <!-- Filtres -->
-    <div class="box mb-4">
-        <div class="columns">
-            <div class="column">
-                <div class="field">
-                    <label class="label">Recherche</label>
-                    <div class="control">
+    <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm mb-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1"
+                        >Recherche</label
+                    >
+                    <div>
                         <input
                             type="text"
                             x-model="searchTerm"
                             @input="filterProfiles"
                             placeholder="Rechercher par nom ou email..."
-                            class="input"
+                            class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-marki-primary focus:border-transparent"
                         />
                     </div>
                 </div>
             </div>
-            <div class="column">
-                <div class="field">
-                    <label class="label">Statut</label>
-                    <div class="control">
-                        <div class="select is-fullwidth">
-                            <select
-                                x-model="selectedStatus"
-                                @change="filterProfiles"
-                            >
-                                <option value="">Tous</option>
-                                <option value="true">Actif</option>
-                                <option value="false">Inactif</option>
-                            </select>
-                        </div>
+            <div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1"
+                        >Statut</label
+                    >
+                    <div>
+                        <select
+                            x-model="selectedStatus"
+                            @change="filterProfiles"
+                            class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-marki-primary focus:border-transparent"
+                        >
+                            <option value="">Tous</option>
+                            <option value="true">Actif</option>
+                            <option value="false">Inactif</option>
+                        </select>
                     </div>
                 </div>
             </div>
@@ -67,63 +68,95 @@ Profils SMTP{% endblock %} {% block head %}
     </div>
 
     <!-- Liste des profils SMTP -->
-    <div class="box">
-        <div class="table-container">
-            <table class="table is-fullwidth is-striped">
+    <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+        <div class="overflow-x-auto">
+            <table class="w-full">
                 <thead>
                     <tr>
-                        <th>Nom</th>
-                        <th>Email</th>
-                        <th>Hôte</th>
-                        <th>Port</th>
-                        <th>Statut</th>
-                        <th>Date création</th>
-                        <th>Actions</th>
+                        <th
+                            class="text-left p-2 font-semibold text-sm text-gray-700"
+                        >
+                            Nom
+                        </th>
+                        <th
+                            class="text-left p-2 font-semibold text-sm text-gray-700"
+                        >
+                            Email
+                        </th>
+                        <th
+                            class="text-left p-2 font-semibold text-sm text-gray-700"
+                        >
+                            Hôte
+                        </th>
+                        <th
+                            class="text-left p-2 font-semibold text-sm text-gray-700"
+                        >
+                            Port
+                        </th>
+                        <th
+                            class="text-left p-2 font-semibold text-sm text-gray-700"
+                        >
+                            Statut
+                        </th>
+                        <th
+                            class="text-left p-2 font-semibold text-sm text-gray-700"
+                        >
+                            Date création
+                        </th>
+                        <th
+                            class="text-left p-2 font-semibold text-sm text-gray-700"
+                        >
+                            Actions
+                        </th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody class="divide-y divide-gray-200">
                     <template
                         x-for="profile in paginatedProfiles"
                         :key="profile.objectId"
                     >
                         <tr>
-                            <td>
-                                <div class="media">
-                                    <div class="media-left">
-                                        <i class="fa-regular fa-envelope has-text-primary"></i>
+                            <td class="p-2">
+                                <div class="flex items-center">
+                                    <div class="mr-2">
+                                        <i
+                                            class="fa-regular fa-envelope text-marki-primary"
+                                        ></i>
                                     </div>
-                                    <div class="media-content">
+                                    <div>
                                         <span x-text="profile.name"></span>
                                     </div>
                                 </div>
                             </td>
-                            <td x-text="profile.email"></td>
-                            <td x-text="profile.host"></td>
-                            <td x-text="profile.port"></td>
-                            <td>
+                            <td class="p-2" x-text="profile.email"></td>
+                            <td class="p-2" x-text="profile.host"></td>
+                            <td class="p-2" x-text="profile.port"></td>
+                            <td class="p-2">
                                 <span
-                                    class="tag"
-                                    :class="profile.isActive ? 'is-success' : 'is-danger'"
+                                    class="inline-block px-2 py-1 rounded text-xs font-medium"
+                                    :class="profile.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
                                 >
-                                    <span x-text="profile.isActive ? 'Actif' : 'Inactif'"></span>
+                                    <span
+                                        x-text="profile.isActive ? 'Actif' : 'Inactif'"
+                                    ></span>
                                 </span>
                             </td>
-                            <td>
+                            <td class="p-2">
                                 <span
                                     x-text="new Date(profile.createdAt).toLocaleDateString()"
                                 ></span>
                             </td>
-                            <td>
-                                <div class="buttons is-right">
+                            <td class="p-2">
+                                <div class="flex justify-end space-x-2">
                                     <button
                                         @click="openEditDrawer(profile)"
-                                        class="button is-small is-info"
+                                        class="bg-blue-500 text-white px-2 py-1 rounded text-sm hover:bg-blue-600"
                                     >
                                         <i class="fa-regular fa-edit"></i>
                                     </button>
                                     <button
                                         @click="toggleArchiveProfile(profile)"
-                                        class="button is-small is-danger"
+                                        class="bg-red-500 text-white px-2 py-1 rounded text-sm hover:bg-red-600"
                                     >
                                         <i
                                             x-show="!profile.isArchived"
@@ -139,10 +172,7 @@ Profils SMTP{% endblock %} {% block head %}
                         </tr>
                     </template>
                     <tr x-show="filteredProfiles.length === 0">
-                        <td
-                            colspan="7"
-                            class="has-text-centered"
-                        >
+                        <td colspan="7" class="text-center p-4 text-gray-500">
                             Aucun profil SMTP trouvé
                         </td>
                     </tr>
@@ -151,34 +181,30 @@ Profils SMTP{% endblock %} {% block head %}
         </div>
 
         <!-- Pagination -->
-        <div class="level mt-4">
-            <div class="level-left">
-                <p class="is-size-7">
-                    <span x-text="(currentPage - 1) * itemsPerPage + 1"></span>-
-                    <span
-                        x-text="Math.min(currentPage * itemsPerPage, filteredProfiles.length)"
-                    ></span>
-                    sur
-                    <span x-text="filteredProfiles.length"></span>
-                </p>
+        <div class="flex flex-wrap items-center justify-between mt-4">
+            <div class="text-sm text-gray-600">
+                <span x-text="(currentPage - 1) * itemsPerPage + 1"></span>-
+                <span
+                    x-text="Math.min(currentPage * itemsPerPage, filteredProfiles.length)"
+                ></span>
+                sur
+                <span x-text="filteredProfiles.length"></span>
             </div>
-            <div class="level-right">
-                <div class="buttons">
-                    <button
-                        @click="previousPage"
-                        :disabled="currentPage === 1"
-                        class="button is-small"
-                    >
-                        Précédent
-                    </button>
-                    <button
-                        @click="nextPage"
-                        :disabled="currentPage * itemsPerPage >= filteredProfiles.length"
-                        class="button is-small"
-                    >
-                        Suivant
-                    </button>
-                </div>
+            <div class="flex space-x-2">
+                <button
+                    @click="previousPage"
+                    :disabled="currentPage === 1"
+                    class="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    Précédent
+                </button>
+                <button
+                    @click="nextPage"
+                    :disabled="currentPage * itemsPerPage >= filteredProfiles.length"
+                    class="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    Suivant
+                </button>
             </div>
         </div>
     </div>
@@ -186,219 +212,216 @@ Profils SMTP{% endblock %} {% block head %}
     <!-- Drawer de création/édition -->
     <div
         x-show="showDrawer"
-        class="modal is-active"
+        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
     >
-        <!-- Overlay -->
-        <div
-            @click="closeDrawer"
-            class="modal-background"
-        ></div>
-
         <!-- Drawer -->
-        <div
-            class="modal-card"
-            style="width: 80%; max-width: 600px; margin: 0 auto;"
-        >
-            <header class="modal-card-head">
-                <p class="modal-card-title">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+            <header
+                class="border-b border-gray-200 p-4 flex justify-between items-center"
+            >
+                <p class="text-lg font-semibold">
                     <span
                         x-text="editingProfile ? 'Modifier le profil SMTP' : 'Créer un profil SMTP'"
                     ></span>
                 </p>
                 <button
                     @click="closeDrawer"
-                    class="delete"
+                    class="text-gray-400 hover:text-gray-600"
                     aria-label="close"
-                ></button>
+                >
+                    <i class="fa-regular fa-times text-xl"></i>
+                </button>
             </header>
 
             <!-- Content -->
-            <section class="modal-card-body">
+            <section class="p-4">
                 <form
                     @submit.prevent="editingProfile ? updateProfile() : createProfile()"
                 >
-                    <div class="field">
+                    <div class="mb-4">
                         <label
                             for="name"
-                            class="label"
+                            class="block text-sm font-medium text-gray-700 mb-1"
                         >
                             Nom du profil
                         </label>
-                        <div class="control">
+                        <div>
                             <input
                                 type="text"
                                 x-model="currentProfile.name"
                                 required
-                                class="input"
+                                class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-marki-primary focus:border-transparent"
                             />
                         </div>
                     </div>
 
-                    <div class="field">
+                    <div class="mb-4">
                         <label
                             for="email"
-                            class="label"
+                            class="block text-sm font-medium text-gray-700 mb-1"
                         >
                             Email
                         </label>
-                        <div class="control">
+                        <div>
                             <input
                                 type="email"
                                 x-model="currentProfile.email"
                                 required
-                                class="input"
+                                class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-marki-primary focus:border-transparent"
                             />
                         </div>
                     </div>
 
-                    <div class="field">
+                    <div class="mb-4">
                         <label
                             for="fromName"
-                            class="label"
+                            class="block text-sm font-medium text-gray-700 mb-1"
                         >
                             Nom de l'expéditeur
                         </label>
-                        <div class="control">
+                        <div>
                             <input
                                 type="text"
                                 x-model="currentProfile.fromName"
-                                class="input"
+                                class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-marki-primary focus:border-transparent"
                             />
                         </div>
                     </div>
 
-                    <div class="field">
+                    <div class="mb-4">
                         <label
                             for="host"
-                            class="label"
+                            class="block text-sm font-medium text-gray-700 mb-1"
                         >
                             Hôte SMTP
                         </label>
-                        <div class="control">
+                        <div>
                             <input
                                 type="text"
                                 x-model="currentProfile.host"
                                 required
-                                class="input"
+                                class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-marki-primary focus:border-transparent"
                             />
                         </div>
                     </div>
 
-                    <div class="field">
+                    <div class="mb-4">
                         <label
                             for="port"
-                            class="label"
+                            class="block text-sm font-medium text-gray-700 mb-1"
                         >
                             Port
                         </label>
-                        <div class="control">
+                        <div>
                             <input
                                 type="text"
                                 x-model="currentProfile.port"
                                 required
-                                class="input"
+                                class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-marki-primary focus:border-transparent"
                             />
                         </div>
                     </div>
 
-                    <div class="field">
+                    <div class="mb-4">
                         <label
                             for="username"
-                            class="label"
+                            class="block text-sm font-medium text-gray-700 mb-1"
                         >
                             Nom d'utilisateur
                         </label>
-                        <div class="control">
+                        <div>
                             <input
                                 type="text"
                                 x-model="currentProfile.username"
                                 required
-                                class="input"
+                                class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-marki-primary focus:border-transparent"
                             />
                         </div>
                     </div>
 
-                    <div class="field">
+                    <div class="mb-4">
                         <label
                             for="password"
-                            class="label"
+                            class="block text-sm font-medium text-gray-700 mb-1"
                         >
                             Mot de passe
                         </label>
-                        <div class="control">
+                        <div>
                             <input
                                 type="password"
                                 x-model="currentProfile.password"
                                 :required="!editingProfile"
-                                class="input"
+                                class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-marki-primary focus:border-transparent"
                             />
                         </div>
-                        <p class="help">
-                            Laissez vide pour ne pas modifier le
-                            mot de passe
+                        <p class="text-xs text-gray-500 mt-1">
+                            Laissez vide pour ne pas modifier le mot de passe
                         </p>
                     </div>
 
-                    <div class="field is-grouped is-grouped-multiline">
-                        <div class="control">
-                            <label class="checkbox">
-                                <input
-                                    type="checkbox"
-                                    x-model="currentProfile.useSSL"
-                                />
-                                Utiliser SSL
-                            </label>
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div class="flex items-center">
+                            <input
+                                type="checkbox"
+                                x-model="currentProfile.useSSL"
+                                class="mr-2"
+                            />
+                            <label class="text-sm text-gray-700"
+                                >Utiliser SSL</label
+                            >
                         </div>
-                        <div class="control">
-                            <label class="checkbox">
-                                <input
-                                    type="checkbox"
-                                    x-model="currentProfile.useTLS"
-                                />
-                                Utiliser TLS
-                            </label>
+                        <div class="flex items-center">
+                            <input
+                                type="checkbox"
+                                x-model="currentProfile.useTLS"
+                                class="mr-2"
+                            />
+                            <label class="text-sm text-gray-700"
+                                >Utiliser TLS</label
+                            >
                         </div>
-                        <div class="control">
-                            <label class="checkbox">
-                                <input
-                                    type="checkbox"
-                                    x-model="currentProfile.isActive"
-                                />
-                                Profil actif
-                            </label>
+                        <div class="flex items-center">
+                            <input
+                                type="checkbox"
+                                x-model="currentProfile.isActive"
+                                class="mr-2"
+                            />
+                            <label class="text-sm text-gray-700"
+                                >Profil actif</label
+                            >
                         </div>
                     </div>
 
-                    <div class="field">
+                    <div class="mb-4">
                         <label
                             for="htmlSignature"
-                            class="label"
+                            class="block text-sm font-medium text-gray-700 mb-1"
                         >
                             Signature HTML
                         </label>
-                        <div class="control">
+                        <div>
                             <textarea
                                 x-model="currentProfile.htmlSignature"
                                 rows="4"
-                                class="textarea"
+                                class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-marki-primary focus:border-transparent"
                             ></textarea>
                         </div>
                     </div>
 
-                    <div class="field is-grouped is-grouped-right mt-6">
-                        <div class="control">
+                    <div class="flex justify-end space-x-2 mt-6">
+                        <div>
                             <button
                                 type="button"
                                 @click="closeDrawer"
-                                class="button is-light"
+                                class="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-50"
                             >
                                 Annuler
                             </button>
                         </div>
-                        <div class="control">
+                        <div>
                             <button
                                 type="submit"
-                                class="button is-link"
+                                class="bg-marki-primary text-white px-4 py-2 rounded hover:bg-marki-primary-dark"
                             >
                                 <span
                                     x-text="editingProfile ? 'Mettre à jour' : 'Créer'"
