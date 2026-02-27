@@ -1,6 +1,5 @@
 {% extends "base-app.html" %} {% block title %}Plan de relance manuel - {{
 sequence_id }}{% endblock %} {% block head %}
-<script src="{{ url_for('static', filename='js/alpines/sequenceManualState.js') }}"></script>
 <!-- ToastUI Editor Symbiote Component -->
 <script
     type="module"
@@ -8,8 +7,122 @@ sequence_id }}{% endblock %} {% block head %}
 ></script>
 {% endblock %} {% block content %}
 <div
-    x-data="sequenceManual"
-    x-init="loadSequenceData()"
+    x-data="{
+        // État centralisé utilisant directement le sequenceStore
+        get sequenceStore() {
+            return Alpine.store('sequence');
+        },
+        
+        // Accès direct aux données du store
+        get sequence() {
+            return this.sequenceStore.currentSequence || {
+                nom: '',
+                description: '',
+                actions: [],
+                isActif: true
+            };
+        },
+        
+        get associatedImpayes() {
+            return this.sequenceStore.associatedImpayes || [];
+        },
+        
+        get isLoading() {
+            return this.sequenceStore.isLoading;
+        },
+        
+        get error() {
+            return this.sequenceStore.error;
+        },
+        
+        // État local pour l'interface
+        activeTab: 'actions',
+        addImpayeDrawerOpen: false,
+        deleteConfirmOpen: false,
+        itemToDelete: null,
+        deleteType: null,
+        impayeSearchTerm: '',
+        selectedImpayes: [],
+        
+        // Méthodes pour les actions
+        get actions() {
+            return this.sequence.actions || [];
+        },
+        
+        addAction(type) {
+            if (type !== 'email') return;
+            this.sequenceStore.addActionToCurrentSequence(type);
+        },
+        
+        deleteActionByIndex(index) {
+            this.sequenceStore.removeActionFromCurrentSequence(index);
+        },
+        
+        // Méthodes pour les impayés
+        filterAvailableImpayes() {
+            // Cette méthode devrait être dans le store, mais on la garde ici pour l'instant
+            return this.sequenceStore.availableImpayes.filter(impaye => {
+                const matchesSearch = this.impayeSearchTerm === '' ||
+                    impaye.nfacture.toLowerCase().includes(this.impayeSearchTerm.toLowerCase()) ||
+                    impaye.payeur_nom.toLowerCase().includes(this.impayeSearchTerm.toLowerCase());
+                return matchesSearch;
+            });
+        },
+        
+        toggleSelectAllImpayes(event) {
+            if (event.target.checked) {
+                this.selectedImpayes = this.filterAvailableImpayes().map(impaye => impaye.objectId);
+            } else {
+                this.selectedImpayes = [];
+            }
+        },
+        
+        // Méthodes d'interface
+        openAddImpayeDrawer() {
+            this.addImpayeDrawerOpen = true;
+            // Charger les impayés disponibles via le store
+            this.sequenceStore.loadAvailableImpayes();
+        },
+        
+        closeAddImpayeDrawer() {
+            this.addImpayeDrawerOpen = false;
+            this.selectedImpayes = [];
+        },
+        
+        openDeleteConfirm(item, type) {
+            this.itemToDelete = item;
+            this.deleteType = type;
+            this.deleteConfirmOpen = true;
+        },
+        
+        cancelDelete() {
+            this.deleteConfirmOpen = false;
+            this.itemToDelete = null;
+            this.deleteType = null;
+        },
+        
+        confirmDelete() {
+            if (this.deleteType === 'impaye' && this.itemToDelete) {
+                this.sequenceStore.removeImpayeFromSequence(this.itemToDelete.objectId);
+            }
+            this.cancelDelete();
+        },
+        
+        // Méthodes utilitaires
+        formatDate(dateString) {
+            return this.sequenceStore.formatDate(dateString);
+        },
+        
+        formatCurrency(amount) {
+            return this.sequenceStore.formatCurrency(amount);
+        },
+        
+        // Chargement initial
+        async init() {
+            await this.sequenceStore.loadSequenceData();
+        }
+    }"
+    x-init="init()"
     class="sequence-container"
 >
     <!-- Header avec titre et boutons d'action -->
@@ -99,7 +212,205 @@ sequence_id }}{% endblock %} {% block head %}
     <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
         <!-- Onglet Étapes -->
         <div x-show="activeTab === 'actions'">
-            {% include 'components/sequence_actions.html' %}
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Colonne principale : Actions -->
+                <div class="md:col-span-2">
+                    <div class="flex space-x-2 mb-4">
+                        <button
+                            @click="addAction('email')"
+                            class="bg-green-500 text-white px-3 py-2 rounded hover:bg-green-600"
+                        >
+                            <span class="text-sm">
+                                <i class="fa-regular fa-plus"></i>
+                            </span>
+                            <span>Ajouter un email</span>
+                        </button>
+                    </div>
+
+                    <!-- Liste des étapes -->
+                    <div>
+                        <template x-for="(action, index) in actions" :key="action.id || index">
+                            <!-- Email Card -->
+                            <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 mb-4" x-show="action.type === 'email'">
+                                <div class="flex flex-wrap items-center justify-between gap-4">
+                                    <div>
+                                        <h3 class="text-lg font-semibold text-gray-900">
+                                            Step <span x-text="index + 1"></span>: Email
+                                        </h3>
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <button
+                                            @click="editAction()"
+                                            class="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                                        >
+                                            <span class="mr-1">
+                                                <i class="fa-regular fa-edit"></i>
+                                            </span>
+                                            <span>Edit</span>
+                                        </button>
+                                        <button
+                                            @click="deleteAction()"
+                                            class="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                                        >
+                                            <span class="mr-1">
+                                                <i class="fa-regular fa-trash-alt"></i>
+                                            </span>
+                                            <span>Delete</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Email Configuration -->
+                                <div class="mt-4 space-y-4">
+                                    <!-- Delay -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Delay (days)</label>
+                                        <div>
+                                            <input
+                                                type="number"
+                                                x-model="action.delay"
+                                                class="w-full p-2 border border-gray-300 rounded-md focus:ring-marki-primary focus:border-marki-primary"
+                                                min="0"
+                                                placeholder="0"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <!-- Subject -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Subject</label>
+                                        <div>
+                                            <input
+                                                type="text"
+                                                x-model="action.subject"
+                                                class="w-full p-2 border border-gray-300 rounded-md focus:ring-marki-primary focus:border-marki-primary"
+                                                placeholder="Email subject..."
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <!-- SMTP Profile -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">SMTP Profile</label>
+                                        <div>
+                                            <select
+                                                x-model="action.smtpProfileId"
+                                                @change="action.senderEmail = $el.options[$el.selectedIndex].getAttribute('data-email')"
+                                                class="w-full p-2 border border-gray-300 rounded-md focus:ring-marki-primary focus:border-marki-primary"
+                                            >
+                                                <option value="" disabled>Select SMTP Profile</option>
+                                                <template x-for="profile in sequenceStore.smtpProfiles.profiles" :key="profile.objectId">
+                                                    <option :value="profile.objectId" :data-email="profile.email" x-text="profile.name + ' (' + profile.email + ')'"></option>
+                                                </template>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <!-- Sender Email -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Sender Email</label>
+                                        <div>
+                                            <input
+                                                type="email"
+                                                x-model="action.senderEmail"
+                                                class="w-full p-2 border border-gray-300 rounded-md focus:ring-marki-primary focus:border-marki-primary"
+                                                placeholder="sender@example.com"
+                                            />
+                                            <p class="text-xs text-gray-500 mt-1">Leave empty to use the default SMTP profile email</p>
+                                        </div>
+                                    </div>
+
+                                    <!-- Email Body with ToastUI Editor -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Email Body</label>
+                                        <div>
+                                            <toast-ui-editor-symbiote
+                                                x-ref="toastuiEditor"
+                                                class="border border-gray-300 rounded-md"
+                                                style="height: 300px;"
+                                            ></toast-ui-editor-symbiote>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+
+                        <div x-show="actions.length === 0" class="text-center">
+                            <p class="text-gray-500">Aucune étape définie pour cette séquence.</p>
+                            <p class="text-gray-500">Ajoutez des étapes en utilisant le bouton ci-dessus.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Colonne de droite : Variables -->
+                <div class="md:col-span-1">
+                    <!-- Variables Section -->
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <h3 class="text-lg font-semibold mb-4">Variables disponibles</h3>
+                        
+                        <!-- Search -->
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Rechercher</label>
+                            <input
+                                type="text"
+                                x-model="sequenceStore.variables.searchTerm"
+                                @input="sequenceStore.setSearchTerm($event.target.value)"
+                                placeholder="Rechercher des variables..."
+                                class="w-full border border-gray-300 rounded px-3 py-2"
+                            />
+                        </div>
+
+                        <!-- Variables List -->
+                        <div class="space-y-2 max-h-[400px] overflow-y-auto">
+                            <template x-for="variable in sequenceStore.variables.filteredVariables" :key="variable.name">
+                                <div class="flex items-center justify-between p-2 bg-white rounded border">
+                                    <div>
+                                        <div class="font-medium text-sm" x-text="variable.name"></div>
+                                        <div class="text-xs text-gray-600" x-text="variable.description"></div>
+                                    </div>
+                                    <div>
+                                        <button
+                                            @click="sequenceStore.copyVariable(variable)"
+                                            class="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600"
+                                        >
+                                            Copier
+                                        </button>
+                                    </div>
+                                </div>
+                            </template>
+                            <div x-show="sequenceStore.variables.filteredVariables.length === 0" class="text-center py-4 text-gray-500">
+                                Aucune variable disponible
+                            </div>
+                        </div>
+
+                        <!-- Payment Links Section -->
+                        <div class="mt-6">
+                            <h4 class="text-md font-semibold mb-3">Liens de paiement</h4>
+                            <div class="space-y-2 max-h-[200px] overflow-y-auto">
+                                <template x-for="link in sequenceStore.paymentLinks.links" :key="link.id">
+                                    <div class="flex items-center justify-between p-2 bg-white rounded border">
+                                        <div>
+                                            <div class="font-medium text-sm" x-text="link.name"></div>
+                                            <div class="text-xs text-gray-600" x-text="link.url"></div>
+                                        </div>
+                                        <div>
+                                            <button
+                                                @click="sequenceStore.copyPaymentLinkVariable(link)"
+                                                class="bg-green-500 text-white px-2 py-1 rounded text-xs hover:bg-green-600"
+                                            >
+                                                Copier
+                                            </button>
+                                        </div>
+                                    </div>
+                                </template>
+                                <div x-show="sequenceStore.paymentLinks.links.length === 0" class="text-center py-2 text-gray-500 text-sm">
+                                    Aucun lien de paiement disponible
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Onglet Impayés -->
