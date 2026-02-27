@@ -3,9 +3,9 @@ import sys
 
 sys.path.insert(0, os.path.dirname(__file__))
 
+from datetime import datetime
 from functools import wraps
 
-from datetime import datetime
 from flask import Flask, redirect, render_template, request, session, url_for
 from flask_cors import CORS
 from flask_livereload import LiveReload
@@ -20,6 +20,7 @@ app.secret_key = "votre_cle_secrete_ici_changez_la_en_production"
 # Activer CORS pour toutes les routes
 CORS(app)
 
+
 # Ajouter le filtre date pour Jinja2
 def date_filter(value, format="%Y-%m-%d"):
     if value == "now":
@@ -29,6 +30,7 @@ def date_filter(value, format="%Y-%m-%d"):
         return date_obj.strftime(format)
     except (ValueError, TypeError):
         return value
+
 
 app.jinja_env.filters["date"] = date_filter
 
@@ -56,9 +58,6 @@ def home():
     return render_template("index.html")
 
 
-
-
-
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -74,9 +73,7 @@ def login():
             return redirect(url_for("dashboard"))
         else:
             # Authentification échouée
-            return render_template(
-                "login.html", error="Identifiants invalides"
-            )
+            return render_template("login.html", error="Identifiants invalides")
 
     return render_template("login.html")
 
@@ -84,9 +81,6 @@ def login():
 @app.route("/dashboard")
 def dashboard():
     return render_template("dashboard.html")
-
-
-
 
 
 @app.route("/styleguide")

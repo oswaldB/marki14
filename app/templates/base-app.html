@@ -52,6 +52,23 @@
             src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"
         ></script>
 
+        <!-- LitElement CDN for web components -->
+        <script
+            type="module"
+            src="https://cdn.jsdelivr.net/npm/lit@2.8.0/+esm"
+        ></script>
+        <!-- Symbiote.js CDN for web components -->
+        <script
+            type="module"
+            src="https://symbiotejs.github.io/symbiote.js/core/Symbiote.js"
+        ></script>
+
+        <!-- ToastUI Editor CDN -->
+        <link
+            rel="stylesheet"
+            href="https://uicdn.toast.com/editor/latest/toastui-editor.css"
+        />
+
         {% block head %}{% endblock %}
     </head>
     <body>
@@ -132,6 +149,10 @@
         </div>
 
         {% block scripts %} {% endblock %}
+
+        <!-- ToastUI Editor JS CDN - loaded after Alpine for proper initialization -->
+        <script src="https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js"></script>
+
         <!-- Système de notifications -->
         {% include '_notifications.html' %}
     </body>

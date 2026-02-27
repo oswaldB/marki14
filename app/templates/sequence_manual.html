@@ -3,7 +3,11 @@ sequence_id }}{% endblock %} {% block head %}
 <script src="{{ url_for('static', filename='js/alpines/sequenceManualState.js') }}"></script>
 <script src="{{ url_for('static', filename='js/alpines/sequenceActionsState.js') }}"></script>
 <script src="{{ url_for('static', filename='js/alpines/emailCardState.js') }}"></script>
-<script src="{{ url_for('static', filename='js/alpines/emailTableState.js') }}"></script>
+<!-- ToastUI Editor Symbiote Component -->
+<script
+    type="module"
+    src="{{ url_for('static', filename='js/components/ToastUIEditorSymbiote.js') }}"
+></script>
 {% endblock %} {% block content %}
 <div
     x-data="sequenceManual"
