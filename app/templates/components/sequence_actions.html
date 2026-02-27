@@ -1,6 +1,23 @@
 <!-- sequence_actions.html - Composant pour la gestion des actions/étapes de séquence -->
 <div
-    x-data="sequenceActionsState()"
+    x-data="{
+        get sequenceStore() {
+            return Alpine.store('sequence');
+        },
+        
+        get actions() {
+            return this.sequenceStore.currentSequence ? this.sequenceStore.currentSequence.actions : [];
+        },
+        
+        deleteActionByIndex(index) {
+            this.sequenceStore.removeActionFromCurrentSequence(index);
+        },
+        
+        addAction(type) {
+            if (type !== 'email') return;
+            this.sequenceStore.addActionToCurrentSequence(type);
+        }
+    }"
     class="sequence-actions-container"
     @delete-action.window="deleteActionByIndex($event.detail.index)"
 >

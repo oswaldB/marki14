@@ -1,5 +1,65 @@
 <!-- email_card_lit.html - Lit-based version with Froala web component -->
-<div x-data="emailCardState(action, index)" class="email-card-container">
+<div x-data="{
+    action: action,
+    index: index,
+    deleteConfirmOpen: false,
+    toastuiEditor: null,
+    
+    init() {
+        // Setup editor when component is ready
+        this.$nextTick(() => {
+            if (this.$refs.toastuiEditor) {
+                this.toastuiEditor = this.$refs.toastuiEditor;
+                this.setupEditor();
+            }
+        });
+    },
+    
+    setupEditor() {
+        if (this.toastuiEditor && this.action.body) {
+            try {
+                this.toastuiEditor.setContent(this.action.body);
+            } catch (error) {
+                console.warn('Error setting editor content:', error);
+            }
+        }
+        
+        // Listen for save events to sync content
+        document.addEventListener('before-save', () => {
+            this.syncEditorContent();
+        });
+    },
+    
+    syncEditorContent() {
+        if (this.toastuiEditor) {
+            try {
+                const content = this.toastuiEditor.getContent();
+                if (content && content !== this.action.body) {
+                    this.action.body = content;
+                }
+            } catch (error) {
+                console.warn('Error syncing editor content:', error);
+            }
+        }
+    },
+    
+    editAction() {
+        console.log('Editing action', this.index);
+    },
+    
+    deleteAction() {
+        this.deleteConfirmOpen = true;
+    },
+    
+    confirmDelete() {
+        this.$dispatch('delete-action', { index: this.index });
+        this.deleteConfirmOpen = false;
+    },
+    
+    cancelDelete() {
+        this.deleteConfirmOpen = false;
+    }
+}" class="email-card-container">
     <!-- Step Component -->
     <div
         class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 mb-4"
@@ -222,211 +282,3 @@
     </div>
 </div>
 
-<script>
-    // State for email card component - Alpine version
-    document.addEventListener("alpine:init", () => {
-        Alpine.data("emailCardState", (action, index) => ({
-            action: action,
-            index: index,
-            deleteConfirmOpen: false,
-            toastuiEditor: null,
-            syncInterval: null,
-
-            init() {
-                console.log(
-                    "Email card initialized - Action:",
-                    this.index,
-                    "Type:",
-                    this.action.type,
-                );
-
-                // Check if editor component is ready
-                if (!this.$refs.toastuiEditor) {
-                    console.warn("ToastUI editor component not ready yet");
-                    setTimeout(() => this.init(), 100);
-                    return;
-                }
-
-                this.toastuiEditor = this.$refs.toastuiEditor;
-                this.setupEventListeners();
-                this.loadInitialContent();
-                this.watchActionContent();
-            },
-
-            loadInitialContent() {
-                // Load initial content into ToastUI editor if available
-                if (this.action.body && this.toastuiEditor) {
-                    // Check if ToastUI is ready by trying to access its methods
-                    const checkToastUIIReady = () => {
-                        if (
-                            this.toastuiEditor &&
-                            this.toastuiEditor.setContent
-                        ) {
-                            try {
-                                this.toastuiEditor.setContent(
-                                    this.action.body,
-                                );
-                                console.log(
-                                    "ToastUI content loaded successfully",
-                                );
-                            } catch (error) {
-                                console.warn(
-                                    "ToastUI not ready yet, retrying...",
-                                    error,
-                                );
-                                setTimeout(checkToastUIIReady, 100);
-                            }
-                        } else {
-                            console.warn(
-                                "ToastUI editor not ready yet, waiting...",
-                            );
-                            setTimeout(checkToastUIIReady, 100);
-                        }
-                    };
-
-                    // Start checking if ToastUI is ready
-                    checkToastUIIReady();
-                }
-            },
-
-            // Watch for changes in action.body and update ToastUI editor
-            watchActionContent() {
-                // Use Alpine's $watch to monitor changes in action.body
-                this.$watch("action.body", (newValue, oldValue) => {
-                    if (newValue !== oldValue && this.toastuiEditor) {
-                        const updateToastUIContent = () => {
-                            if (
-                                this.toastuiEditor &&
-                                this.toastuiEditor.setContent &&
-                                newValue !== this.toastuiEditor.getContent()
-                            ) {
-                                try {
-                                    this.toastuiEditor.setContent(newValue);
-                                    console.log(
-                                        "ToastUI content updated from state change",
-                                    );
-                                } catch (error) {
-                                    console.warn(
-                                        "Could not update ToastUI content:",
-                                        error,
-                                    );
-                                    setTimeout(updateToastUIContent, 100);
-                                }
-                            }
-                        };
-                        updateToastUIContent();
-                    }
-                });
-
-                // Also set up periodic sync to ensure content stays in sync
-                this.syncInterval = setInterval(() => {
-                    this.syncToastUIToState();
-                }, 5000); // Sync every 5 seconds
-            },
-
-            setupEventListeners() {
-                // Set up direct ToastUI editor event listeners
-                if (this.toastuiEditor && this.toastuiEditor.editorInstance) {
-                    try {
-                        // Listen to ToastUI's native change event
-                        this.toastuiEditor.editorInstance.on("change", () => {
-                            console.log("ToastUI change event triggered");
-                            this.syncToastUIToState();
-                        });
-                    } catch (error) {
-                        console.warn(
-                            "Could not set up ToastUI change listener:",
-                            error,
-                        );
-                    }
-                } else {
-                    // Fallback: Listen to the component's content-change event if direct access fails
-                    this.$el.addEventListener("content-change", (e) => {
-                        console.log("ToastUI content changed (fallback)");
-                        this.syncToastUIToState();
-                    });
-                }
-
-                // Listen for before-save event to ensure content is synced
-                document.addEventListener("before-save", () => {
-                    console.log(
-                        "Before save event received, syncing ToastUI content",
-                    );
-                    this.syncContentBeforeSave();
-                });
-            },
-
-            editAction() {
-                console.log("Editing action", this.index);
-            },
-
-            deleteAction() {
-                this.deleteConfirmOpen = true;
-            },
-
-            confirmDelete() {
-                this.$dispatch("delete-action", { index: this.index });
-                this.deleteConfirmOpen = false;
-            },
-
-            cancelDelete() {
-                this.deleteConfirmOpen = false;
-            },
-
-            // Clean up intervals when component is destroyed
-            cleanup() {
-                if (this.syncInterval) {
-                    clearInterval(this.syncInterval);
-                    this.syncInterval = null;
-                }
-            },
-
-            // Get current content from ToastUI editor
-            getToastUIContent() {
-                if (this.toastuiEditor && this.toastuiEditor.getContent) {
-                    try {
-                        return this.toastuiEditor.getContent();
-                    } catch (error) {
-                        console.warn("Could not get ToastUI content:", error);
-                        return this.action.body || "";
-                    }
-                }
-                return this.action.body || "";
-            },
-
-            // Sync ToastUI content to Alpine state
-            syncToastUIToState() {
-                if (this.toastuiEditor && this.toastuiEditor.getContent) {
-                    try {
-                        const currentContent = this.toastuiEditor.getContent();
-                        if (currentContent !== this.action.body) {
-                            console.log("Syncing ToastUI content to state");
-                            this.action.body = currentContent;
-                        }
-                    } catch (error) {
-                        console.warn("Error syncing ToastUI content:", error);
-                    }
-                }
-            },
-
-            // Force sync content from ToastUI to state (called before save)
-            syncContentBeforeSave() {
-                if (this.toastuiEditor && this.toastuiEditor.getContent) {
-                    try {
-                        const currentContent = this.toastuiEditor.getContent();
-                        if (currentContent !== this.action.body) {
-                            console.log("Forcing sync before save");
-                            this.action.body = currentContent;
-                        }
-                    } catch (error) {
-                        console.warn(
-                            "Error syncing content before save:",
-                            error,
-                        );
-                    }
-                }
-                return this.action.body || "";
-            },
-        }));
-    });
-</script>

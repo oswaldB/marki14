@@ -148,7 +148,6 @@ document.addEventListener("alpine:init", () => {
 
         getSequenceDataForActions() {
             const sequenceStore = Alpine.store('sequence');
-            const sequenceStore = Alpine.store('sequence');
             return {
                 actions: sequenceStore.currentSequence.actions,
                 smtpProfiles: sequenceStore.smtpProfiles.profiles,

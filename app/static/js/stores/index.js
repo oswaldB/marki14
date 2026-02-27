@@ -2,6 +2,6 @@
 // Ce fichier charge le store unique qui centralise toute la gestion d'état
 
 // Charger le store consolidé (remplace tous les anciens stores)
-import './sequenceStore.js';
+// Note: sequenceStore.js est chargé directement via script tag dans base-app.html
 
 console.log('Store Alpine.js consolidé chargé avec succès');
