@@ -13,17 +13,25 @@ sequence_id }}{% endblock %} {% block head %}
             return Alpine.store('sequence');
         },
         
-        // Accès direct aux données du store avec vérifications de sécurité
+        // Accès direct au store Alpine avec vérification
         get sequenceStore() {
-            const store = Alpine.store('sequence');
-            return store || {
+            return Alpine.store('sequence') || {
                 currentSequence: null,
                 associatedImpayes: [],
                 smtpProfiles: { profiles: [] },
                 variables: { filteredVariables: [], searchTerm: '' },
                 paymentLinks: { links: [] },
                 isLoading: false,
-                error: null
+                error: null,
+                // Méthodes par défaut
+                loadSequence: () => Promise.resolve(),
+                loadAssociatedImpayes: () => Promise.resolve(),
+                loadSmtpProfiles: () => Promise.resolve(),
+                loadVariables: () => Promise.resolve(),
+                loadPaymentLinks: () => Promise.resolve(),
+                setSearchTerm: () => {},
+                copyVariable: () => {},
+                copyPaymentLinkVariable: () => {}
             };
         },
         
@@ -173,27 +181,36 @@ sequence_id }}{% endblock %} {% block head %}
             return this.sequenceStore.formatCurrency(amount);
         },
         
-        // Chargement initial avec vérification que le store est prêt
+        // Chargement initial amélioré
         async init() {
             try {
+                // Vérifier si le store existe déjà
+                let storeReady = false;
+                let attempts = 0;
+                const maxAttempts = 50; // 5 secondes max
+                
                 // Attendre que le store soit disponible
-                await new Promise((resolve) => {
-                    const checkStore = () => {
-                        const store = Alpine.store('sequence');
-                        if (store) {
-                            resolve();
-                        } else {
-                            setTimeout(checkStore, 100);
-                        }
-                    };
-                    checkStore();
-                });
+                while (!storeReady && attempts < maxAttempts) {
+                    const store = Alpine.store('sequence');
+                    if (store && store.loadSequence) {
+                        storeReady = true;
+                    } else {
+                        attempts++;
+                        await new Promise(resolve => setTimeout(resolve, 100));
+                    }
+                }
+                
+                if (!storeReady) {
+                    console.error('Le store sequence n\'a pas pu être chargé');
+                    return;
+                }
                 
                 // Extraire l'ID de la séquence de l'URL
                 const pathParts = window.location.pathname.split('/');
                 const sequenceId = pathParts[pathParts.length - 1];
                 
                 if (sequenceId) {
+                    // Charger les données séquentiellement
                     await this.sequenceStore.loadSequence(sequenceId);
                     await this.sequenceStore.loadAssociatedImpayes(sequenceId);
                     await this.sequenceStore.loadSmtpProfiles();
