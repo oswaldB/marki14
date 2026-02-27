@@ -160,20 +160,6 @@
             </span>
             Comment utiliser ?
         </h5>
-        <div class="text-sm">
-            <ul class="list-disc pl-5">
-                <li>
-                    Cliquez sur le bouton
-                    <i class="fa-regular fa-copy"></i> pour copier la variable
-                </li>
-                <li>
-                    Collez-la directement dans le sujet ou le corps de l'email
-                </li>
-                <li>
-                    Les variables seront remplacées automatiquement lors de
-                    l'envoi
-                </li>
-            </ul>
-        </div>
+        {% include 'components/chatgpt_prompt.html' %}
     </div>
 </div>
