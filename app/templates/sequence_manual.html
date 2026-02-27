@@ -27,6 +27,10 @@ sequence_id }}{% endblock %} {% block head %}
             return this.sequenceStore.associatedImpayes || [];
         },
         
+        get smtpProfiles() {
+            return this.sequenceStore.smtpProfiles.profiles || [];
+        },
+        
         get isLoading() {
             return this.sequenceStore.isLoading;
         },
@@ -43,10 +47,26 @@ sequence_id }}{% endblock %} {% block head %}
         deleteType: null,
         impayeSearchTerm: '',
         selectedImpayes: [],
+        availableImpayes: [], // Ajout des impayés disponibles locaux
+        
+        // Accès aux états du store
+        get isSaving() {
+            return this.sequenceStore.isLoading; // Utilisation de l'état de chargement du store
+        },
+        
+        get filteredAvailableImpayes() {
+            // Filtrage local des impayés disponibles
+            return this.availableImpayes.filter(impaye => {
+                const matchesSearch = this.impayeSearchTerm === '' ||
+                    impaye.nfacture.toLowerCase().includes(this.impayeSearchTerm.toLowerCase()) ||
+                    impaye.payeur_nom.toLowerCase().includes(this.impayeSearchTerm.toLowerCase());
+                return matchesSearch;
+            });
+        },
         
         // Méthodes pour les actions
         get actions() {
-            return this.sequence.actions || [];
+            return this.sequence.currentSequence?.actions || [];
         },
         
         addAction(type) {
@@ -59,19 +79,9 @@ sequence_id }}{% endblock %} {% block head %}
         },
         
         // Méthodes pour les impayés
-        filterAvailableImpayes() {
-            // Cette méthode devrait être dans le store, mais on la garde ici pour l'instant
-            return this.sequenceStore.availableImpayes.filter(impaye => {
-                const matchesSearch = this.impayeSearchTerm === '' ||
-                    impaye.nfacture.toLowerCase().includes(this.impayeSearchTerm.toLowerCase()) ||
-                    impaye.payeur_nom.toLowerCase().includes(this.impayeSearchTerm.toLowerCase());
-                return matchesSearch;
-            });
-        },
-        
         toggleSelectAllImpayes(event) {
             if (event.target.checked) {
-                this.selectedImpayes = this.filterAvailableImpayes().map(impaye => impaye.objectId);
+                this.selectedImpayes = this.filteredAvailableImpayes.map(impaye => impaye.objectId);
             } else {
                 this.selectedImpayes = [];
             }
@@ -80,8 +90,30 @@ sequence_id }}{% endblock %} {% block head %}
         // Méthodes d'interface
         openAddImpayeDrawer() {
             this.addImpayeDrawerOpen = true;
-            // Charger les impayés disponibles via le store
-            this.sequenceStore.loadAvailableImpayes();
+            // Charger les impayés disponibles - à implémenter dans le store ou via API
+            this.loadAvailableImpayes();
+        },
+        
+        async loadAvailableImpayes() {
+            // Méthode locale pour charger les impayés disponibles
+            // En attendant l'implémentation dans le store
+            try {
+                const parseAxios = Alpine.store('parseAxios');
+                const response = await parseAxios.get('/classes/Impayes', {
+                    params: {
+                        where: JSON.stringify({
+                            sequence: {
+                                $exists: false
+                            }
+                        }),
+                        limit: 100
+                    }
+                });
+                this.availableImpayes = response.data.results || [];
+            } catch (error) {
+                console.error('Erreur lors du chargement des impayés disponibles:', error);
+                this.availableImpayes = [];
+            }
         },
         
         closeAddImpayeDrawer() {
@@ -101,9 +133,20 @@ sequence_id }}{% endblock %} {% block head %}
             this.deleteType = null;
         },
         
-        confirmDelete() {
+        async confirmDelete() {
             if (this.deleteType === 'impaye' && this.itemToDelete) {
-                this.sequenceStore.removeImpayeFromSequence(this.itemToDelete.objectId);
+                try {
+                    const parseAxios = Alpine.store('parseAxios');
+                    await parseAxios.put(`/classes/Impayes/${this.itemToDelete.objectId}`, {
+                        sequence: null
+                    });
+                    // Recharger les impayés associés
+                    const pathParts = window.location.pathname.split('/');
+                    const sequenceId = pathParts[pathParts.length - 1];
+                    await this.sequenceStore.loadAssociatedImpayes(sequenceId);
+                } catch (error) {
+                    console.error('Erreur lors de la suppression de l\'impayé:', error);
+                }
             }
             this.cancelDelete();
         },
@@ -119,7 +162,17 @@ sequence_id }}{% endblock %} {% block head %}
         
         // Chargement initial
         async init() {
-            await this.sequenceStore.loadSequenceData();
+            // Extraire l'ID de la séquence de l'URL
+            const pathParts = window.location.pathname.split('/');
+            const sequenceId = pathParts[pathParts.length - 1];
+            
+            if (sequenceId) {
+                await this.sequenceStore.loadSequence(sequenceId);
+                await this.sequenceStore.loadAssociatedImpayes(sequenceId);
+                await this.sequenceStore.loadSmtpProfiles();
+                await this.sequenceStore.loadVariables();
+                await this.sequenceStore.loadPaymentLinks();
+            }
         }
     }"
     x-init="init()"
@@ -299,7 +352,7 @@ sequence_id }}{% endblock %} {% block head %}
                                                 class="w-full p-2 border border-gray-300 rounded-md focus:ring-marki-primary focus:border-marki-primary"
                                             >
                                                 <option value="" disabled>Select SMTP Profile</option>
-                                                <template x-for="profile in sequenceStore.smtpProfiles.profiles" :key="profile.objectId">
+                                                <template x-for="profile in smtpProfiles" :key="profile.objectId">
                                                     <option :value="profile.objectId" :data-email="profile.email" x-text="profile.name + ' (' + profile.email + ')'"></option>
                                                 </template>
                                             </select>
