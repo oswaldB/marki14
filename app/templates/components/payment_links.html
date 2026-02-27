@@ -1,92 +1,101 @@
 <!-- payment_links.html - Composant pour la gestion des liens de paiement -->
 <div
     x-data="{
-    paymentLinks: {
-        showLink: true,
-        linksConfigOpen: false,
-        selectedLink: null,
-        availableLinks: [],
-        newLink: '',
-        newLinkName: '',
-        newLinkDescription: '',
-        customMessage: 'Veuillez trouver ci-dessous le lien pour effectuer votre paiement en ligne.'
-    },
-
-    async init() {
-        await this.loadPaymentLinks();
-    },
-
-    getParseAxios() {
-      const parseAxios = Alpine.store('parseAxios');
-      if (!parseAxios) {
-        throw new Error('parseAxios is not available. Please reload the page.');
-      }
-      return parseAxios;
-    },
-
-    async loadPaymentLinks() {
+    // Utilisation du store centralisé
+    get paymentLinksStore() {
         try {
-            console.log('Loading payment links from Parse...');
-            const parseAxios = this.getParseAxios();
-            const response = await parseAxios.get('/classes/PaymentLink');
-
-            this.paymentLinks.availableLinks = response.data.results.map(link => ({
-                id: link.objectId,
-                url: link.url,
-                name: link.name || 'Lien de paiement',
-                description: link.description || ''
-            }));
-
-            // Select first link by default
-            if (this.paymentLinks.availableLinks.length > 0) {
-                this.paymentLinks.selectedLink = this.paymentLinks.availableLinks[0].url;
-            }
+            return Alpine.store('paymentLinks');
         } catch (error) {
-            console.error('Error loading payment links:', error);
-            this.paymentLinks.availableLinks = [];
+            console.warn('paymentLinksStore not available yet:', error);
+            return null;
         }
     },
 
+    async init() {
+        await this.paymentLinksStore.loadPaymentLinks();
+    },
+
+    get linksConfigOpen() {
+        return this.paymentLinksStore ? this.paymentLinksStore.linksConfigOpen : false;
+    },
+    
+    set linksConfigOpen(value) {
+        if (this.paymentLinksStore) {
+            this.paymentLinksStore.linksConfigOpen = value;
+        }
+    },
+
+    get newLink() {
+        return this.paymentLinksStore ? this.paymentLinksStore.newLink : '';
+    },
+    
+    set newLink(value) {
+        if (this.paymentLinksStore) {
+            this.paymentLinksStore.newLink = value;
+        }
+    },
+
+    get newLinkName() {
+        return this.paymentLinksStore ? this.paymentLinksStore.newLinkName : '';
+    },
+    
+    set newLinkName(value) {
+        if (this.paymentLinksStore) {
+            this.paymentLinksStore.newLinkName = value;
+        }
+    },
+
+    get newLinkDescription() {
+        return this.paymentLinksStore ? this.paymentLinksStore.newLinkDescription : '';
+    },
+    
+    set newLinkDescription(value) {
+        if (this.paymentLinksStore) {
+            this.paymentLinksStore.newLinkDescription = value;
+        }
+    },
+
+    get customMessage() {
+        return this.paymentLinksStore ? this.paymentLinksStore.customMessage : '';
+    },
+    
+    set customMessage(value) {
+        if (this.paymentLinksStore) {
+            this.paymentLinksStore.setCustomMessage(value);
+        }
+=======
+    },
+
     openLinksConfig() {
-        this.paymentLinks.linksConfigOpen = true;
+        this.paymentLinksStore.linksConfigOpen = true;
     },
 
     closeLinksConfig() {
-        this.paymentLinks.linksConfigOpen = false;
+        this.paymentLinksStore.linksConfigOpen = false;
     },
 
     selectLink(link) {
-        this.paymentLinks.selectedLink = link.url;
+        this.paymentLinksStore.selectLink(link.url);
         this.closeLinksConfig();
     },
 
     async addNewLink() {
-        if (this.paymentLinks.newLink.trim() === '' || this.paymentLinks.newLinkName.trim() === '') return;
+        if (this.newLinkName.trim() === '' || this.newLink.trim() === '') return;
 
         try {
-            const parseAxios = this.getParseAxios();
-            const response = await parseAxios.post('/classes/PaymentLink', {
-                url: this.paymentLinks.newLink,
-                name: this.paymentLinks.newLinkName,
-                description: this.paymentLinks.newLinkDescription || ''
+            const newLink = await this.paymentLinksStore.addPaymentLink({
+                url: this.newLink,
+                name: this.newLinkName,
+                description: this.newLinkDescription
             });
 
-            const newLink = {
-                id: response.data.objectId,
-                url: response.data.url,
-                name: response.data.name,
-                description: response.data.description || ''
-            };
-
-            this.paymentLinks.availableLinks.push(newLink);
-            this.paymentLinks.selectedLink = newLink.url;
-            this.paymentLinks.newLink = '';
-            this.paymentLinks.newLinkName = '';
-            this.paymentLinks.newLinkDescription = '';
-
-            console.log('New payment link saved to Parse:', newLink);
+            if (newLink) {
+                this.newLink = '';
+                this.newLinkName = '';
+                this.newLinkDescription = '';
+            }
         } catch (error) {
-            console.error('Error saving payment link to Parse:', error);
+            console.error('Error saving payment link:', error);
             alert('Erreur lors de la sauvegarde du lien de paiement. Veuillez réessayer.');
         }
     }
@@ -101,18 +110,18 @@
                 type="checkbox"
                 name="switch"
                 class="hidden"
-                :checked="paymentLinks.showLink"
+                :checked="paymentLinksStore.showLink"
             />
 
             <button
                 type="button"
-                @click="paymentLinks.showLink = !paymentLinks.showLink"
-                :class="paymentLinks.showLink ? 'bg-blue-600' : 'bg-neutral-200'"
+                @click="paymentLinksStore.toggleShowLink()"
+                :class="paymentLinksStore.showLink ? 'bg-blue-600' : 'bg-neutral-200'"
                 class="relative inline-flex h-6 py-0.5 ml-4 focus:outline-none rounded-full w-10"
                 x-cloak
             >
                 <span
-                    :class="paymentLinks.showLink ? 'translate-x-[18px]' : 'translate-x-0.5'"
+                    :class="paymentLinksStore.showLink ? 'translate-x-[18px]' : 'translate-x-0.5'"
                     class="w-5 h-5 duration-200 ease-in-out bg-white rounded-full shadow-md"
                 ></span>
             </button>
@@ -120,7 +129,7 @@
             <label
                 @click="$refs.switchButton.click(); $refs.switchButton.focus()"
                 :id="$id('switch')"
-                :class="{ 'text-blue-600': paymentLinks.showLink, 'text-gray-400': !paymentLinks.showLink }"
+                :class="{ 'text-blue-600': paymentLinksStore.showLink, 'text-gray-400': !paymentLinksStore.showLink }"
                 class="text-sm select-none ml-3"
                 x-cloak
             >
@@ -129,7 +138,7 @@
         </div>
         <div class="flex items-center">
             <button
-                @click="paymentLinks.linksConfigOpen = !paymentLinks.linksConfigOpen"
+                @click="openLinksConfig()"
                 class="text-sm text-blue-600 hover:text-blue-800"
             >
                 <i class="fa-regular fa-link mr-1"></i>
@@ -140,14 +149,14 @@
 
     <!-- Affichage du lien sélectionné -->
     <div
-        x-show="paymentLinks.showLink"
+        x-show="paymentLinksStore.showLink"
         x-transition
         class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm"
     >
         <div>
             <div class="mb-4">
                 <textarea
-                    x-model="paymentLinks.customMessage"
+                    x-model="customMessage"
                     class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-marki-primary focus:border-transparent"
                     rows="3"
                     placeholder="Message personnalisé pour accompagner le lien de paiement..."
@@ -155,7 +164,7 @@
             </div>
 
             <div class="mb-4 p-3 bg-gray-50 rounded">
-                <p class="text-sm text-gray-700" x-text="paymentLinks.customMessage"></p>
+                <p class="text-sm text-gray-700" x-text="customMessage"></p>
             </div>
 
             <p class="mb-3">
@@ -165,14 +174,14 @@
                 <div class="flex-1">
                     <input
                         type="text"
-                        :value="paymentLinks.selectedLink"
+                        :value="paymentLinksStore.selectedLink"
                         class="w-full border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-marki-primary focus:border-transparent"
                         readonly
                     />
                 </div>
                 <div class="ml-2">
                     <button
-                        @click="navigator.clipboard.writeText(paymentLinks.selectedLink).then(() => alert('Lien copié!'))"
+                        @click="navigator.clipboard.writeText(paymentLinksStore.selectedLink).then(() => alert('Lien copié!'))"
                         class="bg-blue-500 text-white px-2 py-1 rounded text-sm hover:bg-blue-600"
                     >
                         <span class="text-sm">
@@ -280,8 +289,8 @@
                         class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm"
                     >
                         <template
-                            x-for="link in paymentLinks.availableLinks"
-                            :key="link.id"
+                            x-for="link in paymentLinksStore.links"
+                            :key="link.objectId"
                         >
                             <div
                                 class="mb-3 pb-3"
@@ -321,7 +330,7 @@
                         </template>
 
                         <div
-                            x-show="paymentLinks.availableLinks.length === 0"
+                            x-show="paymentLinksStore.links.length === 0"
                             class="text-center"
                         >
                             <p class="text-gray-500">

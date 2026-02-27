@@ -54,37 +54,68 @@
                 </p>
             </div>
 
-            <!-- SMTP Profile -->
+            <!-- SMTP Profile Selector -->
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1"
                     >SMTP Profile</label
                 >
-                <div class="relative">
-                    <select
-                        x-model="action.smtpProfileId"
-                        class="w-full p-2 border border-gray-300 rounded-md text-sm focus:ring-marki-primary focus:border-marki-primary"
-                    >
-                        <option value="">Select an SMTP profile...</option>
-                        <template
-                            x-for="profile in smtpProfiles"
-                            :key="profile.objectId"
-                        >
-                            <option
-                                :value="profile.objectId"
-                                x-text="`${profile.name} (${profile.email})`"
-                            ></option>
+                <div x-data="{
+                    get smtpProfilesStore() {
+                        try {
+                            return Alpine.store('smtpProfiles');
+                        } catch (error) {
+                            console.warn('smtpProfilesStore not available:', error);
+                            return null;
+                        }
+                    },
+                    
+                    get profiles() {
+                        return this.smtpProfilesStore ? this.smtpProfilesStore.profiles : [];
+                    },
+                    
+                    get selectedProfileId() {
+                        return action.smtpProfileId;
+                    },
+                    
+                    set selectedProfileId(value) {
+                        action.smtpProfileId = value;
+                        // Mettre à jour l'email de l'expéditeur
+                        if (this.smtpProfilesStore) {
+                            const profile = this.profiles.find(p => p.objectId === value);
+                            if (profile) {
+                                action.senderEmail = profile.email;
+                            }
+                        }
+                    }
+                }">
+                    <!-- Grille de sélection simplifiée -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        <template x-for="profile in profiles" :key="profile.objectId">
+                            <label class="flex items-center p-2 border rounded cursor-pointer hover:bg-gray-50">
+                                <input
+                                    type="radio"
+                                    name="smtpProfile"
+                                    :value="profile.objectId"
+                                    x-model="selectedProfileId"
+                                    class="mr-2"
+                                >
+                                <div class="flex-1">
+                                    <p class="font-medium text-sm" x-text="profile.name"></p>
+                                    <p class="text-xs text-gray-600" x-text="profile.email"></p>
+                                </div>
+                            </label>
                         </template>
-                    </select>
+                    </div>
+                    <p
+                        class="text-xs text-yellow-600 mt-1"
+                        x-show="!selectedProfileId"
+                    >
+                        <span class="mr-1">
+                            <i class="fa-regular fa-exclamation-triangle"></i>
+                        </span>
+                        Please select an SMTP profile for sending
+                    </p>
                 </div>
-                <p
-                    class="text-xs text-yellow-600 mt-1"
-                    x-show="!action.smtpProfileId"
-                >
-                    <span class="mr-1">
-                        <i class="fa-regular fa-exclamation-triangle"></i>
-                    </span>
-                    Please select an SMTP profile for sending
-                </p>
             </div>
 
             <!-- Sender -->
@@ -130,8 +161,8 @@
                 <toastui-editor-symbiote
                     x-ref="toastuiEditor"
                     class="mb-4"
-                    content="action.bodyStart"
-                    @content-change="action.bodyStart = $event.detail.content; action.bodyEnd = ''"
+                    content="action.body"
+                    @content-change="action.body = $event.detail.content"
                 ></toastui-editor-symbiote>
             </div>
         </div>
@@ -224,7 +255,7 @@
 
             loadInitialContent() {
                 // Load initial content into ToastUI editor if available
-                if (this.action.bodyStart && this.toastuiEditor) {
+                if (this.action.body && this.toastuiEditor) {
                     // Check if ToastUI is ready by trying to access its methods
                     const checkToastUIIReady = () => {
                         if (
@@ -233,7 +264,7 @@
                         ) {
                             try {
                                 this.toastuiEditor.setContent(
-                                    this.action.bodyStart,
+                                    this.action.body,
                                 );
                                 console.log(
                                     "ToastUI content loaded successfully",
@@ -258,10 +289,10 @@
                 }
             },
 
-            // Watch for changes in action.bodyStart and update ToastUI editor
+            // Watch for changes in action.body and update ToastUI editor
             watchActionContent() {
-                // Use Alpine's $watch to monitor changes in action.bodyStart
-                this.$watch("action.bodyStart", (newValue, oldValue) => {
+                // Use Alpine's $watch to monitor changes in action.body
+                this.$watch("action.body", (newValue, oldValue) => {
                     if (newValue !== oldValue && this.toastuiEditor) {
                         const updateToastUIContent = () => {
                             if (
@@ -357,10 +388,10 @@
                         return this.toastuiEditor.getContent();
                     } catch (error) {
                         console.warn("Could not get ToastUI content:", error);
-                        return this.action.bodyStart || "";
+                        return this.action.body || "";
                     }
                 }
-                return this.action.bodyStart || "";
+                return this.action.body || "";
             },
 
             // Sync ToastUI content to Alpine state
@@ -368,10 +399,9 @@
                 if (this.toastuiEditor && this.toastuiEditor.getContent) {
                     try {
                         const currentContent = this.toastuiEditor.getContent();
-                        if (currentContent !== this.action.bodyStart) {
+                        if (currentContent !== this.action.body) {
                             console.log("Syncing ToastUI content to state");
-                            this.action.bodyStart = currentContent;
-                            this.action.bodyEnd = "";
+                            this.action.body = currentContent;
                         }
                     } catch (error) {
                         console.warn("Error syncing ToastUI content:", error);
@@ -384,10 +414,9 @@
                 if (this.toastuiEditor && this.toastuiEditor.getContent) {
                     try {
                         const currentContent = this.toastuiEditor.getContent();
-                        if (currentContent !== this.action.bodyStart) {
+                        if (currentContent !== this.action.body) {
                             console.log("Forcing sync before save");
-                            this.action.bodyStart = currentContent;
-                            this.action.bodyEnd = "";
+                            this.action.body = currentContent;
                         }
                     } catch (error) {
                         console.warn(
@@ -396,7 +425,7 @@
                         );
                     }
                 }
-                return this.action.bodyStart || "";
+                return this.action.body || "";
             },
         }));
     });

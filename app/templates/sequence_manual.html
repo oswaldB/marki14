@@ -112,7 +112,7 @@ sequence_id }}{% endblock %} {% block head %}
                 </div>
                 <div class="flex-shrink-0">
                     <button
-                        @click="addImpayeDrawerOpen = true"
+                        @click="openAddImpayeDrawer()"
                         class="bg-marki-primary text-white px-4 py-2 rounded hover:bg-marki-primary-dark"
                     >
                         <span class="text-sm mr-1">
@@ -173,7 +173,7 @@ sequence_id }}{% endblock %} {% block head %}
                                 ></td>
                                 <td class="p-2">
                                     <button
-                                        @click="removeImpaye(impaye)"
+                                        @click="openDeleteConfirm(impaye, 'impaye')"
                                         class="bg-red-500 text-white px-2 py-1 rounded text-sm hover:bg-red-600"
                                     >
                                         <span class="text-sm mr-1">
@@ -312,7 +312,7 @@ sequence_id }}{% endblock %} {% block head %}
             </section>
             <footer class="border-t border-gray-200 p-4">
                 <button
-                    @click="addSelectedImpayes"
+                    @click="addSelectedImpayesToSequence()"
                     class="bg-marki-primary text-white px-4 py-2 rounded hover:bg-marki-primary-dark disabled:opacity-50 disabled:cursor-not-allowed"
                     :disabled="selectedImpayes.length === 0"
                 >
@@ -326,7 +326,7 @@ sequence_id }}{% endblock %} {% block head %}
                     >
                 </button>
                 <button
-                    @click="addImpayeDrawerOpen = false"
+                    @click="closeAddImpayeDrawer()"
                     class="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-50 ml-2"
                 >
                     Annuler

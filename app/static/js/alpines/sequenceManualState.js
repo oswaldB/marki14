@@ -69,6 +69,10 @@ document.addEventListener("alpine:init", () => {
                 // Charger les profils SMTP
                 await this.loadSmtpProfiles();
 
+                // Charger les variables et liens de paiement
+                await this.loadVariables();
+                await this.loadPaymentLinks();
+
                 console.log("Données chargées avec succès");
             } catch (error) {
                 this.error = `Échec du chargement des données: ${error.message}`;
@@ -88,22 +92,12 @@ document.addEventListener("alpine:init", () => {
             }
 
             try {
-                const parseAxios = this.getParseAxios();
-                const response = await parseAxios.get(
-                    `/classes/Sequences/${sequenceId}`,
-                );
-
-                this.sequence = {
-                    objectId: response.data.objectId,
-                    nom: response.data.nom || "Séquence sans nom",
-                    description: response.data.description || "",
-                    isActif: response.data.isActif || true,
-                    createdAt:
-                        response.data.createdAt || new Date().toISOString(),
-                    updatedAt:
-                        response.data.updatedAt || new Date().toISOString(),
-                    actions: response.data.actions || [],
-                };
+                const sequenceStore = Alpine.store('sequence');
+                await sequenceStore.loadSequence(sequenceId);
+                this.sequence = sequenceStore.currentSequence;
+                
+                // Charger les profils SMTP séparément
+                await this.loadSmtpProfiles();
             } catch (error) {
                 console.error(
                     "Erreur lors du chargement de la séquence:",
@@ -117,32 +111,9 @@ document.addEventListener("alpine:init", () => {
             if (!this.sequence.objectId) return;
 
             try {
-                const parseAxios = this.getParseAxios();
-                const response = await parseAxios.get("/classes/Impayes", {
-                    params: {
-                        where: JSON.stringify({
-                            sequence: {
-                                __type: "Pointer",
-                                className: "Sequences",
-                                objectId: this.sequence.objectId,
-                            },
-                        }),
-                        include: "payeur",
-                    },
-                });
-
-                this.associatedImpayes = response.data.results.map(
-                    (impaye) => ({
-                        objectId: impaye.objectId,
-                        nfacture: impaye.nfacture || "N/A",
-                        payeur_nom:
-                            impaye.payeur?.nom ||
-                            impaye.payeur_nom ||
-                            "Inconnu",
-                        montant: impaye.montant || 0,
-                        date: impaye.date || new Date().toISOString(),
-                    }),
-                );
+                const sequenceStore = Alpine.store('sequence');
+                await sequenceStore.loadAssociatedImpayes(this.sequence.objectId);
+                this.associatedImpayes = sequenceStore.associatedImpayes;
             } catch (error) {
                 console.error(
                     "Erreur lors du chargement des impayés associés:",
@@ -152,29 +123,16 @@ document.addEventListener("alpine:init", () => {
         },
 
         async loadSmtpProfiles() {
-            try {
-                const parseAxios = this.getParseAxios();
-                const response = await parseAxios.get("/classes/SMTPProfile");
+            const smtpProfilesStore = Alpine.store('smtpProfiles');
+            if (smtpProfilesStore.profiles.length === 0) {
+                await smtpProfilesStore.loadSmtpProfiles();
+            }
+            this.smtpProfiles = smtpProfilesStore.profiles;
 
-                this.smtpProfiles = response.data.results.map((profile) => ({
-                    objectId: profile.objectId,
-                    name: profile.name || "Profil sans nom",
-                    email: profile.email || "",
-                    server: profile.server || "",
-                    port: profile.port || "",
-                }));
-
-                // Définir un email expéditeur par défaut si disponible
-                if (this.smtpProfiles.length > 0) {
-                    this.defaultSmtpProfileId = this.smtpProfiles[0].objectId;
-                    this.defaultSenderEmail = this.smtpProfiles[0].email;
-                }
-            } catch (error) {
-                console.error(
-                    "Erreur lors du chargement des profils SMTP:",
-                    error,
-                );
-                this.smtpProfiles = [];
+            // Définir un email expéditeur par défaut si disponible
+            if (this.smtpProfiles.length > 0) {
+                this.defaultSmtpProfileId = smtpProfilesStore.getDefaultProfileId();
+                this.defaultSenderEmail = smtpProfilesStore.getDefaultSenderEmail();
             }
         },
 
@@ -184,12 +142,18 @@ document.addEventListener("alpine:init", () => {
 
         onActionDeleted(index) {
             // Synchroniser la suppression dans la séquence principale
-            this.sequence.actions.splice(index, 1);
+            const sequenceStore = Alpine.store('sequence');
+            sequenceStore.removeActionFromCurrentSequence(index);
         },
 
         getSequenceDataForActions() {
+            const sequenceStore = Alpine.store('sequence');
+            const smtpProfilesStore = Alpine.store('smtpProfiles');
             return {
-                actions: this.sequence.actions,
+                actions: sequenceStore.currentSequence.actions,
+                smtpProfiles: smtpProfilesStore.profiles,
+                defaultSmtpProfileId: smtpProfilesStore.getDefaultProfileId(),
+                defaultSenderEmail: smtpProfilesStore.getDefaultSenderEmail(),
             };
         },
 
@@ -309,16 +273,8 @@ document.addEventListener("alpine:init", () => {
                 // Small delay to ensure all components have processed the event
                 await new Promise((resolve) => setTimeout(resolve, 100));
 
-                const parseAxios = this.getParseAxios();
-                await parseAxios.put(
-                    `/classes/Sequences/${this.sequence.objectId}`,
-                    {
-                        nom: this.sequence.nom,
-                        description: this.sequence.description,
-                        isActif: this.sequence.isActif,
-                        actions: this.sequence.actions,
-                    },
-                );
+                const sequenceStore = Alpine.store('sequence');
+                await sequenceStore.saveSequence();
 
                 this.showNotification(
                     "Séquence enregistrée avec succès",
@@ -355,26 +311,37 @@ document.addEventListener("alpine:init", () => {
         },
 
         formatDate(dateString) {
-            if (!dateString) return "N/A";
-
-            try {
-                const date = new Date(dateString);
-                return date.toLocaleDateString("fr-FR", {
-                    day: "2-digit",
-                    month: "2-digit",
-                    year: "numeric",
-                });
-            } catch (e) {
-                return "Date invalide";
-            }
+            const sequenceStore = Alpine.store('sequence');
+            return sequenceStore.formatDate(dateString);
         },
 
         formatCurrency(amount) {
-            if (amount == null) return "0,00 €";
-            return new Intl.NumberFormat("fr-FR", {
-                style: "currency",
-                currency: "EUR",
-            }).format(amount);
+            const sequenceStore = Alpine.store('sequence');
+            return sequenceStore.formatCurrency(amount);
+        },
+
+        // ============================================
+        // CHARGEMENT DES VARIABLES ET LIENS DE PAIEMENT
+        // ============================================
+
+        async loadVariables() {
+            try {
+                const variablesStore = Alpine.store('variables');
+                await variablesStore.loadVariables();
+                console.log('Variables chargées:', variablesStore.variables.length);
+            } catch (error) {
+                console.error("Erreur lors du chargement des variables:", error);
+            }
+        },
+
+        async loadPaymentLinks() {
+            try {
+                const paymentLinksStore = Alpine.store('paymentLinks');
+                await paymentLinksStore.loadPaymentLinks();
+                console.log('Liens de paiement chargés:', paymentLinksStore.links.length);
+            } catch (error) {
+                console.error("Erreur lors du chargement des liens de paiement:", error);
+            }
         },
     }));
 });

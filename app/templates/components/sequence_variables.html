@@ -1,52 +1,68 @@
 <!-- sequence_variables.html - Composant pour l'affichage des variables disponibles -->
 <div
     x-data="{
-    variables: [],
-    searchTerm: '',
-    isLoading: false,
-    error: null,
-
-    async init() {
-        await this.loadVariables();
-    },
-
-    async loadVariables() {
+    // Utilisation des stores centralisés
+    get variablesStore() {
         try {
-            this.isLoading = true;
-            this.error = null;
-
-            const response = await fetch('/static/configs/variables.json');
-            if (!response.ok) {
-                throw new Error('Variables file not found');
-            }
-
-            const data = await response.json();
-            this.variables = data.columns || [];
+            return Alpine.store('variables');
         } catch (error) {
-            this.error = 'Erreur lors du chargement des variables';
-            console.error('Error loading variables:', error);
-            this.variables = [];
-        } finally {
-            this.isLoading = false;
+            console.warn('variablesStore not available yet:', error);
+            return null;
+        }
+    },
+    
+    get paymentLinksStore() {
+        try {
+            return Alpine.store('paymentLinks');
+        } catch (error) {
+            console.warn('paymentLinksStore not available yet:', error);
+            return null;
         }
     },
 
-    get filteredVariables() {
-        if (!this.searchTerm) return this.variables;
+    async init() {
+        // Charger les données via les stores
+        await this.variablesStore.loadVariables();
+        await this.paymentLinksStore.loadPaymentLinks();
+    },
 
-        return this.variables.filter(variable =>
-            variable.toLowerCase().includes(this.searchTerm.toLowerCase())
-        );
+    get filteredVariables() {
+        return this.variablesStore ? this.variablesStore.filteredVariables : [];
+    },
+
+    set searchTerm(term) {
+        if (this.variablesStore) {
+            this.variablesStore.setSearchTerm(term);
+        }
+    },
+    
+    get searchTerm() {
+        return this.variablesStore ? this.variablesStore.searchTerm : '';
+    },
+
+    get isLoading() {
+        return (this.variablesStore && this.variablesStore.isLoading) || 
+               (this.paymentLinksStore && this.paymentLinksStore.isLoading);
+    },
+    
+    get error() {
+        return this.variablesStore.error || this.paymentLinksStore.error;
+    },
+
+    get paymentLinks() {
+        return this.paymentLinksStore ? this.paymentLinksStore.links : [];
     },
 
     copyVariable(variable) {
-        navigator.clipboard.writeText(`[[${variable}]]`)
-            .then(() => {
-                console.log(`Variable [[${variable}]] copied to clipboard`);
-            })
-            .catch(err => {
-                console.error('Copy failed:', err);
-            });
+        return this.variablesStore ? this.variablesStore.copyVariable(variable) : false;
+    },
+
+    copyPaymentLink(link) {
+        return this.paymentLinksStore ? this.paymentLinksStore.copyPaymentLinkVariable(link) : false;
+    },
+
+    copyPaymentUrl(link) {
+        return this.paymentLinksStore.copyPaymentLinkUrl(link);
     }
 }"
     class="sequence-variables-container"
@@ -152,8 +168,64 @@
         </template>
     </div>
 
+    <!-- Liens de paiement -->
+    <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm mt-4">
+        <h5 class="text-sm font-semibold mb-2">
+            <span class="text-blue-500 text-sm">
+                <i class="fa-regular fa-credit-card"></i>
+            </span>
+            Liens de paiement disponibles
+        </h5>
+        <div class="text-sm">
+            <div class="space-y-2">
+                <template x-for="link in paymentLinks" :key="link.id">
+                    <div
+                        class="flex items-center justify-between p-2 bg-gray-50 rounded"
+                    >
+                        <div>
+                            <div class="font-medium" x-text="link.name"></div>
+                            <div
+                                class="text-xs text-gray-600 break-all"
+                                x-text="link.url"
+                            ></div>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button
+                                @click="copyPaymentLink(link)"
+                                class="text-blue-500 hover:text-blue-700"
+                                title="Copier la variable"
+                            >
+                                <i class="fa-regular fa-copy"></i>
+                            </button>
+                            <button
+                                @click="copyPaymentUrl(link)"
+                                class="text-green-500 hover:text-green-700"
+                                title="Copier l'URL"
+                            >
+                                <i class="fa-regular fa-link"></i>
+                            </button>
+                        </div>
+                    </div>
+                </template>
+                <div
+                    x-show="paymentLinks.length === 0"
+                    class="text-center py-4 text-gray-500"
+                >
+                    Aucun lien de paiement disponible
+                </div>
+            </div>
+            <button
+                @click="openAddPaymentLinkModal"
+                class="mt-3 bg-marki-primary hover:bg-marki-primary-dark text-white px-3 py-1 rounded text-xs flex items-center"
+            >
+                <i class="fa-regular fa-plus mr-1"></i>
+                Ajouter un lien
+            </button>
+        </div>
+    </div>
+
     <!-- Aide -->
-    <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+    <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm mt-4">
         <h5 class="text-sm font-semibold mb-2">
             <span class="text-blue-500 text-sm">
                 <i class="fa-regular fa-question-circle"></i>
