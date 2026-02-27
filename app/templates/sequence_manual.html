@@ -8,35 +8,26 @@ sequence_id }}{% endblock %} {% block head %}
 {% endblock %} {% block content %}
 <div
     x-data="{
-        // État centralisé utilisant directement le sequenceStore
+        // Accès direct au store Alpine avec vérification et fallback
         get sequenceStore() {
-            return Alpine.store('sequence');
-        },
-        
-        // Accès direct au store Alpine avec vérification
-        get sequenceStore() {
-            return Alpine.store('sequence') || {
+            const store = Alpine.store('sequence');
+            if (store) return store;
+            
+            // Retourner un objet vide si le store n'est pas disponible
+            // Cela empêchera les erreurs mais désactivera les fonctionnalités
+            return {
                 currentSequence: null,
                 associatedImpayes: [],
                 smtpProfiles: { profiles: [] },
                 variables: { filteredVariables: [], searchTerm: '' },
                 paymentLinks: { links: [] },
-                isLoading: false,
-                error: null,
-                // Méthodes par défaut
-                loadSequence: () => Promise.resolve(),
-                loadAssociatedImpayes: () => Promise.resolve(),
-                loadSmtpProfiles: () => Promise.resolve(),
-                loadVariables: () => Promise.resolve(),
-                loadPaymentLinks: () => Promise.resolve(),
-                setSearchTerm: () => {},
-                copyVariable: () => {},
-                copyPaymentLinkVariable: () => {}
+                isLoading: true,
+                error: 'Store non disponible'
             };
         },
         
         get sequence() {
-            return this.sequenceStore.currentSequence || {
+            return sequenceStore.currentSequence || {
                 nom: '',
                 description: '',
                 actions: [],
@@ -45,19 +36,19 @@ sequence_id }}{% endblock %} {% block head %}
         },
         
         get associatedImpayes() {
-            return this.sequenceStore.associatedImpayes || [];
+            return sequenceStore.associatedImpayes || [];
         },
         
         get smtpProfiles() {
-            return this.sequenceStore.smtpProfiles?.profiles || [];
+            return sequenceStore.smtpProfiles?.profiles || [];
         },
         
         get isLoading() {
-            return this.sequenceStore.isLoading;
+            return sequenceStore.isLoading;
         },
         
         get error() {
-            return this.sequenceStore.error;
+            return sequenceStore.error;
         },
         
         // État local pour l'interface
@@ -72,7 +63,7 @@ sequence_id }}{% endblock %} {% block head %}
         
         // Accès aux états du store
         get isSaving() {
-            return this.sequenceStore.isLoading; // Utilisation de l'état de chargement du store
+            return sequenceStore.isLoading; // Utilisation de l'état de chargement du store
         },
         
         get filteredAvailableImpayes() {
@@ -92,11 +83,11 @@ sequence_id }}{% endblock %} {% block head %}
         
         addAction(type) {
             if (type !== 'email') return;
-            this.sequenceStore.addActionToCurrentSequence(type);
+            sequenceStore.addActionToCurrentSequence(type);
         },
         
         deleteActionByIndex(index) {
-            this.sequenceStore.removeActionFromCurrentSequence(index);
+            sequenceStore.removeActionFromCurrentSequence(index);
         },
         
         // Méthodes pour les impayés
@@ -164,7 +155,7 @@ sequence_id }}{% endblock %} {% block head %}
                     // Recharger les impayés associés
                     const pathParts = window.location.pathname.split('/');
                     const sequenceId = pathParts[pathParts.length - 1];
-                    await this.sequenceStore.loadAssociatedImpayes(sequenceId);
+                    await sequenceStore.loadAssociatedImpayes(sequenceId);
                 } catch (error) {
                     console.error('Erreur lors de la suppression de l\'impayé:', error);
                 }
@@ -174,11 +165,11 @@ sequence_id }}{% endblock %} {% block head %}
         
         // Méthodes utilitaires
         formatDate(dateString) {
-            return this.sequenceStore.formatDate(dateString);
+            return sequenceStore.formatDate(dateString);
         },
         
         formatCurrency(amount) {
-            return this.sequenceStore.formatCurrency(amount);
+            return sequenceStore.formatCurrency(amount);
         },
         
         // Chargement initial amélioré
@@ -211,11 +202,11 @@ sequence_id }}{% endblock %} {% block head %}
                 
                 if (sequenceId) {
                     // Charger les données séquentiellement
-                    await this.sequenceStore.loadSequence(sequenceId);
-                    await this.sequenceStore.loadAssociatedImpayes(sequenceId);
-                    await this.sequenceStore.loadSmtpProfiles();
-                    await this.sequenceStore.loadVariables();
-                    await this.sequenceStore.loadPaymentLinks();
+                    await sequenceStore.loadSequence(sequenceId);
+                    await sequenceStore.loadAssociatedImpayes(sequenceId);
+                    await sequenceStore.loadSmtpProfiles();
+                    await sequenceStore.loadVariables();
+                    await sequenceStore.loadPaymentLinks();
                 }
             } catch (error) {
                 console.error('Erreur lors de l\'initialisation:', error);
@@ -453,8 +444,8 @@ sequence_id }}{% endblock %} {% block head %}
                             <label class="block text-sm font-medium text-gray-700 mb-1">Rechercher</label>
                             <input
                                 type="text"
-                                x-model="this.sequenceStore.variables.searchTerm"
-                                @input="this.sequenceStore.setSearchTerm($event.target.value)"
+                                x-model="sequenceStore.variables.searchTerm"
+                                @input="sequenceStore.setSearchTerm($event.target.value)"
                                 placeholder="Rechercher des variables..."
                                 class="w-full border border-gray-300 rounded px-3 py-2"
                             />
@@ -462,7 +453,7 @@ sequence_id }}{% endblock %} {% block head %}
 
                         <!-- Variables List -->
                         <div class="space-y-2 max-h-[400px] overflow-y-auto">
-                            <template x-for="variable in this.sequenceStore.variables?.filteredVariables || []" :key="variable.name">
+                            <template x-for="variable in sequenceStore.variables?.filteredVariables || []" :key="variable.name">
                                 <div class="flex items-center justify-between p-2 bg-white rounded border">
                                     <div>
                                         <div class="font-medium text-sm" x-text="variable.name"></div>
@@ -470,7 +461,7 @@ sequence_id }}{% endblock %} {% block head %}
                                     </div>
                                     <div>
                                         <button
-                                            @click="this.sequenceStore.copyVariable(variable)"
+                                            @click="sequenceStore.copyVariable(variable)"
                                             class="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600"
                                         >
                                             Copier
@@ -478,7 +469,7 @@ sequence_id }}{% endblock %} {% block head %}
                                     </div>
                                 </div>
                             </template>
-                            <div x-show="(this.sequenceStore.variables?.filteredVariables || []).length === 0" class="text-center py-4 text-gray-500">
+                            <div x-show="(sequenceStore.variables?.filteredVariables || []).length === 0" class="text-center py-4 text-gray-500">
                                 Aucune variable disponible
                             </div>
                         </div>
@@ -487,7 +478,7 @@ sequence_id }}{% endblock %} {% block head %}
                         <div class="mt-6">
                             <h4 class="text-md font-semibold mb-3">Liens de paiement</h4>
                             <div class="space-y-2 max-h-[200px] overflow-y-auto">
-                                <template x-for="link in this.sequenceStore.paymentLinks?.links || []" :key="link.id">
+                                <template x-for="link in sequenceStore.paymentLinks?.links || []" :key="link.id">
                                     <div class="flex items-center justify-between p-2 bg-white rounded border">
                                         <div>
                                             <div class="font-medium text-sm" x-text="link.name"></div>
@@ -495,7 +486,7 @@ sequence_id }}{% endblock %} {% block head %}
                                         </div>
                                         <div>
                                             <button
-                                                @click="this.sequenceStore.copyPaymentLinkVariable(link)"
+                                                @click="sequenceStore.copyPaymentLinkVariable(link)"
                                                 class="bg-green-500 text-white px-2 py-1 rounded text-xs hover:bg-green-600"
                                             >
                                                 Copier
@@ -503,7 +494,7 @@ sequence_id }}{% endblock %} {% block head %}
                                         </div>
                                     </div>
                                 </template>
-                                <div x-show="(this.sequenceStore.paymentLinks?.links || []).length === 0" class="text-center py-2 text-gray-500 text-sm">
+                                <div x-show="(sequenceStore.paymentLinks?.links || []).length === 0" class="text-center py-2 text-gray-500 text-sm">
                                     Aucun lien de paiement disponible
                                 </div>
                             </div>
