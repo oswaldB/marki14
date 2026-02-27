@@ -2,33 +2,33 @@
 <div
     x-data="{
         // Utilisation du store centralisé
-        get smtpProfilesStore() {
-            return Alpine.store('smtpProfiles');
+        get sequenceStore() {
+            return Alpine.store('sequence');
         },
 
         get profiles() {
-            return this.smtpProfilesStore.profiles;
+            return this.sequenceStore.smtpProfiles.profiles;
         },
 
         get selectedProfile() {
-            return this.smtpProfilesStore.selectedProfile;
+            return this.sequenceStore.smtpProfiles.selectedProfile;
         },
 
         get isLoading() {
-            return this.smtpProfilesStore.isLoading;
+            return this.sequenceStore.smtpProfiles.isLoading;
         },
 
         get error() {
-            return this.smtpProfilesStore.error;
+            return this.sequenceStore.smtpProfiles.error;
         },
 
         // Méthodes
         selectProfile(profileId) {
-            this.smtpProfilesStore.selectProfile(profileId);
+            this.sequenceStore.selectSmtpProfile(profileId);
         },
 
         async refreshProfiles() {
-            await this.smtpProfilesStore.loadSmtpProfiles();
+            await this.sequenceStore.loadSmtpProfiles();
         }
     }"
     class="smtp-profile-selector"

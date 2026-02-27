@@ -60,17 +60,17 @@
                     >SMTP Profile</label
                 >
                 <div x-data="{
-                    get smtpProfilesStore() {
+                    get sequenceStore() {
                         try {
-                            return Alpine.store('smtpProfiles');
+                            return Alpine.store('sequence');
                         } catch (error) {
-                            console.warn('smtpProfilesStore not available:', error);
+                            console.warn('sequenceStore not available:', error);
                             return null;
                         }
                     },
                     
                     get profiles() {
-                        return this.smtpProfilesStore ? this.smtpProfilesStore.profiles : [];
+                        return this.sequenceStore ? this.sequenceStore.smtpProfiles.profiles : [];
                     },
                     
                     get selectedProfileId() {
@@ -80,7 +80,7 @@
                     set selectedProfileId(value) {
                         action.smtpProfileId = value;
                         // Mettre à jour l'email de l'expéditeur
-                        if (this.smtpProfilesStore) {
+                        if (this.sequenceStore) {
                             const profile = this.profiles.find(p => p.objectId === value);
                             if (profile) {
                                 action.senderEmail = profile.email;

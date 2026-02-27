@@ -2,80 +2,91 @@
 <div
     x-data="{
     // Utilisation du store centralisé
-    get paymentLinksStore() {
+    get sequenceStore() {
         try {
-            return Alpine.store('paymentLinks');
+            return Alpine.store('sequence');
         } catch (error) {
-            console.warn('paymentLinksStore not available yet:', error);
+            console.warn('sequenceStore not available yet:', error);
             return null;
         }
     },
 
     async init() {
-        await this.paymentLinksStore.loadPaymentLinks();
+        await this.sequenceStore.loadPaymentLinks();
     },
 
     get linksConfigOpen() {
-        return this.paymentLinksStore ? this.paymentLinksStore.linksConfigOpen : false;
+        return this.sequenceStore ? this.sequenceStore.paymentLinks.linksConfigOpen : false;
     },
     
     set linksConfigOpen(value) {
-        if (this.paymentLinksStore) {
-            this.paymentLinksStore.linksConfigOpen = value;
+        if (this.sequenceStore) {
+            this.sequenceStore.paymentLinks.linksConfigOpen = value;
         }
     },
 
     get newLink() {
-        return this.paymentLinksStore ? this.paymentLinksStore.newLink : '';
+        return this.sequenceStore ? this.sequenceStore.paymentLinks.newLink : '';
     },
     
     set newLink(value) {
-        if (this.paymentLinksStore) {
-            this.paymentLinksStore.newLink = value;
+        if (this.sequenceStore) {
+            this.sequenceStore.paymentLinks.newLink = value;
         }
     },
 
     get newLinkName() {
-        return this.paymentLinksStore ? this.paymentLinksStore.newLinkName : '';
+        return this.sequenceStore ? this.sequenceStore.paymentLinks.newLinkName : '';
     },
     
     set newLinkName(value) {
-        if (this.paymentLinksStore) {
-            this.paymentLinksStore.newLinkName = value;
+        if (this.sequenceStore) {
+            this.sequenceStore.paymentLinks.newLinkName = value;
         }
     },
 
     get newLinkDescription() {
-        return this.paymentLinksStore ? this.paymentLinksStore.newLinkDescription : '';
+        return this.sequenceStore ? this.sequenceStore.paymentLinks.newLinkDescription : '';
     },
     
     set newLinkDescription(value) {
-        if (this.paymentLinksStore) {
-            this.paymentLinksStore.newLinkDescription = value;
+        if (this.sequenceStore) {
+            this.sequenceStore.paymentLinks.newLinkDescription = value;
         }
     },
 
     get customMessage() {
-        return this.paymentLinksStore ? this.paymentLinksStore.customMessage : '';
+        return this.sequenceStore ? this.sequenceStore.paymentLinks.customMessage : '';
     },
     
+    },
+
+    openLinksConfig() {
+        this.sequenceStore.paymentLinks.linksConfigOpen = true;
+    },
+=======
     set customMessage(value) {
-        if (this.paymentLinksStore) {
-            this.paymentLinksStore.setCustomMessage(value);
+        if (this.sequenceStore) {
+            this.sequenceStore.setPaymentLinkCustomMessage(value);
         }
+    },
+
+    openLinksConfig() {
+        this.sequenceStore.paymentLinks.linksConfigOpen = true;
+    },
 =======
     },
 
     openLinksConfig() {
-        this.paymentLinksStore.linksConfigOpen = true;
+        this.sequenceStore.paymentLinks.linksConfigOpen = true;
     },
 
     closeLinksConfig() {
-        this.paymentLinksStore.linksConfigOpen = false;
+        this.sequenceStore.paymentLinks.linksConfigOpen = false;
     },
 
     selectLink(link) {
-        this.paymentLinksStore.selectLink(link.url);
+        this.sequenceStore.selectPaymentLink(link.url);
         this.closeLinksConfig();
     },
 
@@ -83,7 +94,7 @@
         if (this.newLinkName.trim() === '' || this.newLink.trim() === '') return;
 
         try {
-            const newLink = await this.paymentLinksStore.addPaymentLink({
+            const newLink = await this.sequenceStore.addPaymentLink({
                 url: this.newLink,
                 name: this.newLinkName,
                 description: this.newLinkDescription
@@ -110,18 +121,18 @@
                 type="checkbox"
                 name="switch"
                 class="hidden"
-                :checked="paymentLinksStore.showLink"
+                :checked="sequenceStore.paymentLinks.showLink"
             />
 
             <button
                 type="button"
-                @click="paymentLinksStore.toggleShowLink()"
-                :class="paymentLinksStore.showLink ? 'bg-blue-600' : 'bg-neutral-200'"
+                @click="sequenceStore.toggleShowPaymentLink()"
+                :class="sequenceStore.paymentLinks.showLink ? 'bg-blue-600' : 'bg-neutral-200'"
                 class="relative inline-flex h-6 py-0.5 ml-4 focus:outline-none rounded-full w-10"
                 x-cloak
             >
                 <span
-                    :class="paymentLinksStore.showLink ? 'translate-x-[18px]' : 'translate-x-0.5'"
+                    :class="sequenceStore.paymentLinks.showLink ? 'translate-x-[18px]' : 'translate-x-0.5'"
                     class="w-5 h-5 duration-200 ease-in-out bg-white rounded-full shadow-md"
                 ></span>
             </button>
@@ -129,7 +140,7 @@
             <label
                 @click="$refs.switchButton.click(); $refs.switchButton.focus()"
                 :id="$id('switch')"
-                :class="{ 'text-blue-600': paymentLinksStore.showLink, 'text-gray-400': !paymentLinksStore.showLink }"
+                :class="{ 'text-blue-600': sequenceStore.paymentLinks.showLink, 'text-gray-400': !sequenceStore.paymentLinks.showLink }"
                 class="text-sm select-none ml-3"
                 x-cloak
             >
@@ -149,7 +160,7 @@
 
     <!-- Affichage du lien sélectionné -->
     <div
-        x-show="paymentLinksStore.showLink"
+        x-show="sequenceStore.paymentLinks.showLink"
         x-transition
         class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm"
     >
@@ -174,14 +185,14 @@
                 <div class="flex-1">
                     <input
                         type="text"
-                        :value="paymentLinksStore.selectedLink"
+                        :value="sequenceStore.paymentLinks.selectedLink"
                         class="w-full border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-marki-primary focus:border-transparent"
                         readonly
                     />
                 </div>
                 <div class="ml-2">
                     <button
-                        @click="navigator.clipboard.writeText(paymentLinksStore.selectedLink).then(() => alert('Lien copié!'))"
+                        @click="navigator.clipboard.writeText(sequenceStore.paymentLinks.selectedLink).then(() => alert('Lien copié!'))"
                         class="bg-blue-500 text-white px-2 py-1 rounded text-sm hover:bg-blue-600"
                     >
                         <span class="text-sm">
@@ -289,7 +300,7 @@
                         class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm"
                     >
                         <template
-                            x-for="link in paymentLinksStore.links"
+                            x-for="link in sequenceStore.paymentLinks.links"
                             :key="link.objectId"
                         >
                             <div
@@ -330,7 +341,7 @@
                         </template>
 
                         <div
-                            x-show="paymentLinksStore.links.length === 0"
+                            x-show="sequenceStore.paymentLinks.links.length === 0"
                             class="text-center"
                         >
                             <p class="text-gray-500">

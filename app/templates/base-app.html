@@ -46,11 +46,8 @@
         <!-- Base app state - doit être chargé avant Alpine -->
         <script src="{{ url_for('static', filename='js/alpines/baseAppState.js') }}"></script>
 
-        <!-- Stores Alpine.js - doivent être chargés avant Alpine -->
-        <script src="{{ url_for('static', filename='js/stores/sequenceStore.js') }}"></script>
-        <script src="{{ url_for('static', filename='js/stores/variablesStore.js') }}"></script>
-        <script src="{{ url_for('static', filename='js/stores/paymentLinksStore.js') }}"></script>
-        <script src="{{ url_for('static', filename='js/stores/smtpProfilesStore.js') }}"></script>
+        <!-- Store Alpine.js consolidé - remplace tous les anciens stores -->
+        <script src="{{ url_for('static', filename='js/stores/index.js') }}"></script>
 
         <!-- Alpine.js CDN -->
         <script

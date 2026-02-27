@@ -1,16 +1,7 @@
-// stores/index.js - Point d'entrée pour tous les stores Alpine.js
-// Ce fichier charge tous les stores nécessaires pour l'application
+// stores/index.js - Point d'entrée pour le store Alpine.js consolidé
+// Ce fichier charge le store unique qui centralise toute la gestion d'état
 
-// Charger le store de séquences
+// Charger le store consolidé (remplace tous les anciens stores)
 import './sequenceStore.js';
 
-// Charger le store de variables
-import './variablesStore.js';
-
-// Charger le store de liens de paiement
-import './paymentLinksStore.js';
-
-// Charger le store de profils SMTP
-import './smtpProfilesStore.js';
-
-console.log('Tous les stores Alpine.js ont été chargés');
+console.log('Store Alpine.js consolidé chargé avec succès');

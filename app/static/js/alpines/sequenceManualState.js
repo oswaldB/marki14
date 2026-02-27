@@ -123,16 +123,16 @@ document.addEventListener("alpine:init", () => {
         },
 
         async loadSmtpProfiles() {
-            const smtpProfilesStore = Alpine.store('smtpProfiles');
-            if (smtpProfilesStore.profiles.length === 0) {
-                await smtpProfilesStore.loadSmtpProfiles();
+            const sequenceStore = Alpine.store('sequence');
+            if (sequenceStore.smtpProfiles.profiles.length === 0) {
+                await sequenceStore.loadSmtpProfiles();
             }
-            this.smtpProfiles = smtpProfilesStore.profiles;
+            this.smtpProfiles = sequenceStore.smtpProfiles.profiles;
 
             // Définir un email expéditeur par défaut si disponible
             if (this.smtpProfiles.length > 0) {
-                this.defaultSmtpProfileId = smtpProfilesStore.getDefaultProfileId();
-                this.defaultSenderEmail = smtpProfilesStore.getDefaultSenderEmail();
+                this.defaultSmtpProfileId = sequenceStore.getDefaultProfileId();
+                this.defaultSenderEmail = sequenceStore.getDefaultSenderEmail();
             }
         },
 
@@ -148,12 +148,12 @@ document.addEventListener("alpine:init", () => {
 
         getSequenceDataForActions() {
             const sequenceStore = Alpine.store('sequence');
-            const smtpProfilesStore = Alpine.store('smtpProfiles');
+            const sequenceStore = Alpine.store('sequence');
             return {
                 actions: sequenceStore.currentSequence.actions,
-                smtpProfiles: smtpProfilesStore.profiles,
-                defaultSmtpProfileId: smtpProfilesStore.getDefaultProfileId(),
-                defaultSenderEmail: smtpProfilesStore.getDefaultSenderEmail(),
+                smtpProfiles: sequenceStore.smtpProfiles.profiles,
+                defaultSmtpProfileId: sequenceStore.getDefaultProfileId(),
+                defaultSenderEmail: sequenceStore.getDefaultSenderEmail(),
             };
         },
 
@@ -326,9 +326,9 @@ document.addEventListener("alpine:init", () => {
 
         async loadVariables() {
             try {
-                const variablesStore = Alpine.store('variables');
-                await variablesStore.loadVariables();
-                console.log('Variables chargées:', variablesStore.variables.length);
+                const sequenceStore = Alpine.store('sequence');
+                await sequenceStore.loadVariables();
+                console.log('Variables chargées:', sequenceStore.variables.variables.length);
             } catch (error) {
                 console.error("Erreur lors du chargement des variables:", error);
             }
@@ -336,9 +336,9 @@ document.addEventListener("alpine:init", () => {
 
         async loadPaymentLinks() {
             try {
-                const paymentLinksStore = Alpine.store('paymentLinks');
-                await paymentLinksStore.loadPaymentLinks();
-                console.log('Liens de paiement chargés:', paymentLinksStore.links.length);
+                const sequenceStore = Alpine.store('sequence');
+                await sequenceStore.loadPaymentLinks();
+                console.log('Liens de paiement chargés:', sequenceStore.paymentLinks.links.length);
             } catch (error) {
                 console.error("Erreur lors du chargement des liens de paiement:", error);
             }

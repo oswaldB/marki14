@@ -17,12 +17,12 @@ document.addEventListener('alpine:init', () => {
       const sequenceStore = Alpine.store('sequence');
       this.actions = sequenceStore.currentSequence ? sequenceStore.currentSequence.actions : [];
       
-      // Charger les profils SMTP directement depuis le store
-      const smtpProfilesStore = Alpine.store('smtpProfiles');
-      if (smtpProfilesStore.profiles.length === 0) {
-        await smtpProfilesStore.loadSmtpProfiles();
+      // Charger les profils SMTP directement depuis le store consolidé
+      const sequenceStore = Alpine.store('sequence');
+      if (sequenceStore.smtpProfiles.profiles.length === 0) {
+        await sequenceStore.loadSmtpProfiles();
       }
-      this.smtpProfiles = smtpProfilesStore.profiles;
+      this.smtpProfiles = sequenceStore.smtpProfiles.profiles;
       
       console.log('Sequence Actions State initialized');
     },

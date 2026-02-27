@@ -1,68 +1,59 @@
 <!-- sequence_variables.html - Composant pour l'affichage des variables disponibles -->
 <div
     x-data="{
-    // Utilisation des stores centralisés
-    get variablesStore() {
+    // Utilisation du store centralisé
+    get sequenceStore() {
         try {
-            return Alpine.store('variables');
+            return Alpine.store('sequence');
         } catch (error) {
-            console.warn('variablesStore not available yet:', error);
-            return null;
-        }
-    },
-    
-    get paymentLinksStore() {
-        try {
-            return Alpine.store('paymentLinks');
-        } catch (error) {
-            console.warn('paymentLinksStore not available yet:', error);
+            console.warn('sequenceStore not available yet:', error);
             return null;
         }
     },
 
     async init() {
-        // Charger les données via les stores
-        await this.variablesStore.loadVariables();
-        await this.paymentLinksStore.loadPaymentLinks();
+        // Charger les données via le store consolidé
+        await this.sequenceStore.loadVariables();
+        await this.sequenceStore.loadPaymentLinks();
     },
 
     get filteredVariables() {
-        return this.variablesStore ? this.variablesStore.filteredVariables : [];
+        return this.sequenceStore ? this.sequenceStore.variables.filteredVariables : [];
     },
 
     set searchTerm(term) {
-        if (this.variablesStore) {
-            this.variablesStore.setSearchTerm(term);
+        if (this.sequenceStore) {
+            this.sequenceStore.setSearchTerm(term);
         }
     },
     
     get searchTerm() {
-        return this.variablesStore ? this.variablesStore.searchTerm : '';
+        return this.sequenceStore ? this.sequenceStore.variables.searchTerm : '';
     },
 
     get isLoading() {
-        return (this.variablesStore && this.variablesStore.isLoading) || 
-               (this.paymentLinksStore && this.paymentLinksStore.isLoading);
+        return (this.sequenceStore && this.sequenceStore.variables.isLoading) || 
+               (this.sequenceStore && this.sequenceStore.paymentLinks.isLoading);
     },
     
     get error() {
-        return this.variablesStore.error || this.paymentLinksStore.error;
+        return this.sequenceStore.variables.error || this.sequenceStore.paymentLinks.error;
     },
 
     get paymentLinks() {
-        return this.paymentLinksStore ? this.paymentLinksStore.links : [];
+        return this.sequenceStore ? this.sequenceStore.paymentLinks.links : [];
     },
 
     copyVariable(variable) {
-        return this.variablesStore ? this.variablesStore.copyVariable(variable) : false;
+        return this.sequenceStore ? this.sequenceStore.copyVariable(variable) : false;
     },
 
     copyPaymentLink(link) {
-        return this.paymentLinksStore ? this.paymentLinksStore.copyPaymentLinkVariable(link) : false;
+        return this.sequenceStore ? this.sequenceStore.copyPaymentLinkVariable(link) : false;
     },
 
     copyPaymentUrl(link) {
-        return this.paymentLinksStore.copyPaymentLinkUrl(link);
+        return this.sequenceStore.copyPaymentLinkUrl(link);
     }
 }"
     class="sequence-variables-container"
