@@ -20,37 +20,16 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Nano Stores -->
+    <!-- Nano Stores - chargé depuis fichier externe -->
+    <script type="module" src="{{ url_for('static', filename='js/stores/sequenceNanoStore.js') }}"></script>
     <script type="module">
-        import { atom } from 'https://cdn.jsdelivr.net/npm/nanostores@0.9.5/+esm';
+        import { loadSequenceFromUrl } from '{{ url_for('static', filename='js/stores/sequenceNanoStore.js') }}';
         
-        // Store pour la séquence
-        export const sequenceStore = atom(null);
-        
-        // Charger la séquence depuis l'URL
-        async function loadSequenceFromUrl() {
-            try {
-                const pathParts = window.location.pathname.split('/');
-                const sequenceId = pathParts[pathParts.length - 2];
-                
-                if (sequenceId) {
-                    // Utilisation de parseAxios au lieu d'axios directement
-                    const parseAxios = window.parseAxios;
-                    if (parseAxios) {
-                        const response = await parseAxios.get(`/classes/Sequences/${sequenceId}`);
-                        sequenceStore.set(response.data);
-                        console.log('Séquence chargée:', response.data);
-                    } else {
-                        console.error('parseAxios non disponible');
-                    }
-                }
-            } catch (error) {
-                console.error('Erreur lors du chargement de la séquence:', error);
-            }
-        }
-        
+        // Charger la séquence au chargement de la page
         document.addEventListener('DOMContentLoaded', loadSequenceFromUrl);
     </script>
+    
+
     
     <style>
         body {
@@ -59,8 +38,117 @@
     </style>
 </head>
 <body class="bg-gray-50">
-    <!-- Conteneur vide pour le composant Lit -->
-    <div id="lit-component-container" class="max-w-7xl mx-auto p-6"></div>
+    <!-- Header Alpine.js -->
+    <header x-data="{
+        sequence: null,
+        isSaving: false,
+        lastSaved: null,
+        
+        init() {
+            // Charger le store Nano et s'abonner
+            const script = document.createElement('script');
+            script.type = 'module';
+            script.src = '{{ url_for('static', filename='js/stores/sequenceNanoStore.js') }}';
+            script.onload = () => {
+                // Le module est maintenant disponible globalement
+                if (window.sequenceNanoStoreModule) {
+                    const { sequenceStore, loadSequenceFromUrl } = window.sequenceNanoStoreModule;
+                    
+                    // Charger la séquence
+                    loadSequenceFromUrl().then(sequence => {
+                        this.sequence = sequence;
+                        if (sequence) {
+                            this.lastSaved = new Date().toLocaleTimeString();
+                        }
+                    });
+                    
+                    // S'abonner aux changements
+                    sequenceStore.subscribe(value => {
+                        this.sequence = value;
+                        if (value) {
+                            this.lastSaved = new Date().toLocaleTimeString();
+                        }
+                    });
+                }
+            };
+            document.head.appendChild(script);
+        },
+        
+        async saveSequence() {
+            if (!this.sequence || !this.sequence.objectId) return;
+            
+            this.isSaving = true;
+            try {
+                const parseAxios = window.parseAxios;
+                await parseAxios.put(`/classes/Sequences/${this.sequence.objectId}`, {
+                    nom: this.sequence.nom,
+                    description: this.sequence.description
+                });
+                this.lastSaved = new Date().toLocaleTimeString();
+            } catch (error) {
+                console.error('Erreur lors de la sauvegarde:', error);
+            } finally {
+                this.isSaving = false;
+            }
+        },
+        
+        publishSequence() {
+            alert('Fonctionnalité de publication à implémenter');
+        }
+    }" class="bg-white border-b border-gray-200 h-[60px] flex items-center justify-between px-6 sticky top-0 z-10">
+        <!-- Bouton de retour -->
+        <div class="flex items-center">
+            <a href="/sequences" class="text-gray-500 hover:text-gray-700 mr-4">
+                <i class="fas fa-times text-xl"></i>
+            </a>
+            
+            <!-- Logo -->
+            <div class="flex items-center mr-6">
+                <img src="/static/marki-logo.png" alt="Marki Logo" class="h-8 mr-3">
+                <div>
+                    <h1 class="text-lg font-semibold text-gray-900">Édition de scénario</h1>
+                </div>
+            </div>
+            
+            <!-- Nom et description éditables -->
+            <div class="flex-1">
+                <div class="mb-1">
+                    <input
+                        x-model="sequence.nom"
+                        @blur="saveSequence()"
+                        placeholder="Nom du scénario..."
+                        class="text-xl font-semibold border-none focus:outline-none focus:ring-0 bg-transparent"
+                    />
+                </div>
+                <div>
+                    <textarea
+                        x-model="sequence.description"
+                        @blur="saveSequence()"
+                        placeholder="Description du scénario..."
+                        class="text-sm text-gray-600 border-none focus:outline-none focus:ring-0 bg-transparent resize-none"
+                        rows="1"
+                    ></textarea>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Statut et bouton Publier -->
+        <div class="flex items-center space-x-4">
+            <div class="text-sm">
+                <span x-show="lastSaved" x-text="'Enregistré à ' + lastSaved" class="text-green-600"></span>
+                <span x-show="isSaving" class="text-yellow-600">Enregistrement en cours...</span>
+            </div>
+            <button
+                @click="publishSequence()"
+                class="bg-marki-primary text-white px-4 py-2 rounded hover:bg-marki-primary-dark transition-colors"
+            >
+                Publier
+            </button>
+        </div>
+    </header>
+    
+    <!-- Conteneur pour le composant Lit -->
+    <div id="lit-component-container" class="max-w-7xl mx-auto p-6 pt-4"></div>
     
     <script type="module">
         // Ce script peut être utilisé pour charger votre composant Lit
