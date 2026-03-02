@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="fr" x-data="appState()">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Éditeur d'email - Sequence Alpine</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Alpine.js with store plugin -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@alpinejs/persist@3.x.x/dist/cdn.min.js" defer></script>
+    
+    <!-- Alpine.js Collapse plugin for collapsible sections -->
+    <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
+    
+    <!-- Lit for web components -->
+    <script type="module" src="https://cdn.jsdelivr.net/npm/lit@2.8.0/+esm"></script>
+    
+    <!-- Axios -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    
+    <!-- parseAxios configuration -->
+    <script src="{{ url_for('static', filename='js/parseAxios.js') }}"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- ToastUI Editor CSS -->
+    <link rel="stylesheet" href="https://uicdn.toast.com/editor/latest/toastui-editor.css" />
+    <!-- ToastUI Editor JS -->
+    <script src="https://uicdn.toast.com/editor/latest/toastui-editor-all.js"></script>
+    <!-- ToastUI Editor Lit Component -->
+    <script type="module" src="{{ url_for('static', filename='js/components/toastui-editor-lit.js') }}"></script>
+    
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+    </style>
+    
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.store('sequence', {
+                objectId: null,
+                nom: '',
+                description: '',
+                isAuto: false,
+                isActif: true,
+                actions: [],
+                createdAt: null,
+                
+                async loadFromUrl() {
+                    try {
+                        const pathParts = window.location.pathname.split('/');
+                        const sequenceId = pathParts[pathParts.length - 2];
+                        
+                        if (sequenceId) {
+                            const parseAxios = window.parseAxios;
+                            if (parseAxios) {
+                                const response = await parseAxios.get(`/classes/Sequences/${sequenceId}`);
+                                
+                                this.objectId = response.data.objectId || null;
+                                this.nom = response.data.nom || '';
+                                this.description = response.data.description || '';
+                                this.isAuto = response.data.isAuto || false;
+                                this.isActif = response.data.isActif || true;
+                                this.actions = response.data.actions || [];
+                                this.createdAt = response.data.createdAt || null;
+                                
+                                console.log('Séquence chargée:', this);
+                                return this;
+                            }
+                        }
+                        return null;
+                    } catch (error) {
+                        console.error('Erreur lors du chargement de la séquence:', error);
+                        return null;
+                    }
+                },
+                
+                async save() {
+                    if (!this.objectId) return;
+                    
+                    try {
+                        const parseAxios = window.parseAxios;
+                        await parseAxios.put(`/classes/Sequences/${this.objectId}`, {
+                            nom: this.nom,
+                            description: this.description,
+                            actions: this.actions
+                        });
+                        return true;
+                    } catch (error) {
+                        console.error('Erreur lors de la sauvegarde:', error);
+                        return false;
+                    }
+                }
+            });
+            
+            Alpine.data('appState', () => ({
+                isSaving: false,
+                lastSaved: null,
+                currentActionIndex: 0,
+                saveTimeout: null,
+                
+                init() {
+                    this.loadSequence();
+                    
+                    // Set up $watch for automatic saving
+                    this.$watch('$store.sequence.actions', () => {
+                        this.autoSave();
+                    }, { deep: true });
+                },
+                
+                async loadSequence() {
+                    await Alpine.store('sequence').loadFromUrl();
+                    this.lastSaved = new Date().toLocaleTimeString();
+                },
+                
+                async autoSave() {
+                    // Clear any existing timeout
+                    if (this.saveTimeout) {
+                        clearTimeout(this.saveTimeout);
+                    }
+                    
+                    // Debounce the save to avoid too many requests
+                    this.saveTimeout = setTimeout(async () => {
+                        await this.saveSequence();
+                    }, 1000); // Save 1 second after last change
+                },
+                
+                async saveSequence() {
+                    if (!Alpine.store('sequence').objectId) return;
+                    
+                    this.isSaving = true;
+                    try {
+                        const success = await Alpine.store('sequence').save();
+                        if (success) {
+                            this.lastSaved = new Date().toLocaleTimeString();
+                        }
+                    } finally {
+                        this.isSaving = false;
+                    }
+                },
+                
+                get currentAction() {
+                    const actions = Alpine.store('sequence').actions;
+                    return actions[this.currentActionIndex] || null;
+                },
+                
+                addAction(type = 'email') {
+                    const newAction = {
+                        id: Date.now().toString(),
+                        type: type,
+                        delay: 0,
+                        subject: '',
+                        body: '',
+                        cc: ''
+                    };
+                    
+                    const actions = [...Alpine.store('sequence').actions, newAction];
+                    Alpine.store('sequence').actions = actions.sort((a, b) => a.delay - b.delay);
+                },
+                
+                removeAction(index) {
+                    const actions = Alpine.store('sequence').actions.filter((_, i) => i !== index);
+                    Alpine.store('sequence').actions = actions;
+                },
+                
+                updateAction(index, field, value) {
+                    const actions = [...Alpine.store('sequence').actions];
+                    actions[index] = { ...actions[index], [field]: value };
+                    Alpine.store('sequence').actions = actions;
+                },
+                
+                updateCurrentActionField(field, value) {
+                    if (this.currentAction) {
+                        const index = Alpine.store('sequence').actions.findIndex(
+                            a => a.id === this.currentAction.id
+                        );
+                        if (index !== -1) {
+                            this.updateAction(index, field, value);
+                        }
+                    }
+                },
+                
+                publishSequence() {
+                    alert('Fonctionnalité de publication à implémenter');
+                }
+            }));
+        });
+    </script>
+</head>
+<body class="bg-gray-50">
+    <!-- Header Alpine.js -->
+    <header class="bg-white border-b border-gray-200 h-[60px] flex items-center justify-between px-6 sticky top-0 z-10">
+        <!-- Bouton de retour -->
+        <div class="flex items-center">
+            <a href="/sequences" class="text-gray-500 hover:text-gray-700 mr-4">
+                <i class="fas fa-times text-xl"></i>
+            </a>
+            
+            <!-- Logo -->
+            <div class="flex items-center mr-6">
+                <img src="/static/marki-logo.png" alt="Marki Logo" class="h-8 mr-3">
+                <div>
+                    <h1 class="text-lg font-semibold text-gray-900">Édition de scénario</h1>
+                </div>
+            </div>
+            
+            <!-- Nom et description éditables sur la même ligne -->
+            <div class="flex-1 flex items-center space-x-4">
+                <input
+                    x-model="$store.sequence.nom"
+                    @blur="saveSequence()"
+                    placeholder="Nom du scénario..."
+                    class="text-xl font-semibold border-none focus:outline-none focus:ring-0 bg-transparent"
+                />
+                <span class="text-gray-400">|</span>
+                <input
+                    x-model="$store.sequence.description"
+                    @blur="saveSequence()"
+                    placeholder="Description du scénario..."
+                    class="text-sm text-gray-600 border-none focus:outline-none focus:ring-0 bg-transparent"
+                />
+            </div>
+        </div>
+        
+        <!-- Statut et bouton Publier -->
+        <div class="flex items-center space-x-4">
+            <div class="text-sm">
+                <span x-show="lastSaved" x-text="'Enregistré à ' + lastSaved" class="text-green-600"></span>
+                <span x-show="isSaving" class="text-yellow-600">Enregistrement en cours...</span>
+            </div>
+            <button
+                @click="publishSequence()"
+                class="bg-[#007ACE] text-white px-4 py-2 rounded hover:bg-[#005bb5] transition-colors"
+            >
+                Publier
+            </button>
+        </div>
+    </header>
+    
+    <!-- Conteneur principal avec disposition personnalisée -->
+    <main class="max-w-7xl mx-auto p-6 pt-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Colonne 1: Éditeurs d'emails répétés (2/3) -->
+            <div class="md:col-span-2">
+                {% include 'components/email-editors-container.html' %}
+            </div>
+            
+            <!-- Colonne 2: Variables et liens de paiement (1/3) -->
+            <div class="md:col-span-1">
+                {% include 'components/variables-panel-alpine.html' %}
+            </div>
+        </div>
+    </main>
+    
+
+</body>
+</html>

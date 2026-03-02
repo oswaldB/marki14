@@ -131,6 +131,10 @@ def sequence_detail(sequence_id):
 def sequence_email_editor(sequence_id):
     return render_template("sequence_id_2.html", sequence_id=sequence_id)
 
+@app.route("/sequence/<sequence_id>/3")
+def sequence_alpine_editor(sequence_id):
+    return render_template("sequence_id_3.html", sequence_id=sequence_id)
+
 
 if __name__ == "__main__":
     # Démarre le serveur Flask avec livereload

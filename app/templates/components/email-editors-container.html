@@ -1,0 +1,46 @@
+<div x-data="{
+    addAction(type = 'email') {
+        const newAction = {
+            id: Date.now().toString(),
+            type: type,
+            delay: 0,
+            subject: '',
+            body: '',
+            cc: ''
+        };
+        
+        const actions = [...$store.sequence.actions, newAction];
+        $store.sequence.actions = actions.sort((a, b) => a.delay - b.delay);
+    },
+    
+    removeAction(index) {
+        const actions = $store.sequence.actions.filter((_, i) => i !== index);
+        $store.sequence.actions = actions;
+    },
+    
+    updateActionField(index, field, value) {
+        const actions = [...$store.sequence.actions];
+        actions[index] = { ...actions[index], [field]: value };
+        $store.sequence.actions = actions;
+    },
+    
+
+}" class="bg-white rounded-lg shadow-sm p-4">
+    <div class="flex justify-between items-center mb-6">
+        <h3 class="text-xl font-semibold">Éditeur d'emails</h3>
+        <button @click="addAction('email')" class="bg-[#007ACE] text-white px-4 py-2 rounded hover:bg-[#005bb5]">
+            <i class="fas fa-plus mr-1"></i> Ajouter Email
+        </button>
+    </div>
+    
+    <template x-for="(action, index) in $store.sequence.actions" :key="action.id">
+        {% include 'components/email-action-editor.html' %}
+    </template>
+    
+    <template x-if="$store.sequence.actions.length === 0">
+        <div class="text-gray-500 text-center py-8">
+            <p class="mb-2">Aucune action email dans ce scénario</p>
+            <p class="text-sm">Cliquez sur "Ajouter Email" pour commencer</p>
+        </div>
+    </template>
+</div>
