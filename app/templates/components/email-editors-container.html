@@ -1,4 +1,16 @@
 <div x-data="{
+    init() {
+        // Sort actions by delay when component initializes
+        if (Alpine.store('sequence').actions.length > 0) {
+            Alpine.store('sequence').actions = this.sortActionsByDelay(Alpine.store('sequence').actions);
+        }
+        
+        // Listen for email body changes from individual editors
+        document.addEventListener('email-body-changed', (e) => {
+            this.updateActionField(e.detail.index, 'body', e.detail.content);
+        });
+    },
+    
     addAction(type = 'email') {
         const newAction = {
             id: Date.now().toString(),
@@ -6,29 +18,54 @@
             delay: 0,
             subject: '',
             body: '',
-            cc: ''
+            cc: '',
+            smtpProfileId: '',
+            senderEmail: ''
         };
         
-        const actions = [...$store.sequence.actions, newAction];
-        $store.sequence.actions = actions.sort((a, b) => a.delay - b.delay);
+        const actions = [...Alpine.store('sequence').actions, newAction];
+        Alpine.store('sequence').actions = this.sortActionsByDelay(actions);
     },
     
     removeAction(index) {
-        const actions = $store.sequence.actions.filter((_, i) => i !== index);
-        $store.sequence.actions = actions;
+        const actions = Alpine.store('sequence').actions.filter((_, i) => i !== index);
+        Alpine.store('sequence').actions = actions; // No need to sort on remove
     },
     
     updateActionField(index, field, value) {
-        const actions = [...$store.sequence.actions];
-        actions[index] = { ...actions[index], [field]: value };
-        $store.sequence.actions = actions;
+        const actions = [...Alpine.store('sequence').actions];
+        
+        // Create a new action object with the updated field
+        const updatedAction = { ...actions[index], [field]: value };
+        
+        // Initialize senderEmail if not present when smtpProfileId is set
+        if (field === 'smtpProfileId' && value && !updatedAction.senderEmail) {
+            const selectedProfile = Alpine.store('sequence').smtpProfiles.find(p => p.objectId === value);
+            if (selectedProfile) {
+                updatedAction.senderEmail = selectedProfile.email;
+            }
+        }
+        
+        actions[index] = updatedAction;
+        
+        // Re-sort actions by delay if the delay field was updated
+        if (field === 'delay') {
+            Alpine.store('sequence').actions = this.sortActionsByDelay(actions);
+        } else {
+            // Force a new array reference to ensure reactivity
+            Alpine.store('sequence').actions = [...actions];
+        }
+    },
+    
+    sortActionsByDelay(actions) {
+        return [...actions].sort((a, b) => a.delay - b.delay);
     },
     
 
 }" class="bg-white rounded-lg shadow-sm p-4">
     <div class="flex justify-between items-center mb-6">
-        <h3 class="text-xl font-semibold">Éditeur d'emails</h3>
-        <button @click="addAction('email')" class="bg-[#007ACE] text-white px-4 py-2 rounded hover:bg-[#005bb5]">
+        <h3 class="text-xl font-semibold text-gray-800">Éditeur d'emails</h3>
+        <button @click="addAction('email')" class="bg-marki-primary text-white px-4 py-2 rounded transition-all">
             <i class="fas fa-plus mr-1"></i> Ajouter Email
         </button>
     </div>

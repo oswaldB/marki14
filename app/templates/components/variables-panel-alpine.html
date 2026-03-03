@@ -1,5 +1,23 @@
-<div x-data="variablesPanel()" class="bg-white rounded-lg shadow-sm p-4">
-    <h3 class="text-lg font-semibold mb-4">Variables disponibles</h3>
+<div x-data="variablesPanel()" class="variables-panel p-4">
+    <h3 class="text-lg font-semibold mb-4 text-gray-800">Variables disponibles</h3>
+    
+    <!-- Boutons d'actions -->
+    <div class="mb-4 flex gap-2">
+        <button
+            class="text-white bg-[#007ACE] border border-[#007ACE] focus:ring-4 focus:ring-[#007ACE]/30 font-medium rounded-lg text-sm px-3 py-2 text-center inline-flex items-center gap-1 hover:bg-[#005bb5] transition-colors"
+            @click="copyGptPrompt()"
+        >
+            <i class="fas fa-copy"></i>
+            Copier le prompt ChatGPT
+        </button>
+        <button
+            class="text-white bg-[#005bb5] border border-[#005bb5] focus:ring-4 focus:ring-[#005bb5]/30 font-medium rounded-lg text-sm px-3 py-2 text-center inline-flex items-center gap-1 hover:bg-[#004a96] transition-colors"
+            @click="copyGptPromptBatch()"
+        >
+            <i class="fas fa-robot"></i>
+            Copier 5 prompts ChatGPT
+        </button>
+    </div>
     
     <!-- Barre de recherche -->
     <div class="mb-4">
@@ -8,7 +26,7 @@
             x-model="searchTerm"
             @input="filterVariables()"
             placeholder="Rechercher une variable..."
-            class="w-full p-2 border border-gray-300 rounded"
+            class="focus:ring-2 transition-all w-full"
         />
     </div>
     
@@ -29,7 +47,16 @@
         </template>
     </div>
     
-    <h3 class="text-lg font-semibold mb-4 mt-6">Liens de paiement</h3>
+    <h3 class="text-lg font-semibold mb-4 mt-6 flex justify-between items-center">
+        <span>Liens de paiement</span>
+        <button
+            class="text-white bg-[#007ACE] border border-[#007ACE] focus:ring-4 focus:ring-[#007ACE]/30 font-medium rounded-lg text-xs px-2 py-1 text-center inline-flex items-center gap-1 hover:bg-[#005bb5] transition-colors"
+            @click="openPaymentLinkModal()"
+        >
+            <i class="fas fa-plus"></i>
+            Ajouter
+        </button>
+    </h3>
     <div class="space-y-3">
         <template x-for="link in paymentLinks" :key="link.id">
             <div class="border border-gray-200 rounded p-3 bg-green-50">
@@ -37,18 +64,98 @@
                     <div class="font-medium" x-text="link.name"></div>
                     <div class="text-xs text-gray-600 break-all" x-text="link.url"></div>
                 </div>
-                <button 
-                    class="bg-green-500 text-white px-2 py-1 rounded text-xs hover:bg-green-600 mt-2"
-                    @click="copyToClipboard(link.url, $el)"
-                >
-                    Copier l'URL
-                </button>
+                <div class="flex gap-2 mt-2">
+                    <button 
+                        class="bg-[#007ACE] text-white px-2 py-1 rounded text-xs hover:bg-[#005bb5] flex-1"
+                        @click="copyToClipboard(link.url, $el)"
+                    >
+                        Copier l'URL
+                    </button>
+                    <button
+                        class="bg-[#005bb5] text-white px-2 py-1 rounded text-xs hover:bg-[#004a96]"
+                        @click="editPaymentLink(link)"
+                    >
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button
+                        class="bg-[#8b0000] text-white px-2 py-1 rounded text-xs hover:bg-[#6b0000]"
+                        @click="deletePaymentLink(link.id)"
+                    >
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
             </div>
         </template>
         
         <template x-if="paymentLinks.length === 0">
             <p class="text-gray-500 text-sm">Aucun lien de paiement disponible</p>
         </template>
+    </div>
+</div>
+
+<!-- Payment Link Modal -->
+<div 
+    x-show="showPaymentLinkModal"
+    x-transition
+    class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50"
+    @click.away="closePaymentLinkModal"
+>
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-medium text-gray-900">
+                <template x-if="isEditing">Modifier le lien de paiement</template>
+                <template x-if="!isEditing">Ajouter un lien de paiement</template>
+            </h3>
+            <button 
+                class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center"
+                @click="closePaymentLinkModal"
+            >
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <form @submit.prevent="savePaymentLink" class="space-y-4">
+            <div>
+                <label for="paymentLinkName" class="block mb-2 text-sm font-medium text-gray-900">Nom du lien</label>
+                <input 
+                    type="text"
+                    id="paymentLinkName"
+                    x-model="currentPaymentLink.name"
+                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+                    placeholder="Ex: Lien Stripe"
+                    required
+                >
+            </div>
+            
+            <div>
+                <label for="paymentLinkUrl" class="block mb-2 text-sm font-medium text-gray-900">URL</label>
+                <input 
+                    type="url"
+                    id="paymentLinkUrl"
+                    x-model="currentPaymentLink.url"
+                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+                    placeholder="https://example.com/payment"
+                    required
+                >
+            </div>
+            
+            <div class="flex justify-end gap-2">
+                <button 
+                    type="button"
+                    class="text-gray-500 bg-white hover:bg-gray-100 focus:ring-4 focus:ring-gray-300 rounded-lg border border-gray-200 text-sm font-medium px-5 py-2.5 hover:text-gray-900 focus:z-10"
+                    @click="closePaymentLinkModal"
+                >
+                    Annuler
+                </button>
+                <button 
+                    type="submit"
+                    class="text-white bg-[#007ACE] hover:bg-[#005bb5] focus:ring-4 focus:ring-[#007ACE]/30 font-medium rounded-lg text-sm px-5 py-2.5 text-center"
+                >
+                    <template x-if="isEditing">Enregistrer</template>
+                    <template x-if="!isEditing">Ajouter</template>
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -59,6 +166,15 @@ document.addEventListener('alpine:init', () => {
         paymentLinks: [],
         filteredVariables: [],
         searchTerm: '',
+        
+        // State for payment link modal
+        showPaymentLinkModal: false,
+        currentPaymentLink: {
+            id: null,
+            name: '',
+            url: ''
+        },
+        isEditing: false,
         
         init() {
             this.loadVariablesFromConfig();
@@ -134,6 +250,90 @@ document.addEventListener('alpine:init', () => {
                 }, 2000);
             } catch (error) {
                 console.error('Erreur lors de la copie:', error);
+            }
+        },
+        
+        copyGptPrompt() {
+            const variablesList = this.variables.map(v => `- \`${v.tag}\`: ${v.name}`).join('\n');
+            const prompt = `Rédige un email de relance pour un impayé en utilisant uniquement le corps de l'email en format markdown. Voici les variables disponibles que tu peux utiliser:\n\n${variablesList}\n\nL'email doit être professionnel, courtois mais ferme, et inciter au paiement rapide. Ne réponds qu'avec le corps de l'email en markdown, sans salutations ni signature.`;
+            
+            this.copyToClipboard(prompt, event.target);
+        },
+        
+        copyGptPromptBatch() {
+            const variablesList = this.variables.map(v => `- \`${v.tag}\`: ${v.name}`).join('\n');
+            const prompt = `Génère 5 emails de relance pour impayés en utilisant uniquement le corps des emails en format markdown. Voici les variables disponibles que tu peux utiliser:\n\n${variablesList}\n\nLes emails doivent être professionnels, courtois mais fermes, et inciter au paiement rapide. Chaque email doit avoir un ton légèrement différent (ex: rappel amical, rappel urgent, rappel avec menace de pénalités, etc.). Ne réponds qu'avec les 5 corps d'emails en markdown, séparés par ---, sans salutations ni signatures.`;
+            
+            this.copyToClipboard(prompt, event.target);
+        },
+        
+        // Payment link management methods
+        openPaymentLinkModal() {
+            this.currentPaymentLink = { id: null, name: '', url: '' };
+            this.isEditing = false;
+            this.showPaymentLinkModal = true;
+        },
+        
+        editPaymentLink(link) {
+            this.currentPaymentLink = { ...link };
+            this.isEditing = true;
+            this.showPaymentLinkModal = true;
+        },
+        
+        closePaymentLinkModal() {
+            this.showPaymentLinkModal = false;
+        },
+        
+        async savePaymentLink() {
+            try {
+                const parseAxios = window.parseAxios;
+                if (!parseAxios) {
+                    alert('ParseAxios non disponible');
+                    return;
+                }
+                
+                const payload = {
+                    name: this.currentPaymentLink.name,
+                    url: this.currentPaymentLink.url
+                };
+                
+                if (this.isEditing && this.currentPaymentLink.id) {
+                    // Update existing
+                    await parseAxios.put(`/classes/PaymentLink/${this.currentPaymentLink.id}`, payload);
+                } else {
+                    // Create new
+                    const response = await parseAxios.post('/classes/PaymentLink', payload);
+                    this.currentPaymentLink.id = response.data.objectId;
+                }
+                
+                // Refresh the list
+                await this.loadPaymentLinks();
+                this.closePaymentLinkModal();
+                
+            } catch (error) {
+                console.error('Erreur lors de la sauvegarde du lien de paiement:', error);
+                alert('Erreur lors de la sauvegarde: ' + (error.message || 'Unknown error'));
+            }
+        },
+        
+        async deletePaymentLink(id) {
+            if (!confirm('Êtes-vous sûr de vouloir supprimer ce lien de paiement ?')) {
+                return;
+            }
+            
+            try {
+                const parseAxios = window.parseAxios;
+                if (!parseAxios) {
+                    alert('ParseAxios non disponible');
+                    return;
+                }
+                
+                await parseAxios.delete(`/classes/PaymentLink/${id}`);
+                await this.loadPaymentLinks();
+                
+            } catch (error) {
+                console.error('Erreur lors de la suppression du lien de paiement:', error);
+                alert('Erreur lors de la suppression: ' + (error.message || 'Unknown error'));
             }
         }
     }));

@@ -14,33 +14,59 @@
             updateActionField(index, 'delay', parseInt(action.delay) || 0);
         },
         
+        updateSenderEmail() {
+            updateActionField(index, 'senderEmail', action.senderEmail);
+        },
+        
         handleContentChange(event) {
-            updateActionField(index, 'body', event.detail.content);
+            console.log('Handling content change for action', index, ':', event.detail.content);
+            // Dispatch an event with the index and content
+            // The container component will handle the store update
+            const changeEvent = new CustomEvent('email-body-changed', {
+                detail: {
+                    index: index,
+                    content: event.detail.content
+                },
+                bubbles: true
+            });
+            this.$dispatch('email-body-changed', {
+                index: index,
+                content: event.detail.content
+            });
+            console.log('Event dispatched for action', index);
         },
         
         toggleExpand() {
             this.isExpanded = !this.isExpanded;
         }
-    }" class="border border-gray-200 rounded-lg mb-4 bg-white overflow-hidden">
-        <!-- Header with collapse/expand toggle -->
-        <div class="flex justify-between items-center p-4 bg-gray-50 cursor-pointer hover:bg-gray-100" @click="toggleExpand">
-            <div class="flex items-center flex-1 min-w-0">
-                <button class="mr-3 text-gray-500 hover:text-gray-700">
+    }" class="action-card mb-4 overflow-hidden">
+        <!-- Header with collapse/expand toggle - compact column layout -->
+        <div class="grid grid-cols-12 gap-3 p-4 action-header cursor-pointer hover:bg-gray-100 items-center transition-all" @click="toggleExpand">
+            <div class="col-span-1 flex justify-center">
+                <button class="text-gray-500 hover:text-gray-700 transition-all">
                     <i class="fas" :class="isExpanded ? 'fa-chevron-down' : 'fa-chevron-right'"></i>
                 </button>
-                <div class="flex-1 min-w-0">
-                    <h4 class="text-lg font-semibold truncate" x-text="'Email Action ' + (index + 1)"></h4>
-                    <div class="text-sm text-gray-600 mt-1">
-                        <span class="font-medium">Objet:</span>
-                        <span class="truncate block" x-text="action.subject || 'Sans objet'"></span>
-                        <span class="font-medium mt-1 block">Délai:</span>
-                        <span class="block" x-text="action.delay + ' jours'"></span>
-                    </div>
+            </div>
+            <div class="col-span-3">
+                <span class="action-badge" x-text="'Action ' + (index + 1)"></span>
+            </div>
+            <div class="col-span-4">
+                <div class="text-sm">
+                    <span class="font-medium text-gray-600">Objet:</span>
+                    <span class="truncate block font-medium text-gray-800" x-text="action.subject || 'Sans objet'"></span>
                 </div>
             </div>
-            <button @click.stop="removeAction(index)" class="text-red-500 hover:text-red-700 ml-4">
-                <i class="fas fa-trash"></i> Supprimer
-            </button>
+            <div class="col-span-2">
+                <div class="text-sm">
+                    <span class="font-medium text-gray-600">Délai:</span>
+                    <span class="block font-medium text-gray-800" x-text="action.delay + ' jours'"></span>
+                </div>
+            </div>
+            <div class="col-span-2 flex justify-end">
+                <button @click.stop="removeAction(index)" class="text-red-500 hover:text-red-700 transition-all">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
         </div>
         
         <!-- Expanded content -->
@@ -55,7 +81,7 @@
                     x-model="action.subject"
                     @blur="updateSubject()"
                     placeholder="Objet de l'email..."
-                    class="w-full p-2 border border-gray-300 rounded"
+                    class="focus:ring-2 transition-all"
                 />
             </div>
             
@@ -66,7 +92,7 @@
                     x-model="action.cc"
                     @blur="updateCC()"
                     placeholder="Adresses en copie..."
-                    class="w-full p-2 border border-gray-300 rounded"
+                    class="focus:ring-2 transition-all"
                 />
             </div>
         </div>
@@ -78,8 +104,111 @@
                 x-model="action.delay"
                 @blur="updateDelay()"
                 min="0"
-                class="w-full p-2 border border-gray-300 rounded"
+                class="focus:ring-2 transition-all"
             />
+        </div>
+        
+        <!-- Modern SMTP Profile Selector -->
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Profil SMTP</label>
+            <div x-data="{
+                isOpen: false,
+                searchTerm: '',
+                
+                toggleDropdown() {
+                    this.isOpen = !this.isOpen;
+                    if (this.isOpen) {
+                        this.$nextTick(() => this.$refs.searchInput.focus());
+                    }
+                },
+                
+                selectProfile(profile) {
+                    action.smtpProfileId = profile.objectId;
+                    action.senderEmail = profile.email;
+                    this.isOpen = false;
+                    updateActionField(index, 'smtpProfileId', profile.objectId);
+                    updateActionField(index, 'senderEmail', profile.email);
+                },
+                
+                filteredProfiles() {
+                    if (!this.searchTerm) return $store.sequence.smtpProfiles;
+                    const term = this.searchTerm.toLowerCase();
+                    return $store.sequence.smtpProfiles.filter(profile =>
+                        profile.name.toLowerCase().includes(term) ||
+                        profile.email.toLowerCase().includes(term)
+                    );
+                }
+            }" class="relative">
+                <!-- Dropdown trigger -->
+                <div @click="toggleDropdown()" class="cursor-pointer">
+                    <div class="flex items-center justify-between p-2 border border-gray-300 rounded-md focus:ring-2 transition-all min-h-[42px]">
+                        <span x-show="action.smtpProfileId" class="truncate">
+                            <template x-for="profile in $store.sequence.smtpProfiles" :key="profile.objectId">
+                                <span x-show="profile.objectId === action.smtpProfileId" x-text="profile.name + ' (' + profile.email + ')'"></span>
+                            </template>
+                        </span>
+                        <span x-show="!action.smtpProfileId" class="text-gray-500">Sélectionner un profil SMTP</span>
+                        <i class="fas ml-2" :class="isOpen ? 'fa-chevron-up' : 'fa-chevron-down'" style="color: #9ca3af;"></i>
+                    </div>
+                </div>
+                
+                <!-- Dropdown panel -->
+                <div 
+                    x-show="isOpen"
+                    @click.away="isOpen = false"
+                    x-transition:enter="transition ease-out duration-100"
+                    x-transition:enter-start="transform opacity-0 scale-95"
+                    x-transition:enter-end="transform opacity-100 scale-100"
+                    x-transition:leave="transition ease-in duration-75"
+                    x-transition:leave-start="transform opacity-100 scale-100"
+                    x-transition:leave-end="transform opacity-0 scale-95"
+                    class="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto focus:outline-none"
+                >
+                    <!-- Search input -->
+                    <div class="sticky top-0 bg-white pt-2 px-2">
+                        <input 
+                            type="text"
+                            x-model="searchTerm"
+                            placeholder="Rechercher un profil..."
+                            class="w-full p-2 border border-gray-200 rounded-md focus:ring-2 transition-all text-sm"
+                            x-ref="searchInput"
+                        />
+                    </div>
+                    
+                    <!-- Profile list -->
+                    <div class="py-1">
+                        <template x-for="profile in filteredProfiles()" :key="profile.objectId">
+                            <div 
+                                @click="selectProfile(profile)"
+                                class="flex items-center px-3 py-2 cursor-pointer hover:bg-gray-100 transition-all"
+                            >
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-sm font-medium text-gray-900 truncate" x-text="profile.name"></p>
+                                    <p class="text-xs text-gray-500 truncate" x-text="profile.email"></p>
+                                </div>
+                                <i class="fas fa-check text-marki-primary ml-2" x-show="profile.objectId === action.smtpProfileId"></i>
+                            </div>
+                        </template>
+                        
+                        <div x-show="filteredProfiles().length === 0" class="px-3 py-2 text-center text-gray-500 text-sm">
+                            Aucun profil SMTP trouvé
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sender Email -->
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Email Expéditeur</label>
+            <input
+                type="email"
+                x-model="action.senderEmail"
+                @blur="updateSenderEmail()"
+                placeholder="expéditeur@example.com"
+                class="focus:ring-2 transition-all w-full"
+            />
+            <p class="text-xs text-gray-500 mt-1">Laisser vide pour utiliser l'email du profil SMTP par défaut</p>
         </div>
         
         <div>

@@ -40,7 +40,7 @@ class ToastUIEditorLit extends LitElement {
                     height: this.height,
                     initialEditType: 'wysiwyg',
                     previewStyle: 'vertical',
-                    initialValue: this.content || '',
+                    language: 'fr-FR',
                     toolbarItems: [
                         ['heading', 'bold', 'italic', 'strike'],
                         ['hr', 'quote'],
@@ -56,9 +56,22 @@ class ToastUIEditorLit extends LitElement {
                                 detail: { content: newContent },
                                 bubbles: true
                             }));
+                            
+                            // Also dispatch a custom event that Alpine can listen to globally
+                            const alpineEvent = new CustomEvent('toastui-content-changed', {
+                                detail: { content: newContent },
+                                bubbles: true
+                            });
+                            document.dispatchEvent(alpineEvent);
                         }
                     }
                 });
+                
+                // Set the initial content using setHTML with cursorToEnd after initialization
+                if (this.content) {
+                    console.log('Setting initial editor content with setHTML:', this.content);
+                    this.editor.setHTML(this.content, true); // cursorToEnd: true
+                }
             }
         }
     }
