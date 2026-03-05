@@ -1,0 +1,10 @@
+# Configuration de l'agent pour l'architecture technique
+# Cet agent utilise le prompt architect_prompt pour concevoir l'architecture technique.
+
+# Prompt système personnalisé pour l'architecture technique
+system_prompt_id = "architect_prompt"
+
+display_name = "architect"
+description = "Agent spécialisé dans la conception de l'architecture technique pour les applications SaaS."
+enabled_tools = ["ask_user_question","read_file", "grep", "write_file","search_replace","bash","webfetch","websearch"]
+auto_approve = true

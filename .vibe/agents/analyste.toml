@@ -1,0 +1,10 @@
+# Configuration de l'agent pour l'Analyste
+# Cet agent utilise le prompt feature_extraction pour extraire et analyser les features et use cases.
+
+# Prompt système personnalisé pour l'Analyste
+system_prompt_id = "feature_extraction_prompt"
+
+display_name = "analyste"
+description = "Agent spécialisé dans l'extraction et l'analyse des features et use cases à partir du fichier specs/idées."
+enabled_tools = ["ask_user_question","read_file", "grep", "write_file","search_replace","bash","webfetch","websearch"]
+auto_approve = true

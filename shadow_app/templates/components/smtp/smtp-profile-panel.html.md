@@ -3,6 +3,34 @@
 ## Description
 Composant pour le panneau de création et d'édition des profils SMTP. Ce composant permet de créer ou de modifier un profil SMTP avec des informations telles que le nom, l'email, l'hôte, le port, le nom d'utilisateur, le mot de passe, et les options de sécurité. Il est utilisé dans les templates de gestion des profils SMTP pour fournir une interface interactive.
 
+## État Alpine.js
+Ce composant gère les profils SMTP, permettant de créer, modifier et archiver des profils. Il inclut des fonctionnalités pour gérer l'état des profils, la pagination, et les interactions utilisateur.
+
+### Fonctionnalités
+- **profiles** : Liste des profils SMTP disponibles.
+- **filteredProfiles** : Liste des profils filtrés selon les critères de recherche.
+- **isLoading** : Indique si les données sont en cours de chargement.
+- **error** : Stocke les erreurs éventuelles.
+- **searchTerm** : Terme de recherche pour filtrer les profils.
+- **selectedStatus** : Statut de profil sélectionné pour le filtrage.
+- **currentPage** : Page actuelle.
+- **itemsPerPage** : Nombre d'éléments par page.
+
+### Méthodes
+- **init()** : Initialise le composant et charge les profils.
+- **loadProfiles()** : Charge les profils depuis le serveur.
+- **filterProfiles()** : Filtre les profils selon les critères de recherche.
+- **previousPage()** : Passe à la page précédente.
+- **nextPage()** : Passe à la page suivante.
+- **openCreatePanel()** : Ouvre le panneau pour créer un nouveau profil.
+- **openEditPanel(profile)** : Ouvre le panneau pour éditer un profil existant.
+- **toggleArchiveProfile(profile)** : Archive ou désarchive un profil.
+
+### Comportement
+- **Gestion des profils** : Permet de créer, éditer et archiver des profils SMTP.
+- **Filtrage et pagination** : Filtre les profils selon les critères de recherche et gère la pagination pour l'affichage.
+- **Gestion des erreurs** : Capture et affiche les erreurs lors des opérations de chargement et d'archivage.
+
 ## Structure HTML
 
 ### Description

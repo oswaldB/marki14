@@ -10,7 +10,6 @@ Ce blueprint Flask fournit une interface REST pour exécuter des scripts Python 
 - **Listage des scripts** : Fournit un endpoint pour lister tous les scripts disponibles.
 
 ## Endpoints
-
 ### POST /script/<script_name>
 @description Exécute un script spécifique.
 @param {string} script_name - Nom du script à exécuter (sans l'extension `.py`).
@@ -45,13 +44,7 @@ Pour récupérer une facture depuis FTP, envoyez une requête POST à l'endpoint
 @example
 Pour exécuter le workflow de récupération des factures impayées, envoyez une requête POST à l'endpoint `/script/populateImpayes` avec les filtres et les options de recherche dans le corps de la requête au format JSON. Le résultat retourné est un objet JSON avec un statut, un message, et les données traitées.
 
-### POST /script/archive-impayes
-@description Archive des impayés spécifiques.
-@param {Array} impaye_ids - Liste des IDs des impayés à archiver.
-@returns {JSON} Résultat de l'archivage.
 
-@example
-Pour archiver des impayés spécifiques, envoyez une requête POST à l'endpoint `/script/archive-impayes` avec la liste des IDs des impayés à archiver dans le corps de la requête au format JSON. Le résultat retourné est un objet JSON avec un statut, un message, et les données de l'archivage.
 
 ### POST /script/peuplerRelances
 @description Génère automatiquement les relances pour les impayés.
@@ -68,36 +61,8 @@ Pour générer automatiquement les relances pour les impayés, envoyez une requ�
 @example
 Pour récupérer les détails d'un impayé spécifique, envoyez une requête POST à l'endpoint `/script/impaye-details` avec l'ID de l'impayé dans le corps de la requête au format JSON. Le résultat retourné est un objet JSON avec un statut, un message, et les détails de l'impayé.
 
-### POST /script/contact-impayes
-@description Récupère les impayés d'un contact spécifique.
-@param {string} contact_id - ID du contact.
-@returns {JSON} Impayés du contact.
 
-@example
-Pour récupérer les impayés d'un contact spécifique, envoyez une requête POST à l'endpoint `/script/contact-impayes` avec l'ID du contact dans le corps de la requête au format JSON. Le résultat retourné est un objet JSON avec un statut, un message, et les impayés du contact.
 
-### GET /script/list
-@description Liste tous les scripts disponibles.
-@returns {JSON} Liste des scripts disponibles.
-
-@example
-Pour lister tous les scripts disponibles, envoyez une requête GET à l'endpoint `/script/list`. Le résultat retourné est un objet JSON avec un statut, un message, et la liste des scripts disponibles.
-
-@response
-```json
-{
-  "status": "success",
-  "message": "X scripts disponibles",
-  "scripts": [
-    {
-      "name": "script_name",
-      "description": "Description du script",
-      "file": "script_name.py"
-    }
-  ],
-  "timestamp": "..."
-}
-```
 
 ## Fonctions Internes
 
@@ -123,7 +88,6 @@ Pour lister tous les scripts disponibles, envoyez une requête GET à l'endpoint
 app/
 └── scripts/
     ├── script_bp.py
-    ├── contact_impayes.py
     ├── populateImpayes.py
     └── ...
 ```

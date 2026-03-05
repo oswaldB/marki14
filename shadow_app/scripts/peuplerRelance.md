@@ -83,7 +83,6 @@ Ce script permet de générer automatiquement des relances pour les impayés qui
 - **dotenv** : Bibliothèque pour charger les variables d'environnement depuis un fichier `.env`.
 
 ## Exemples d'Utilisation
-- **En ligne de commande** : Exécuter le script pour générer des relances pour tous les impayés éligibles.
 - **Via l'API Flask** : Intégrer le script dans une API Flask pour générer des relances à la demande.
 - **Automatisation** : Utiliser le script dans un workflow pour automatiser la génération des relances.
 

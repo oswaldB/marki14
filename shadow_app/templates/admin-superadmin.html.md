@@ -8,6 +8,19 @@ Template pour la page d'administration superadmin. Ce template étend `base-app.
 ### Description
 Le template `admin-superadmin.html` étend le template `base-app.html` et ajoute un contenu spécifique pour la page d'administration superadmin. Il inclut un titre, des scripts spécifiques, et un contenu principal avec une interface pour gérer les opérations d'administration.
 
+## État Alpine.js
+Ce composant gère les opérations d'administration superadmin, notamment la synchronisation des factures impayées. Il inclut des fonctionnalités pour gérer l'état de chargement, afficher des messages de statut, et traiter les résultats de la synchronisation.
+
+### Fonctionnalités
+- **isLoading** : Indique si une opération de synchronisation est en cours.
+- **statusMessage** : Affiche des messages de statut pour informer l'utilisateur.
+- **resultData** : Stocke les résultats de la synchronisation.
+- **runSynchronization()** : Méthode asynchrone pour lancer la synchronisation des factures depuis PostgreSQL vers Parse Server.
+
+### Comportement
+- **Gestion des erreurs** : Capture et affiche les erreurs lors de la synchronisation.
+- **Messages de statut** : Met à jour les messages pour refléter l'état de l'opération.
+
 ### Schéma ASCII
 
 #### Structure Globale

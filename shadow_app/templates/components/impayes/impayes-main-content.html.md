@@ -9,6 +9,30 @@ Ce composant affiche le contenu principal des impayés en fonction de la vue act
 - **Message d'absence de résultats** : Affiche un message si aucun impayé ne correspond aux critères de recherche.
 - **Inclusion de vues** : Inclut les templates spécifiques à chaque vue (par payeur, par facture, par acteur, etc.).
 
+## État Alpine.js
+Ce composant gère l'affichage des impayés en fonction de la vue actuelle. Il inclut des fonctionnalités pour gérer les données des impayés, formater les dates et les montants, et calculer les retards de paiement.
+
+### Fonctionnalités
+- **store** : Référence au store global pour la gestion des données des impayés.
+- **refreshData()** : Rafraîchit les données des impayés.
+- **switchView(viewName)** : Change la vue actuelle des impayés.
+- **toggleGroupExpansion(groupId)** : Basculer l'expansion d'un groupe.
+- **isGroupExpanded(groupId)** : Vérifie si un groupe est expansé.
+- **openDetailsDrawer(item)** : Ouvre le tiroir des détails pour un élément.
+- **closeDetailsDrawer()** : Ferme le tiroir des détails.
+- **formatDate(dateString)** : Formate une date pour l'affichage.
+- **formatCurrency(amount)** : Formate un montant en euros.
+- **calculateMaxDaysLate(group)** : Calcule le nombre maximum de jours de retard pour un groupe.
+- **updateSearchTerm(term)** : Met à jour le terme de recherche.
+- **updateSelectedPayeur(payeur)** : Met à jour le payeur sélectionné.
+- **updateSortBy(sortField)** : Met à jour le champ de tri.
+- **updateStatusFilter(status)** : Met à jour le filtre de statut.
+
+### Comportement
+- **Affichage conditionnel** : Affiche le contenu en fonction de la vue actuelle et des états de chargement et d'erreur.
+- **Gestion des erreurs** : Affiche un message d'erreur si une erreur s'est produite lors du chargement des données.
+- **Message d'absence de résultats** : Affiche un message si aucun impayé ne correspond aux critères de recherche.
+
 ## ASCII Render
 
 ### Avec des données mockées

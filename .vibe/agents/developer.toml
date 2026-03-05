@@ -1,0 +1,10 @@
+# Configuration de l'agent pour le développement
+# Cet agent utilise le prompt developer_prompt pour développer les fichiers en miroir.
+
+# Prompt système personnalisé pour le développement
+system_prompt_id = "developer_prompt"
+
+display_name = "developer"
+description = "Agent spécialisé dans le développement de fichiers en miroir basés sur les spécifications dans /shadow_app/."
+enabled_tools = ["ask_user_question","read_file", "grep", "write_file","search_replace","bash","webfetch","websearch"]
+auto_approve = true

@@ -42,12 +42,8 @@ Pour exécuter le script via l'API Flask, appelez la fonction `execute()` avec l
 - **dotenv** : Bibliothèque pour charger les variables d'environnement depuis un fichier `.env`.
 
 ## Exemples d'Utilisation
-- **En ligne de commande** : Exécuter le script pour télécharger une facture spécifique.
 - **Via l'API Flask** : Intégrer le script dans une API Flask pour fournir des factures dynamiques aux templates HTML.
 - **Avec des URLs dynamiques** : Utiliser des URLs générées dynamiquement pour accéder aux factures.
-
-@example
-Pour exécuter le script en ligne de commande, utilisez la commande `python getInvoice.py` suivie de l'URL de la facture et des options souhaitées (par exemple, `--debug` pour activer le mode débogage).
 
 ## Gestion des Erreurs
 - **Configuration manquante** : Si les variables d'environnement pour la connexion SFTP sont manquantes.

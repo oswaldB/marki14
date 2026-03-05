@@ -1,29 +1,10 @@
 # Configuration de l'agent pour les spécifications techniques
 # Cet agent utilise le prompt guide_documentation_technique pour générer des spécifications techniques détaillées.
 
-# Modèle actif pour cet agent
-active_model = "devstral-2"
-
 # Prompt système personnalisé pour les spécifications techniques
 system_prompt_id = "guide_documentation_technique"
 
-# Description de l'agent
-[agent]
-name = "spec_tech"
+display_name = "spec_tech"
 description = "Agent spécialisé dans la génération de spécifications techniques pour les composants Alpine.js et autres technologies."
-
-# Configuration des outils pour cet agent
-[tools]
-read_file = { permission = "always" }
-write_file = { permission = "always" }
-grep = { permission = "always" }
-search_replace = { permission = "always" }
-bash = { permission = "always" }
-
-# Configuration des sessions
-[session]
-enable_logging = true
-log_dir = "./.vibe/logs"
-
-# Configuration des mises à jour
-enable_auto_update = false
+enabled_tools = ["ask_user_question","read_file", "grep", "write_file","search_replace","bash","webfetch","websearch"]
+auto_approve = true

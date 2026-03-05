@@ -63,6 +63,13 @@ A Markdown file in the `/specs/idees/` folder with the following naming conventi
 3. The `ID` is a unique identifier for the idea.
 4. The `nom-de-l-idee` is a short, descriptive name in lowercase with hyphens.
 
+### Feature and Use Case File Creation
+When features and use cases are finalized, they must be saved in their respective folders:
+- **Features**: `specs/features/ID - FXXX - nom-de-la-feature.md` (e.g., `specs/features/001 - F001 - upload-factures.md`).
+- **User Stories**: `specs/us/ID - USXXX - nom-de-l-user-story.md` (e.g., `specs/us/001 - US001 - extraire-informations-facture.md`).
+
+The `ID` must match the idea's ID, and the feature/user story codes (`FXXX`, `USXXX`) must be included in the filename.
+
 ### Feature and Use Case Coding
 1. Each feature must have a unique identifier starting with `F` followed by a sequential number (e.g., `F001`, `F002`).
 2. Each use case must have a unique identifier starting with the feature code followed by `US` and a sequential number (e.g., `F001-US001`, `F001-US002`).
