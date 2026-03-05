@@ -1,0 +1,148 @@
+<!-- components/impayes-acteur-group-card.html -->
+<div
+    class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm mb-6"
+>
+    <!-- Header du groupe acteur -->
+    <div class="flex flex-wrap items-center justify-between">
+        <div class="flex-1 min-w-0 mb-4 md:mb-0">
+            <div class="flex items-center">
+                <!-- Case à cocher pour sélectionner tout le groupe -->
+                <div class="mr-3">
+                    <input
+                        type="checkbox"
+                        :checked="$store.impayesStore.isGroupFullySelected(group)"
+                        @change="$store.impayesStore.isGroupFullySelected(group) ? 
+                            $store.impayesStore.deselectAllInGroup(group) : 
+                            $store.impayesStore.selectAllInGroup(group)"
+                        class="h-4 w-4 text-blue-600 border-gray-300 rounded"
+                    >
+                </div>
+                <div class="mr-3">
+                    <div
+                        class="w-12 h-12 bg-marki-primary bg-opacity-10 rounded-full flex items-center justify-center"
+                    >
+                        <i
+                            :class="$store.impayesStore.getGroupDisplayInfo(group, groupKey).icon + ' text-white text-xl'"
+                        ></i>
+                    </div>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p
+                        class="text-lg font-bold"
+                        x-text="$store.impayesStore.getGroupDisplayInfo(group, groupKey).title"
+                    ></p>
+                    <p class="text-sm text-gray-600" x-html="$store.impayesStore.getGroupDisplayInfo(group, groupKey).subtitle"></p>
+                    <p
+                        class="text-sm font-medium p-2 rounded mt-1"
+                        :class="$store.impayesStore.calculateMaxDaysLate($store.impayesStore.getGroupItems(group)) > 0 ? 'text-yellow-600 bg-yellow-50' : 'text-gray-600 bg-gray-50'"
+                    >
+                        <i
+                            class="fa-regular mr-1"
+                            :class="$store.impayesStore.calculateMaxDaysLate($store.impayesStore.getGroupItems(group)) > 0 ? 'fa-exclamation-triangle' : 'fa-calendar-days'"
+                        ></i>
+                        Retard max:
+                        <span
+                            class="font-bold"
+                            x-text="$store.impayesStore.calculateMaxDaysLate($store.impayesStore.getGroupItems(group))"
+                        ></span>
+                        jour(s)
+                    </p>
+                    
+                    <!-- Affichage des séquences pour le groupe (supprimé) -->
+                </div>
+            </div>
+        </div>
+        <div class="flex-shrink-0 flex space-x-2">
+            <button
+                @click="$store.impayesStore.toggleGroupExpansion($store.impayesStore.currentView, groupKey)"
+                class="bg-white border border-gray-300 text-gray-700 px-3 py-1 rounded hover:bg-gray-50"
+            >
+                <i
+                    :class="{'fa-chevron-up': $store.impayesStore.isGroupExpanded($store.impayesStore.currentView, groupKey), 'fa-chevron-down': !$store.impayesStore.isGroupExpanded($store.impayesStore.currentView, groupKey)}"
+                    class="fa-regular"
+                ></i>
+            </button>
+            <button
+                @click="$store.impayesStore.selectAllInGroup(group); $store.impayesStore.openSequenceDrawer()"
+                class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
+                title="Ajouter tout le groupe à une séquence"
+            >
+                <i class="fa-regular fa-list-check"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Liste des impayés du groupe -->
+    <div x-show="$store.impayesStore.isGroupExpanded($store.impayesStore.currentView, groupKey)" x-transition>
+        <div class="mt-4 space-y-6">
+            <!-- Mode acteur: affichage avec sous-groupes -->
+            <template x-if="$store.impayesStore.currentView === 'acteur' && group.ownOverdueInvoices">
+                <!-- Sous-groupe 1: Factures propres en retard -->
+                <div x-show="group.ownOverdueInvoices.length > 0">
+                    <div class="bg-gray-50 px-4 py-2 rounded border border-gray-200 mb-3">
+                        <h4 class="font-semibold text-gray-700">Factures propres en retard</h4>
+                        <p class="text-sm text-gray-600">
+                            <span x-text="group.ownOverdueInvoices.length"></span> facture(s) - 
+                            Total: <span x-text="$store.impayesStore.formatCurrency(group.ownOverdueInvoices.reduce((sum, imp) => sum + (imp.resteapayer || 0), 0))"></span>
+                        </p>
+                    </div>
+                    <div class="space-y-3">
+                        <template x-for="impaye in group.ownOverdueInvoices" :key="impaye.objectId">
+                            {% include 'components/impayes/impayes-item-card.html' %}
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Sous-groupe 2: Factures où l'acteur est apporteur -->
+                <div x-show="group.broughtInvoices.length > 0">
+                    <div class="bg-blue-50 px-4 py-2 rounded border border-blue-200 mb-3">
+                        <h4 class="font-semibold text-blue-700">Factures apportées</h4>
+=======
+    <!-- Liste des impayés du groupe -->
+    <div x-show="$store.impayesStore.isGroupExpanded($store.impayesStore.currentView, groupKey)" x-transition>
+        <div class="mt-4 space-y-6">
+            <!-- Mode acteur: affichage avec sous-groupes -->
+            <template x-if="$store.impayesStore.currentView === 'acteur' && group.ownOverdueInvoices">
+                <!-- Sous-groupe 1: Factures propres en retard -->
+                <div x-show="group.ownOverdueInvoices.length > 0">
+                    <div class="bg-gray-50 px-4 py-2 rounded border border-gray-200 mb-3">
+                        <h4 class="font-semibold text-gray-700">Factures propres en retard</h4>
+                        <p class="text-sm text-gray-600">
+                            <span x-text="group.ownOverdueInvoices.length"></span> facture(s) - 
+                            Total: <span x-text="$store.impayesStore.formatCurrency(group.ownOverdueInvoices.reduce((sum, imp) => sum + (imp.resteapayer || 0), 0))"></span>
+                        </p>
+                    </div>
+                    <div class="space-y-3">
+                        <template x-for="impaye in group.ownOverdueInvoices" :key="impaye.objectId">
+                            {% include 'components/impayes/impayes-item-card.html' %}
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Sous-groupe 2: Factures où l'acteur est apporteur -->
+                <div x-show="group.broughtInvoices.length > 0">
+                    <div class="bg-blue-50 px-4 py-2 rounded border border-blue-200 mb-3">
+                        <h4 class="font-semibold text-blue-700">Factures apportées</h4>
+                    <p class="text-sm text-blue-600">
+                        <span x-text="group.broughtInvoices.length"></span> facture(s) - 
+                        Total: <span x-text="$store.impayesStore.formatCurrency(group.broughtInvoices.reduce((sum, imp) => sum + (imp.resteapayer || 0), 0))"></span>
+                    </p>
+                </div>
+                <div class="space-y-3">
+                    <template x-for="impaye in group.broughtInvoices" :key="impaye.objectId">
+                        {% include 'components/impayes/impayes-item-card.html' %}
+                    </template>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mode standard: affichage simple pour les autres vues -->
+        <template x-if="$store.impayesStore.currentView !== 'acteur' || !group.ownOverdueInvoices">
+            <div class="space-y-3">
+                <template x-for="impaye in (group.ownOverdueInvoices || group)" :key="impaye.objectId">
+                    {% include 'components/impayes/impayes-item-card.html' %}
+                </template>
+            </div>
+        </div>
+    </div>
+</div>

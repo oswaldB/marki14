@@ -1,6 +1,6 @@
 <div x-data="variablesPanel()" class="variables-panel p-4">
     <h3 class="text-lg font-semibold mb-4 text-gray-800">Variables disponibles</h3>
-    
+
     <!-- Boutons d'actions -->
     <div class="mb-4 flex gap-2">
         <button
@@ -10,13 +10,72 @@
             <i class="fas fa-copy"></i>
             Copier le prompt ChatGPT
         </button>
-        <button
-            class="text-white bg-[#005bb5] border border-[#005bb5] focus:ring-4 focus:ring-[#005bb5]/30 font-medium rounded-lg text-sm px-3 py-2 text-center inline-flex items-center gap-1 hover:bg-[#004a96] transition-colors"
-            @click="copyGptPromptBatch()"
-        >
-            <i class="fas fa-robot"></i>
-            Copier 5 prompts ChatGPT
-        </button>
+    </div>
+
+    <!-- Panneau lien de paiement (doit être dans le même x-data) -->
+    <div
+        x-show="showPaymentLinkModal"
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="translate-x-full"
+        x-transition:enter-end="translate-x-0"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="translate-x-0"
+        x-transition:leave-end="translate-x-full"
+        class="fixed inset-y-0 right-0 w-[420px] bg-white border-l border-gray-200 shadow-xl z-50 flex flex-col overflow-y-auto p-5"
+    >
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-medium text-gray-900">
+                    Gestion du lien de paiement
+                </h3>
+                <button
+                    class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center"
+                    @click="closePaymentLinkModal"
+                >
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <form @submit.prevent="savePaymentLink" class="space-y-4">
+                <div>
+                    <label for="paymentLinkName" class="block mb-2 text-sm font-medium text-gray-900">Nom du lien</label>
+                    <input
+                        type="text"
+                        id="paymentLinkName"
+                        x-model="currentPaymentLink.name"
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+                        placeholder="Ex: Lien Stripe"
+                        required
+                    >
+                </div>
+
+                <div>
+                    <label for="paymentLinkUrl" class="block mb-2 text-sm font-medium text-gray-900">URL</label>
+                    <input
+                        type="url"
+                        id="paymentLinkUrl"
+                        x-model="currentPaymentLink.url"
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+                        placeholder="https://example.com/payment"
+                        required
+                    >
+                </div>
+
+                <div class="flex justify-end gap-2">
+                    <button
+                        type="button"
+                        class="text-gray-500 bg-white hover:bg-gray-100 focus:ring-4 focus:ring-gray-300 rounded-lg border border-gray-200 text-sm font-medium px-5 py-2.5 hover:text-gray-900 focus:z-10"
+                        @click="closePaymentLinkModal"
+                    >
+                        Annuler
+                    </button>
+                    <button
+                        type="submit"
+                        class="text-white bg-[#007ACE] hover:bg-[#005bb5] focus:ring-4 focus:ring-[#007ACE]/30 font-medium rounded-lg text-sm px-5 py-2.5 text-center"
+                    >
+                        Enregistrer
+                    </button>
+                </div>
+            </form>
     </div>
     
     <!-- Barre de recherche -->
@@ -59,7 +118,7 @@
     </h3>
     <div class="space-y-3">
         <template x-for="link in paymentLinks" :key="link.id">
-            <div class="border border-gray-200 rounded p-3 bg-green-50">
+            <div class="border border-gray-200 rounded p-3">
                 <div>
                     <div class="font-medium" x-text="link.name"></div>
                     <div class="text-xs text-gray-600 break-all" x-text="link.url"></div>
@@ -93,72 +152,6 @@
     </div>
 </div>
 
-<!-- Payment Link Modal -->
-<div 
-    x-show="showPaymentLinkModal"
-    x-transition
-    class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50"
-    @click.away="closePaymentLinkModal"
->
-    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-        <div class="flex justify-between items-center mb-4">
-            <h3 class="text-lg font-medium text-gray-900">
-                <template x-if="isEditing">Modifier le lien de paiement</template>
-                <template x-if="!isEditing">Ajouter un lien de paiement</template>
-            </h3>
-            <button 
-                class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center"
-                @click="closePaymentLinkModal"
-            >
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        
-        <form @submit.prevent="savePaymentLink" class="space-y-4">
-            <div>
-                <label for="paymentLinkName" class="block mb-2 text-sm font-medium text-gray-900">Nom du lien</label>
-                <input 
-                    type="text"
-                    id="paymentLinkName"
-                    x-model="currentPaymentLink.name"
-                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                    placeholder="Ex: Lien Stripe"
-                    required
-                >
-            </div>
-            
-            <div>
-                <label for="paymentLinkUrl" class="block mb-2 text-sm font-medium text-gray-900">URL</label>
-                <input 
-                    type="url"
-                    id="paymentLinkUrl"
-                    x-model="currentPaymentLink.url"
-                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                    placeholder="https://example.com/payment"
-                    required
-                >
-            </div>
-            
-            <div class="flex justify-end gap-2">
-                <button 
-                    type="button"
-                    class="text-gray-500 bg-white hover:bg-gray-100 focus:ring-4 focus:ring-gray-300 rounded-lg border border-gray-200 text-sm font-medium px-5 py-2.5 hover:text-gray-900 focus:z-10"
-                    @click="closePaymentLinkModal"
-                >
-                    Annuler
-                </button>
-                <button 
-                    type="submit"
-                    class="text-white bg-[#007ACE] hover:bg-[#005bb5] focus:ring-4 focus:ring-[#007ACE]/30 font-medium rounded-lg text-sm px-5 py-2.5 text-center"
-                >
-                    <template x-if="isEditing">Enregistrer</template>
-                    <template x-if="!isEditing">Ajouter</template>
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
-
 <script>
 document.addEventListener('alpine:init', () => {
     Alpine.data('variablesPanel', () => ({
@@ -169,12 +162,8 @@ document.addEventListener('alpine:init', () => {
         
         // State for payment link modal
         showPaymentLinkModal: false,
-        currentPaymentLink: {
-            id: null,
-            name: '',
-            url: ''
-        },
-        isEditing: false,
+        currentPaymentLink: { id: null, name: '', url: '' },
+
         
         init() {
             this.loadVariablesFromConfig();
@@ -260,23 +249,16 @@ document.addEventListener('alpine:init', () => {
             this.copyToClipboard(prompt, event.target);
         },
         
-        copyGptPromptBatch() {
-            const variablesList = this.variables.map(v => `- \`${v.tag}\`: ${v.name}`).join('\n');
-            const prompt = `Génère 5 emails de relance pour impayés en utilisant uniquement le corps des emails en format markdown. Voici les variables disponibles que tu peux utiliser:\n\n${variablesList}\n\nLes emails doivent être professionnels, courtois mais fermes, et inciter au paiement rapide. Chaque email doit avoir un ton légèrement différent (ex: rappel amical, rappel urgent, rappel avec menace de pénalités, etc.). Ne réponds qu'avec les 5 corps d'emails en markdown, séparés par ---, sans salutations ni signatures.`;
-            
-            this.copyToClipboard(prompt, event.target);
-        },
+
         
         // Payment link management methods
         openPaymentLinkModal() {
             this.currentPaymentLink = { id: null, name: '', url: '' };
-            this.isEditing = false;
             this.showPaymentLinkModal = true;
         },
         
         editPaymentLink(link) {
             this.currentPaymentLink = { ...link };
-            this.isEditing = true;
             this.showPaymentLinkModal = true;
         },
         
@@ -289,6 +271,11 @@ document.addEventListener('alpine:init', () => {
                 const parseAxios = window.parseAxios;
                 if (!parseAxios) {
                     alert('ParseAxios non disponible');
+                    return;
+                }
+                
+                if (!this.currentPaymentLink) {
+                    alert('Aucun lien de paiement à sauvegarder');
                     return;
                 }
                 

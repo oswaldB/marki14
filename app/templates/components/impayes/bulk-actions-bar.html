@@ -1,0 +1,29 @@
+<!-- components/impayes/bulk-actions-bar.html -->
+<div
+    x-show="$store.impayesStore.isBulkMode"
+    class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-6"
+>
+    <div class="flex items-center justify-between">
+        <div class="flex items-center">
+            <span class="text-blue-800 font-medium mr-3">
+                <span x-text="$store.impayesStore.selectedImpayes.length"></span> facture(s) sélectionnée(s)
+            </span>
+            <button
+                @click="$store.impayesStore.clearSelection()"
+                class="text-blue-600 hover:text-blue-800 text-sm"
+            >
+                <i class="fa-regular fa-times mr-1"></i>
+                Annuler
+            </button>
+        </div>
+        <div class="flex space-x-2">
+            <button
+                @click="archiveSelected()"
+                class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm"
+            >
+                <i class="fa-regular fa-archive mr-1"></i>
+                Archiver
+            </button>
+        </div>
+    </div>
+</div>

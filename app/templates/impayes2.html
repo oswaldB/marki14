@@ -1,319 +1,77 @@
 {% extends "base-app.html" %} {% block title %}Impayés{% endblock %} {% block
 head %}
 
+<script src="{{ url_for('static', filename='js/alpines/impayesStore.js') }}"></script>
 <script src="{{ url_for('static', filename='js/alpines/impayesState.js') }}"></script>
 {% endblock %} {% block content %}
-<div x-data="impayesState" class="min-h-screen">
-    <!-- Header -->
-    <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm mb-4">
-        <div class="flex flex-wrap items-center justify-between">
-            <div class="flex-1 min-w-0 mb-4 md:mb-0">
-                <div>
-                    <h1 class="text-2xl font-bold">Impayés</h1>
-                    <p class="text-sm text-gray-600">
-                        <span x-text="impayes.length"></span> facture(s)
-                        impayée(s)
-                    </p>
-                </div>
-            </div>
-            <div class="flex-shrink-0">
-                <button
-                    @click="refreshData()"
-                    :disabled="isLoading"
-                    class="bg-marki-primary text-white px-4 py-2 rounded hover:bg-marki-primary-dark disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                    <i x-show="!isLoading" class="fa-regular fa-sync mr-2"></i>
-                    <i
-                        x-show="isLoading"
-                        class="fa-regular fa-spinner fa-spin mr-2"
-                    ></i>
-                    Actualiser
-                </button>
-            </div>
-        </div>
-    </div>
+<div x-data="{
+    ...impayesState,
+    currentSortField: 'datepiece',
+    archiveSelected: async function() {
+        const result = await $store.impayesStore.archiveSelectedImpayes();
+        if (result.success) {
+            showNotification({ type: 'success', message: result.message });
+        } else {
+            showNotification({ type: 'error', message: result.message });
+        }
+    },
+    }
+}" x-init="$store.impayesStore.init()" class="min-h-screen">
+    {% include 'components/impayes/impayes-header.html' %}
+    {% include 'components/impayes/impayes-view-selector.html' %}
+    {% include 'components/impayes/impayes-filters.html' %}
 
-    <!-- Filtres -->
-    <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm mb-4">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-                <div class="mb-2">
-                    <label class="block text-sm font-medium text-gray-700 mb-1"
-                        >Recherche</label
-                    >
-                    <div>
-                        <input
-                            type="text"
-                            x-model="searchTerm"
-                            @input="filterImpayes()"
-                            placeholder="Rechercher par payeur, référence, montant..."
-                            class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-marki-primary focus:border-transparent"
-                        />
-                    </div>
-                </div>
-            </div>
-            <div>
-                <div class="mb-2">
-                    <label class="block text-sm font-medium text-gray-700 mb-1"
-                        >Payeur</label
-                    >
-                    <div>
-                        <select
-                            x-model="selectedPayeur"
-                            @change="filterImpayes()"
-                            class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-marki-primary focus:border-transparent"
-                        >
-                            <option value="">Tous les payeurs</option>
-                            <template x-for="payeur in payeurs" :key="payeur">
-                                <option
-                                    :value="payeur"
-                                    x-text="payeur"
-                                ></option>
-                            </template>
-                        </select>
-                    </div>
-                </div>
-            </div>
-            <div>
-                <div class="mb-2">
-                    <label class="block text-sm font-medium text-gray-700 mb-1"
-                        >Trier par</label
-                    >
-                    <div>
-                        <select
-                            x-model="sortBy"
-                            @change="sortImpayes()"
-                            class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-marki-primary focus:border-transparent"
-                        >
-                            <option value="datepiece">Date de facture</option>
-                            <option value="delais">Délais (jours)</option>
-                            <option value="totalttcnet">Montant TTC</option>
-                            <option value="payeur_nom">Payeur</option>
-                            <option value="refpiece">Référence</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
+    <!-- Debug: Afficher l'état du store -->
+    <div class="fixed bottom-4 left-4 bg-white border border-gray-200 rounded-lg p-3 shadow-lg z-50" style="max-width: 300px; font-size: 12px;">
+        <div><strong>Debug:</strong></div>
+        <div>Alpine accessible: <span x-text="window.Alpine ? 'oui' : 'NON'"></span></div>
+        <div>Store impayesStore: <span x-text="$store ? 'oui' : 'NON'"></span></div>
+        <div x-show="$store">
+            <div>impayesStore dans $store: <span x-text="$store.impayesStore ? 'oui' : 'NON'"></span></div>
+        </div>
+        <div x-show="$store && $store.impayesStore">
+            <div>isLoading: <span x-text="$store.impayesStore.isLoading"></span></div>
+            <div>isSequenceDrawerOpen: <span x-text="$store.impayesStore.isSequenceDrawerOpen"></span></div>
+            <div>error: <span x-text="$store.impayesStore.error || 'null'"></span></div>
+            <div>data length: <span x-text="$store.impayesStore.impayesData.length"></span></div>
+            <div>filtered length: <span x-text="$store.impayesStore.getFilteredData().length"></span></div>
+            <div>selectedImpayes: <span x-text="$store.impayesStore.selectedImpayes.length"></span></div>
         </div>
     </div>
 
     <!-- Contenu principal -->
     <div class="container mx-auto">
+        <!-- Barre d'actions pour la sélection multiple -->
+        <div x-show="!$store.impayesStore.isLoading">
+            {% include 'components/impayes/bulk-actions-bar.html' %}
+        </div>
+
         <!-- Message de chargement -->
-        <div x-show="isLoading" class="text-center py-6">
+        <div x-show="$store.impayesStore.isLoading" class="text-center py-6">
             <div
                 class="inline-block w-8 h-8 border-4 border-marki-primary border-t-transparent rounded-full animate-spin"
             ></div>
         </div>
 
-        <!-- Message d'erreur -->
-        <div
-            x-show="error"
-            class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6"
-        >
-            <div class="flex items-center">
-                <div class="mr-3">
-                    <i class="fa-regular fa-ban"></i>
-                </div>
-                <div>
-                    <p class="text-sm" x-text="error"></p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Liste des impayés groupés par payeur -->
-        <div x-show="!isLoading && !error">
-            <template x-for="(group, payeur) in groupedImpayes" :key="payeur">
-                <div
-                    class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm mb-6"
-                >
-                    <!-- Header du payeur -->
-                    <div class="flex flex-wrap items-center justify-between">
-                        <div class="flex-1 min-w-0 mb-4 md:mb-0">
-                            <div class="flex items-center">
-                                <div class="mr-3">
-                                    <div
-                                        class="w-12 h-12 bg-marki-primary bg-opacity-10 rounded-full flex items-center justify-center"
-                                    >
-                                        <i
-                                            :class="group[0].payeur_typePersonne === 'P' ? 'fa-regular fa-user' : 'fa-regular fa-building'"
-                                            class="text-marki-primary text-xl"
-                                        ></i>
-                                    </div>
-                                </div>
-                                <div class="flex-1 min-w-0">
-                                    <p
-                                        class="text-lg font-bold"
-                                        x-text="payeur"
-                                    ></p>
-                                    <p class="text-sm text-gray-600">
-                                        <span x-text="group.length"></span>
-                                        facture(s) - Total:
-                                        <span
-                                            x-text="formatCurrency(group.reduce((sum, imp) => sum + (imp.totalttcnet || 0), 0))"
-                                        ></span>
-                                    </p>
-                                    <p
-                                        class="text-yellow-600 text-sm"
-                                        x-show="calculateMaxDaysLate(group) > 0"
-                                    >
-                                        <i
-                                            class="fa-regular fa-exclamation-triangle mr-1"
-                                        ></i>
-                                        Retard max:
-                                        <span
-                                            x-text="calculateMaxDaysLate(group)"
-                                        ></span>
-                                        jour(s)
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="flex-shrink-0">
-                            <button
-                                @click="togglePayeur(payeur)"
-                                class="bg-white border border-gray-300 text-gray-700 px-3 py-1 rounded hover:bg-gray-50"
-                            >
-                                <i
-                                    :class="{'fa-chevron-up': expandedPayeurs.includes(payeur), 'fa-chevron-down': !expandedPayeurs.includes(payeur)}"
-                                    class="fa-regular"
-                                ></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Liste des factures du payeur -->
-                    <div x-show="expandedPayeurs.includes(payeur)" x-transition>
-                        <div class="mt-4">
-                            <template
-                                x-for="impaye in group"
-                                :key="impaye.objectId"
-                            >
-                                <div
-                                    class="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4"
-                                >
-                                    <div
-                                        class="flex flex-wrap items-center justify-between"
-                                    >
-                                        <div
-                                            class="flex-1 min-w-0 mb-4 md:mb-0"
-                                        >
-                                            <div class="flex items-center">
-                                                <div class="mr-3">
-                                                    <span
-                                                        class="inline-block px-2 py-1 rounded text-xs font-medium"
-                                                        :class="impaye.facturesoldee ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
-                                                    >
-                                                        <span
-                                                            x-text="impaye.facturesoldee ? 'Soldée' : 'Impayée'"
-                                                        ></span>
-                                                    </span>
-                                                </div>
-                                                <div class="flex-1 min-w-0">
-                                                    <p
-                                                        class="text-lg font-medium"
-                                                        x-text="impaye.refpiece"
-                                                    ></p>
-                                                    <p
-                                                        class="text-sm text-gray-600"
-                                                    >
-                                                        N°
-                                                        <span
-                                                            x-text="impaye.nfacture"
-                                                        ></span>
-                                                        -
-                                                        <span
-                                                            x-text="formatDate(impaye.datepiece)"
-                                                        ></span>
-                                                    </p>
-                                                    <p
-                                                        class="text-sm text-gray-500"
-                                                    >
-                                                        <i
-                                                            class="fa-regular fa-location-dot mr-1"
-                                                        ></i>
-                                                        <span
-                                                            x-text="(impaye.numVoie || '') + ' ' + (impaye.typeVoie || '') + ' ' + (impaye.cptNumVoie || '') + ' ' + (impaye.adresse || '') + ', ' + (impaye.codepostal || '') + ' ' + (impaye.ville || '')"
-                                                        ></span>
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="flex-shrink-0 text-right">
-                                            <p
-                                                class="text-lg font-bold"
-                                                x-text="formatCurrency(impaye.totalttcnet)"
-                                            ></p>
-                                            <p class="text-sm text-gray-600">
-                                                Reste:
-                                                <span
-                                                    x-text="formatCurrency(impaye.resteapayer)"
-                                                ></span>
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    <!-- Actions -->
-                                    <div
-                                        class="flex justify-start space-x-2 mt-3"
-                                    >
-                                        <button
-                                            x-show="impaye.invoice_url"
-                                            @click="openInvoice(impaye.invoice_url)"
-                                            class="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600"
-                                        >
-                                            <i
-                                                class="fa-regular fa-eye mr-1"
-                                            ></i>
-                                            Voir la facture
-                                        </button>
-                                        <button
-                                            @click="openDetails(impaye)"
-                                            class="bg-gray-500 text-white px-3 py-1 rounded text-sm hover:bg-gray-600"
-                                        >
-                                            Détails
-                                        </button>
-                                    </div>
-                                </div>
-                            </template>
-                        </div>
-                    </div>
-                </div>
-            </template>
-        </div>
-
-        <!-- Message si aucun résultat -->
-        <div
-            x-show="!isLoading && !error && filteredImpayes.length === 0"
-            class="text-center py-6"
-        >
-            <i
-                class="fa-regular fa-file-invoice-dollar text-4xl text-gray-300"
-            ></i>
-            <h3 class="text-xl font-bold mt-2">Aucun impayé trouvé</h3>
-            <p class="text-gray-600">
-                Aucune facture impayée ne correspond à vos critères de
-                recherche.
-            </p>
+        <!-- Contenu principal (masqué pendant le chargement) -->
+        <div x-show="!$store.impayesStore.isLoading">
+            {% include 'components/impayes/impayes-main-content.html' %}
         </div>
     </div>
 
-    <!-- Drawer pour afficher les détails d'une facture -->
-    <div
-        x-show="isDetailsDrawerOpen"
-        class="fixed inset-0 z-50 overflow-y-auto"
-    >
-        <!-- Overlay -->
-        <div
-            @click="closeDetailsDrawer()"
-            class="fixed inset-0 bg-black bg-opacity-50"
-        ></div>
+    {% include 'components/impayes/sequence-drawer.html' %}
 
-        <!-- Drawer -->
-        <div
-            class="relative bg-white rounded-lg shadow-xl mx-auto mt-8 mb-8 max-w-2xl w-full"
-            style="width: 80%; max-width: 800px; margin: 0 auto"
-        >
+    <!-- Panneau détails d'une facture -->
+    <div
+        x-show="$store.impayesStore.isDetailsDrawerOpen"
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="translate-x-full"
+        x-transition:enter-end="translate-x-0"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="translate-x-0"
+        x-transition:leave-end="translate-x-full"
+        class="fixed inset-y-0 right-0 w-[640px] bg-white border-l border-gray-200 shadow-xl z-50 flex flex-col overflow-y-auto"
+    >
             <header
                 class="bg-gray-100 border-b border-gray-200 rounded-t-lg px-4 py-3 flex justify-between items-center"
             >
@@ -321,24 +79,24 @@ head %}
                     Détails de la facture
                 </h3>
                 <button
-                    @click="closeDetailsDrawer()"
+                    @click="$store.impayesStore.closeDetailsDrawer()"
                     class="text-gray-400 hover:text-gray-600 focus:outline-none"
                     aria-label="close"
                 >
-                    <i class="fas fa-times"></i>
+                    <i class="fa-regular fa-times"></i>
                 </button>
             </header>
 
             <!-- Content -->
             <section class="p-4">
                 <div
-                    x-show="!selectedImpayeForDetails"
+                    x-show="!$store.impayesStore.viewStates[$store.impayesStore.currentView]?.selectedItemForDetails"
                     class="text-center py-6"
                 >
                     <p class="text-gray-500">Aucune facture sélectionnée</p>
                 </div>
 
-                <div x-show="selectedImpayeForDetails" class="content">
+                <div x-show="$store.impayesStore.viewStates[$store.impayesStore.currentView]?.selectedItemForDetails" class="content">
                     <!-- Informations principales -->
                     <div
                         class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm mb-4"
@@ -353,7 +111,7 @@ head %}
                                 </p>
                                 <p
                                     class="text-base font-medium"
-                                    x-text="selectedImpayeForDetails?.nfacture || 'N/A'"
+                                    x-text="$store.impayesStore.viewStates[$store.impayesStore.currentView]?.selectedItemForDetails?.nfacture || 'N/A'"
                                 ></p>
                             </div>
                             <div class="">
@@ -362,7 +120,7 @@ head %}
                                 </p>
                                 <p
                                     class="text-base font-medium"
-                                    x-text="selectedImpayeForDetails?.refpiece || 'N/A'"
+                                    x-text="$store.impayesStore.selectedImpayeForDetails?.refpiece || 'N/A'"
                                 ></p>
                             </div>
                             <div class="">
@@ -371,7 +129,7 @@ head %}
                                 </p>
                                 <p
                                     class="text-base font-medium"
-                                    x-text="formatDate(selectedImpayeForDetails?.datepiece)"
+                                    x-text="$store.impayesStore.formatDate($store.impayesStore.selectedImpayeForDetails?.datepiece)"
                                 ></p>
                             </div>
                             <div class="">
@@ -380,7 +138,7 @@ head %}
                                 </p>
                                 <p
                                     class="text-base font-medium"
-                                    x-text="formatDate(selectedImpayeForDetails?.datecre)"
+                                    x-text="$store.impayesStore.formatDate($store.impayesStore.selectedImpayeForDetails?.datecre)"
                                 ></p>
                             </div>
                             <div class="">
@@ -389,17 +147,17 @@ head %}
                                 </p>
                                 <p
                                     class="text-base font-medium"
-                                    x-text="formatDate(selectedImpayeForDetails?.dateDebutMission)"
+                                    x-text="$store.impayesStore.formatDate($store.impayesStore.selectedImpayeForDetails?.dateDebutMission)"
                                 ></p>
                             </div>
                             <div class="">
                                 <p class="text-xs text-gray-500">Statut</p>
                                 <span
                                     class="tag"
-                                    :class="selectedImpayeForDetails?.facturesoldee ? 'bg-green-100 text-green-800 border border-green-300' : 'bg-red-100 text-red-800 border border-red-300'"
+                                    :class="$store.impayesStore.selectedImpayeForDetails?.facturesoldee ? 'bg-green-100 text-green-800 border border-green-300' : 'bg-red-100 text-red-800 border border-red-300'"
                                 >
                                     <span
-                                        x-text="selectedImpayeForDetails?.facturesoldee ? 'Soldée' : 'Impayée'"
+                                        x-text="$store.impayesStore.selectedImpayeForDetails?.facturesoldee ? 'Soldée' : 'Impayée'"
                                     ></span>
                                 </span>
                             </div>
@@ -407,7 +165,7 @@ head %}
                                 <p class="text-xs text-gray-500">ID Dossier</p>
                                 <p
                                     class="text-base font-medium"
-                                    x-text="selectedImpayeForDetails?.idDossier || 'N/A'"
+                                    x-text="$store.impayesStore.selectedImpayeForDetails?.idDossier || 'N/A'"
                                 ></p>
                             </div>
                             <div class="">
@@ -416,7 +174,7 @@ head %}
                                 </p>
                                 <p
                                     class="text-base font-medium"
-                                    x-text="selectedImpayeForDetails?.reference || 'N/A'"
+                                    x-text="$store.impayesStore.selectedImpayeForDetails?.reference || 'N/A'"
                                 ></p>
                             </div>
                             <div class="">
@@ -425,7 +183,7 @@ head %}
                                 </p>
                                 <p
                                     class="text-base font-medium"
-                                    x-text="selectedImpayeForDetails?.numero || 'N/A'"
+                                    x-text="$store.impayesStore.selectedImpayeForDetails?.numero || 'N/A'"
                                 ></p>
                             </div>
                             <div class="">
@@ -434,7 +192,7 @@ head %}
                                 </p>
                                 <p
                                     class="text-base font-medium"
-                                    x-text="selectedImpayeForDetails?.statut_intitule || 'N/A'"
+                                    x-text="$store.impayesStore.selectedImpayeForDetails?.statut_intitule || 'N/A'"
                                 ></p>
                             </div>
                         </div>
@@ -450,14 +208,14 @@ head %}
                                 <p class="text-xs text-gray-500">Total HT</p>
                                 <p
                                     class="text-base font-medium"
-                                    x-text="formatCurrency(selectedImpayeForDetails?.totalhtnet)"
+                                    x-text="$store.impayesStore.formatCurrency($store.impayesStore.selectedImpayeForDetails?.totalhtnet)"
                                 ></p>
                             </div>
                             <div class="column">
                                 <p class="text-xs text-gray-500">Total TTC</p>
                                 <p
                                     class="text-base font-medium"
-                                    x-text="formatCurrency(selectedImpayeForDetails?.totalttcnet)"
+                                    x-text="$store.impayesStore.formatCurrency($store.impayesStore.selectedImpayeForDetails?.totalttcnet)"
                                 ></p>
                             </div>
                             <div class="column">
@@ -466,7 +224,7 @@ head %}
                                 </p>
                                 <p
                                     class="text-base font-medium text-red-600"
-                                    x-text="formatCurrency(selectedImpayeForDetails?.resteapayer)"
+                                    x-text="$store.impayesStore.formatCurrency($store.impayesStore.selectedImpayeForDetails?.resteapayer)"
                                 ></p>
                             </div>
                         </div>
@@ -482,63 +240,63 @@ head %}
                                 <p class="text-xs text-gray-500">Adresse</p>
                                 <p
                                     class="text-base font-medium"
-                                    x-text="(selectedImpayeForDetails?.numVoie || '') + ' ' + (selectedImpayeForDetails?.typeVoie || '') + ' ' + (selectedImpayeForDetails?.cptNumVoie || '') + ' ' + (selectedImpayeForDetails?.adresse || '')"
+                                    x-text="($store.impayesStore.selectedImpayeForDetails?.numVoie || '') + ' ' + ($store.impayesStore.selectedImpayeForDetails?.typeVoie || '') + ' ' + ($store.impayesStore.selectedImpayeForDetails?.cptNumVoie || '') + ' ' + ($store.impayesStore.selectedImpayeForDetails?.adresse || '')"
                                 ></p>
                             </div>
                             <div class="">
                                 <p class="text-xs text-gray-500">Complément</p>
                                 <p
                                     class="text-base font-medium"
-                                    x-text="selectedImpayeForDetails?.cptAdresse || 'N/A'"
+                                    x-text="$store.impayesStore.selectedImpayeForDetails?.cptAdresse || 'N/A'"
                                 ></p>
                             </div>
                             <div class="">
                                 <p class="text-xs text-gray-500">Code postal</p>
                                 <p
                                     class="text-base font-medium"
-                                    x-text="selectedImpayeForDetails?.codePostal || 'N/A'"
+                                    x-text="$store.impayesStore.selectedImpayeForDetails?.codePostal || 'N/A'"
                                 ></p>
                             </div>
                             <div class="">
                                 <p class="text-xs text-gray-500">Ville</p>
                                 <p
                                     class="text-base font-medium"
-                                    x-text="selectedImpayeForDetails?.ville || 'N/A'"
+                                    x-text="$store.impayesStore.selectedImpayeForDetails?.ville || 'N/A'"
                                 ></p>
                             </div>
                             <div class="">
                                 <p class="text-xs text-gray-500">Lot</p>
                                 <p
                                     class="text-base font-medium"
-                                    x-text="selectedImpayeForDetails?.numeroLot || 'N/A'"
+                                    x-text="$store.impayesStore.selectedImpayeForDetails?.numeroLot || 'N/A'"
                                 ></p>
                             </div>
                             <div class="">
                                 <p class="text-xs text-gray-500">Étage</p>
                                 <p
                                     class="text-base font-medium"
-                                    x-text="selectedImpayeForDetails?.etage || 'N/A'"
+                                    x-text="$store.impayesStore.selectedImpayeForDetails?.etage || 'N/A'"
                                 ></p>
                             </div>
                             <div class="">
                                 <p class="text-xs text-gray-500">Entrée</p>
                                 <p
                                     class="text-base font-medium"
-                                    x-text="selectedImpayeForDetails?.entree || 'N/A'"
+                                    x-text="$store.impayesStore.selectedImpayeForDetails?.entree || 'N/A'"
                                 ></p>
                             </div>
                             <div class="">
                                 <p class="text-xs text-gray-500">Escalier</p>
                                 <p
                                     class="text-base font-medium"
-                                    x-text="selectedImpayeForDetails?.escalier || 'N/A'"
+                                    x-text="$store.impayesStore.selectedImpayeForDetails?.escalier || 'N/A'"
                                 ></p>
                             </div>
                             <div class="">
                                 <p class="text-xs text-gray-500">Porte</p>
                                 <p
                                     class="text-base font-medium"
-                                    x-text="selectedImpayeForDetails?.porte || 'N/A'"
+                                    x-text="$store.impayesStore.selectedImpayeForDetails?.porte || 'N/A'"
                                 ></p>
                             </div>
                         </div>
@@ -556,7 +314,7 @@ head %}
                                 </p>
                                 <p
                                     class="text-base font-medium"
-                                    x-text="selectedImpayeForDetails?.payeur_nom || 'N/A'"
+                                    x-text="$store.impayesStore.selectedImpayeForDetails?.payeur_nom || 'N/A'"
                                 ></p>
                             </div>
                             <div class="column">
@@ -565,21 +323,21 @@ head %}
                                 </p>
                                 <p
                                     class="text-base font-medium"
-                                    x-text="selectedImpayeForDetails?.payeur_typePersonne === 'P' ? 'Particulier' : 'Professionnel'"
+                                    x-text="$store.impayesStore.selectedImpayeForDetails?.payeur_typePersonne === 'P' ? 'Particulier' : 'Professionnel'"
                                 ></p>
                             </div>
                             <div class="column">
                                 <p class="text-xs text-gray-500">Email</p>
                                 <p
                                     class="text-base font-medium"
-                                    x-text="selectedImpayeForDetails?.payeur_email || 'N/A'"
+                                    x-text="$store.impayesStore.selectedImpayeForDetails?.payeur_email || 'N/A'"
                                 ></p>
                             </div>
                             <div class="column">
                                 <p class="text-xs text-gray-500">Téléphone</p>
                                 <p
                                     class="text-base font-medium"
-                                    x-text="selectedImpayeForDetails?.payeur_telephone || 'N/A'"
+                                    x-text="$store.impayesStore.selectedImpayeForDetails?.payeur_telephone || 'N/A'"
                                 ></p>
                             </div>
                         </div>
@@ -597,14 +355,14 @@ head %}
                                 </p>
                                 <p
                                     class="text-base font-medium"
-                                    x-text="selectedImpayeForDetails?.employe_intervention || 'N/A'"
+                                    x-text="$store.impayesStore.selectedImpayeForDetails?.employe_intervention || 'N/A'"
                                 ></p>
                             </div>
                             <div class="column">
                                 <p class="text-xs text-gray-500">ID Employé</p>
                                 <p
                                     class="text-base font-medium"
-                                    x-text="selectedImpayeForDetails?.idEmployeIntervention || 'N/A'"
+                                    x-text="$store.impayesStore.selectedImpayeForDetails?.idEmployeIntervention || 'N/A'"
                                 ></p>
                             </div>
                         </div>
@@ -621,7 +379,7 @@ head %}
                                     Commentaire pièce
                                 </p>
                                 <p
-                                    x-text="selectedImpayeForDetails?.commentaire_piece || 'Aucun commentaire'"
+                                    x-text="$store.impayesStore.selectedImpayeForDetails?.commentaire_piece || 'Aucun commentaire'"
                                 ></p>
                             </div>
                             <div>
@@ -629,7 +387,7 @@ head %}
                                     Commentaire dossier
                                 </p>
                                 <p
-                                    x-text="selectedImpayeForDetails?.commentaire_dossier || 'Aucun commentaire'"
+                                    x-text="$store.impayesStore.selectedImpayeForDetails?.commentaire_dossier || 'Aucun commentaire'"
                                 ></p>
                             </div>
                         </div>
@@ -647,7 +405,7 @@ head %}
                                 </p>
                                 <p
                                     class="text-base font-medium"
-                                    x-text="selectedImpayeForDetails?.contactPlace || 'N/A'"
+                                    x-text="$store.impayesStore.selectedImpayeForDetails?.contactPlace || 'N/A'"
                                 ></p>
                             </div>
                             <div class="column">
@@ -656,7 +414,7 @@ head %}
                                 </p>
                                 <p
                                     class="text-base font-medium"
-                                    x-text="selectedImpayeForDetails?.referenceExterne || 'N/A'"
+                                    x-text="$store.impayesStore.selectedImpayeForDetails?.referenceExterne || 'N/A'"
                                 ></p>
                             </div>
                         </div>
@@ -665,15 +423,15 @@ head %}
                     <!-- Actions -->
                     <div class="flex justify-end mt-4 space-x-2">
                         <button
-                            x-show="selectedImpayeForDetails?.invoice_url"
-                            @click="closeDetailsDrawer(); openInvoice(selectedImpayeForDetails?.invoice_url)"
+                            x-show="$store.impayesStore.selectedImpayeForDetails?.invoice_url"
+                            @click="$store.impayesStore.closeDetailsDrawer(); $store.impayesStore.openInvoice($store.impayesStore.selectedImpayeForDetails?.invoice_url)"
                             class="bg-marki-primary text-white px-4 py-2 rounded hover:bg-marki-primary-dark"
                         >
                             <i class="fa-regular fa-eye mr-2"></i>
                             Voir la facture
                         </button>
                         <button
-                            @click="closeDetailsDrawer()"
+                            @click="$store.impayesStore.closeDetailsDrawer()"
                             class="bg-gray-100 text-gray-800 px-4 py-2 rounded hover:bg-gray-200 border border-gray-300"
                         >
                             <i class="fa-regular fa-times mr-2"></i>
@@ -682,45 +440,39 @@ head %}
                     </div>
                 </div>
             </section>
-        </div>
     </div>
 
-    <!-- Drawer pour afficher les factures PDF -->
+    <!-- Panneau factures PDF -->
     <div
-        x-show="isInvoiceDrawerOpen"
-        class="fixed inset-0 z-50 overflow-y-auto"
+        x-show="$store.impayesStore.isInvoiceDrawerOpen"
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="translate-x-full"
+        x-transition:enter-end="translate-x-0"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="translate-x-0"
+        x-transition:leave-end="translate-x-full"
+        class="fixed inset-y-0 right-0 w-[720px] bg-white border-l border-gray-200 shadow-xl z-50 flex flex-col overflow-y-auto"
     >
-        <!-- Overlay -->
-        <div
-            @click="closeInvoiceDrawer()"
-            class="fixed inset-0 bg-black bg-opacity-50"
-        ></div>
-
-        <!-- Drawer -->
-        <div
-            class="relative bg-white rounded-lg shadow-xl mx-auto mt-8 mb-8 max-w-3xl w-full"
-            style="width: 80%; max-width: 900px; margin: 0 auto"
-        >
             <header
                 class="bg-gray-100 border-b border-gray-200 rounded-t-lg px-4 py-3 flex justify-between items-center"
             >
                 <h3
                     class="text-lg font-medium text-gray-900"
-                    x-text="invoiceDrawerTitle"
+                    x-text="$store.impayesStore.invoiceDrawerTitle"
                 ></h3>
                 <button
-                    @click="closeInvoiceDrawer()"
+                    @click="$store.impayesStore.closeInvoiceDrawer()"
                     class="text-gray-400 hover:text-gray-600 focus:outline-none"
                     aria-label="close"
                 >
-                    <i class="fas fa-times"></i>
+                    <i class="fa-regular fa-times"></i>
                 </button>
             </header>
 
             <!-- Content -->
             <section class="p-4">
                 <!-- Message de chargement -->
-                <div x-show="invoiceDrawerLoading" class="text-center py-6">
+                <div x-show="$store.impayesStore.invoiceDrawerLoading" class="text-center py-6">
                     <div
                         class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"
                     ></div>
@@ -731,7 +483,7 @@ head %}
 
                 <!-- Message d'erreur -->
                 <div
-                    x-show="invoiceDrawerError"
+                    x-show="$store.impayesStore.invoiceDrawerError"
                     class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg shadow-sm mb-6"
                 >
                     <div class="flex items-center">
@@ -741,37 +493,36 @@ head %}
                         <div class="flex-1">
                             <p
                                 class="text-base"
-                                x-text="invoiceDrawerError"
+                                x-text="$store.impayesStore.invoiceDrawerError"
                             ></p>
                         </div>
                     </div>
                 </div>
 
                 <!-- Affichage du PDF -->
-                <div x-show="invoiceDrawerPdfContent" class="text-center">
-                    <object
-                        x-bind:data="'data:application/pdf;base64,' + invoiceDrawerPdfContent"
+                <div x-show="$store.impayesStore.invoiceDrawerPdfContent" class="text-center">
+                    <iframe
+                        x-bind:src="'data:application/pdf;base64,' + $store.impayesStore.invoiceDrawerPdfContent"
                         type="application/pdf"
                         class="pdf-viewer"
-                        style="width: 100%; height: 600px"
-                    >
-                        <p class="text-center py-6">
-                            Votre navigateur ne supporte pas l'affichage des
-                            PDF.
-                            <a
-                                x-bind:href="'data:application/pdf;base64,' + invoiceDrawerPdfContent"
-                                x-bind:download="invoiceDrawerFilename"
-                                class="text-marki-primary hover:underline"
-                            >
-                                Cliquez ici pour télécharger la facture
-                            </a>
-                        </p>
-                    </object>
+                        style="width: 100%; height: 600px; border: none;"
+                        allowfullscreen
+                    ></iframe>
+                    <p class="text-center py-2 text-sm text-gray-500">
+                        Si le PDF ne s'affiche pas, 
+                        <a
+                            x-bind:href="'data:application/pdf;base64,' + $store.impayesStore.invoiceDrawerPdfContent"
+                            x-bind:download="$store.impayesStore.invoiceDrawerFilename"
+                            class="text-marki-primary hover:underline"
+                        >
+                            cliquez ici pour le télécharger
+                        </a>
+                    </p>
                 </div>
 
                 <!-- Message si aucun PDF -->
                 <div
-                    x-show="!invoiceDrawerLoading && !invoiceDrawerError && !invoiceDrawerPdfContent"
+                    x-show="!$store.impayesStore.invoiceDrawerLoading && !$store.impayesStore.invoiceDrawerError && !$store.impayesStore.invoiceDrawerPdfContent"
                     class="text-center py-6"
                 >
                     <i class="fa-regular fa-file text-2xl text-gray-400"></i>
@@ -789,12 +540,12 @@ head %}
                 class="bg-gray-50 border-t border-gray-200 rounded-b-lg px-4 py-3 flex justify-end"
             >
                 <button
-                    x-show="invoiceDrawerPdfContent"
-                    x-bind:disabled="!invoiceDrawerPdfContent"
+                    x-show="$store.impayesStore.invoiceDrawerPdfContent"
+                    x-bind:disabled="!$store.impayesStore.invoiceDrawerPdfContent"
                     @click="() => {
                         const link = document.createElement('a');
-                        link.href = 'data:application/pdf;base64,' + invoiceDrawerPdfContent;
-                        link.download = invoiceDrawerFilename;
+                        link.href = 'data:application/pdf;base64,' + $store.impayesStore.invoiceDrawerPdfContent;
+                        link.download = $store.impayesStore.invoiceDrawerFilename;
                         link.click();
                     }"
                     class="bg-marki-primary text-white px-4 py-2 rounded hover:bg-marki-primary-dark disabled:opacity-50 disabled:cursor-not-allowed"
@@ -803,7 +554,6 @@ head %}
                     Télécharger la facture
                 </button>
             </footer>
-        </div>
     </div>
 </div>
 {% endblock %}

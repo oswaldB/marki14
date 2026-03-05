@@ -247,33 +247,34 @@ def run_impayes():
         ), 500
 
 
-@script_bp.route("/populateSequences", methods=["POST"])
-def run_populate_sequences():
+
+@script_bp.route("/archive-impayes", methods=["POST"])
+def archive_impayes():
     """
-    Route spécifique pour exécuter le script populateSequences
-
-    Cette route permet d'exécuter le peuplement automatique des séquences
-    qui associe les Impayes aux séquences automatiques selon leurs critères.
-
+    Route pour archiver des impayés
+    
     Exemple d'utilisation:
-        POST /script/populateSequences
+        POST /script/archive-impayes
         Content-Type: application/json
-
-        {}
-
+        
+        {
+            "impaye_ids": ["id1", "id2", "id3"]
+        }
+        
         Réponse:
         {
             "status": "success",
-            "message": "Peuplement automatique des séquences terminé avec succès",
+            "message": "X/Y facture(s) archivée(s) avec succès",
             "data": {
-                "associations_created": 15
+                "archived_count": X,
+                "total_attempted": Y
             },
             "timestamp": "..."
         }
     """
     try:
-        # Importer le module populateSequences
-        from scripts.populateSequences import execute
+        # Importer le module impayes_archive
+        from scripts.impayes_archive import execute
 
         # Extraire les paramètres de la requête
         params = request.get_json() if request.is_json else {}
@@ -300,7 +301,7 @@ def run_populate_sequences():
         return jsonify(
             {
                 "status": "error",
-                "message": f"Erreur d'import du script populateSequences: {str(e)}",
+                "message": f"Erreur d'import du script impayes_archive: {str(e)}",
                 "timestamp": datetime.now().isoformat(),
             }
         ), 400
@@ -309,7 +310,7 @@ def run_populate_sequences():
         return jsonify(
             {
                 "status": "error",
-                "message": f"Erreur lors de l'exécution de populateSequences: {str(e)}",
+                "message": f"Erreur lors de l'exécution de archive-impayes: {str(e)}",
                 "error_details": str(e),
                 "timestamp": datetime.now().isoformat(),
             }
@@ -379,6 +380,143 @@ def run_peupler_relances():
             {
                 "status": "error",
                 "message": f"Erreur lors de l'exécution de peuplerRelances: {str(e)}",
+                "error_details": str(e),
+                "timestamp": datetime.now().isoformat(),
+            }
+        ), 500
+
+@script_bp.route("/impaye-details", methods=["POST"])
+def get_impaye_details():
+    """
+    Route pour récupérer les détails d'un impayé spécifique
+    
+    Exemple d'utilisation:
+        POST /script/impaye-details
+        Content-Type: application/json
+        
+        {
+            "impaye_id": "objectId"
+        }
+        
+        Réponse:
+        {
+            "status": "success",
+            "message": "Détails de l'impayé récupérés",
+            "data": {
+                "impaye": {...},
+                "actions": [...]
+            },
+            "timestamp": "..."
+        }
+    """
+    try:
+        # Importer le module impaye_details
+        from scripts.impaye_details import execute
+
+        # Extraire les paramètres de la requête
+        params = request.get_json() if request.is_json else {}
+
+        # Exécuter le script
+        result = execute(params)
+
+        # S'assurer que le résultat a le format attendu
+        if not isinstance(result, dict):
+            result = {
+                "status": "error",
+                "message": "Format de réponse invalide",
+                "data": {"raw_response": str(result)},
+                "timestamp": datetime.now().isoformat(),
+            }
+
+        # Ajouter des métadonnées si non présentes
+        if "timestamp" not in result:
+            result["timestamp"] = datetime.now().isoformat()
+
+        return jsonify(result), 200
+
+    except ImportError as e:
+        return jsonify(
+            {
+                "status": "error",
+                "message": f"Erreur d'import du script impaye_details: {str(e)}",
+                "timestamp": datetime.now().isoformat(),
+            }
+        ), 400
+
+    except Exception as e:
+        return jsonify(
+            {
+                "status": "error",
+                "message": f"Erreur lors de l'exécution de impaye-details: {str(e)}",
+                "error_details": str(e),
+                "timestamp": datetime.now().isoformat(),
+            }
+        ), 500
+
+@script_bp.route("/contact-impayes", methods=["POST"])
+def get_contact_impayes():
+    """
+    Route pour récupérer les impayés d'un contact
+    
+    Exemple d'utilisation:
+        POST /script/contact-impayes
+        Content-Type: application/json
+        
+        {
+            "contact_id": "objectId"
+        }
+        
+        Réponse:
+        {
+            "status": "success",
+            "message": "Impayés du contact récupérés",
+            "data": {
+                "contact": {...},
+                "impayes_as_payeur": [...],
+                "impayes_as_apporteur": [...]
+            },
+            "timestamp": "..."
+        }
+    """
+    try:
+        # Importer le module contact_impayes
+        from scripts.contact_impayes import execute
+
+        # Extraire les paramètres de la requête
+        params = request.get_json() if request.is_json else {}
+
+        # Exécuter le script
+        result = execute(params)
+
+        # S'assurer que le résultat a le format attendu
+        if not isinstance(result, dict):
+            result = {
+                "status": "error",
+                "message": "Format de réponse invalide",
+                "data": {"raw_response": str(result)},
+                "timestamp": datetime.now().isoformat(),
+            }
+
+        # Ajouter des métadonnées si non présentes
+        if "timestamp" not in result:
+            result["timestamp"] = datetime.now().isoformat()
+
+        return jsonify(result), 200
+
+    except ImportError as e:
+        return jsonify(
+            {
+                "status": "error",
+                "message": f"Erreur d'import du script contact_impayes: {str(e)}",
+                "timestamp": datetime.now().isoformat(),
+            }
+        ), 400
+
+    except Exception as e:
+        return jsonify(
+            {
+                "status": "error",
+                "message": f"Erreur lors de l'exécution de contact-impayes: {str(e)}",
                 "error_details": str(e),
                 "timestamp": datetime.now().isoformat(),
             }

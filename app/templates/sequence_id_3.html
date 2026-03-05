@@ -189,7 +189,7 @@
                 isAuto: false,
                 isActif: true,
                 actions: [],
-                smtpProfiles: [],
+                smtpProfiles: { profiles: [], selectedProfile: null },
                 createdAt: null,
                 
                 async loadFromUrl() {
@@ -210,9 +210,6 @@
                                 this.actions = response.data.actions || [];
                                 this.createdAt = response.data.createdAt || null;
                                 
-                                // Load SMTP profiles
-                                await this.loadSmtpProfiles();
-                                
                                 console.log('Séquence chargée:', this);
                                 return this;
                             }
@@ -229,12 +226,12 @@
                         const parseAxios = window.parseAxios;
                         if (parseAxios) {
                             const response = await parseAxios.get('/classes/SMTPProfile');
-                            this.smtpProfiles = response.data.results || [];
-                            console.log('SMTP Profiles loaded:', this.smtpProfiles);
+                            this.smtpProfiles.profiles = response.data.results || [];
+                            console.log('SMTP Profiles loaded:', this.smtpProfiles.profiles);
                         }
                     } catch (error) {
                         console.error('Erreur lors du chargement des profils SMTP:', error);
-                        this.smtpProfiles = [];
+                        this.smtpProfiles.profiles = [];
                     }
                 },
                 
@@ -260,32 +257,21 @@
                 isSaving: false,
                 lastSaved: null,
                 currentActionIndex: 0,
-                saveTimeout: null,
+                editMode: true,
                 
                 init() {
                     this.loadSequence();
-                    
-                    // Set up $watch for automatic saving
-                    this.$watch('$store.sequence.actions', () => {
-                        this.autoSave();
-                    }, { deep: true });
+                    this.checkEditModeFromUrl();
+                },
+                
+                checkEditModeFromUrl() {
+                    const pathParts = window.location.pathname.split('/');
+                    this.editMode = pathParts.includes('edit');
                 },
                 
                 async loadSequence() {
                     await Alpine.store('sequence').loadFromUrl();
                     this.lastSaved = new Date().toLocaleTimeString();
-                },
-                
-                async autoSave() {
-                    // Clear any existing timeout
-                    if (this.saveTimeout) {
-                        clearTimeout(this.saveTimeout);
-                    }
-                    
-                    // Debounce the save to avoid too many requests
-                    this.saveTimeout = setTimeout(async () => {
-                        await this.saveSequence();
-                    }, 1000); // Save 1 second after last change
                 },
                 
                 async saveSequence() {
@@ -345,6 +331,16 @@
                 
                 publishSequence() {
                     alert('Fonctionnalité de publication à implémenter');
+                },
+                
+                toggleEditMode() {
+                    const pathParts = window.location.pathname.split('/');
+                    const sequenceId = pathParts[pathParts.length - 2];
+                    if (this.editMode) {
+                        window.location.href = `/sequence/${sequenceId}`;
+                    } else {
+                        window.location.href = `/sequence/${sequenceId}/edit`;
+                    }
                 }
             }));
         });
@@ -397,6 +393,15 @@
             >
                 Publier
             </button>
+            <!-- Toggle pour basculer entre les modes -->
+            <div class="flex items-center space-x-2">
+                <span class="text-sm text-gray-600">Mode Liste</span>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" x-model="editMode" class="sr-only peer" @change="toggleEditMode()">
+                    <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-marki-primary"></div>
+                </label>
+                <span class="text-sm text-gray-600">Mode Édition</span>
+            </div>
         </div>
     </header>
     

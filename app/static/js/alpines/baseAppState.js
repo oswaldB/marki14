@@ -12,6 +12,7 @@ document.addEventListener('alpine:init', () => {
       { path: '/impayes', icon: 'fa-regular fa-file-invoice-dollar', label: 'Impayés', active: false },
       { path: '/sequences', icon: 'fa-regular fa-list-check', label: 'Séquences', active: false },
       { path: '/relances', icon: 'fa-regular fa-paper-plane', label: 'Relances', active: false },
+      { path: '/contacts-without-email', icon: 'fa-regular fa-user', label: 'Contacts sans email', active: false },
       { path: '/admin/superadmin', icon: 'fa-regular fa-crown', label: 'Admin', active: false },
       { path: '/settings/profil-smtp', icon: 'fa-regular fa-envelope', label: 'Emails', active: false }
     ],

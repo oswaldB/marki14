@@ -26,7 +26,7 @@ fi
 source venv/bin/activate
 if ! pip show flask &> /dev/null; then
     echo "Installation des dépendances Flask..."
-    pip install flask flask-livereload
+    pip install flask flask-livereload flask-cors apscheduler python-dotenv psycopg2-binary
 fi
 
 # Lancer le serveur Flask en arrière-plan
@@ -40,6 +40,6 @@ sleep 3
 
 echo "✅ Le serveur Marki et tous les composants ont été démarrés."
 echo "==========================================="
-echo "Le serveur Flask est accessible à : http://localhost:5000"
+echo "Le serveur Flask est accessible à : http://0.0.0.0:5000"
 echo "Les conteneurs Docker sont en cours d'exécution"
 echo "==========================================="

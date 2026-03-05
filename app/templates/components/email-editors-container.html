@@ -1,4 +1,6 @@
 <div x-data="{
+    isGenerating: false,
+    
     init() {
         // Sort actions by delay when component initializes
         if (Alpine.store('sequence').actions.length > 0) {
@@ -9,6 +11,18 @@
         document.addEventListener('email-body-changed', (e) => {
             this.updateActionField(e.detail.index, 'body', e.detail.content);
         });
+
+        // Recharger les profils SMTP après création/édition
+        window.addEventListener('smtp-profile-saved', async () => {
+            await Alpine.store('sequence').loadSmtpProfiles();
+        });
+        
+        // Désactivé pour éviter la boucle infinie
+        // this.$watch('$store.sequence.actions', () => {
+        //     if (Alpine.store('sequence').actions.length > 0) {
+        //         Alpine.store('sequence').actions = this.sortActionsByDelay(Alpine.store('sequence').actions);
+        //     }
+        // }, { deep: true });
     },
     
     addAction(type = 'email') {
@@ -26,6 +40,48 @@
         const actions = [...Alpine.store('sequence').actions, newAction];
         Alpine.store('sequence').actions = this.sortActionsByDelay(actions);
     },
+
+    async generateWithAI() {
+        this.isGenerating = true;
+        
+        try {
+            // Récupérer les variables depuis le fichier de configuration
+            const variablesResponse = await fetch('/static/configs/variables.json');
+            const variablesData = await variablesResponse.json();
+            
+            // Créer un objet avec toutes les colonnes comme variables
+            const variablesConfig = {};
+            variablesData.columns.forEach(column => {
+                variablesConfig[column] = `[[${column}]]`;
+            });
+            
+            // Appeler l'API pour générer les emails
+            const response = await axios.post('/script/generate_emails_ollama', {
+                variables: variablesConfig,
+                sequence_id: '{{sequence_id}}'
+            });
+            
+            if (response.data.status === 'success') {
+                // Ajouter les emails générés au store
+                const newActions = response.data.data.emails;
+                const currentActions = [...Alpine.store('sequence').actions];
+                
+                // Ajouter les nouvelles actions
+                const allActions = [...currentActions, ...newActions];
+                Alpine.store('sequence').actions = allActions;
+                
+                // Force Alpine to re-render by triggering a reaction
+                this.$forceUpdate();
+            } else {
+                throw new Error(response.data.message || 'Erreur lors de la génération');
+            }
+        } catch (error) {
+            console.error('Erreur lors de la génération IA:', error);
+            alert('Erreur lors de la génération des emails: ' + error.message);
+        } finally {
+            this.isGenerating = false;
+        }
+    },
     
     removeAction(index) {
         const actions = Alpine.store('sequence').actions.filter((_, i) => i !== index);
@@ -40,7 +96,7 @@
         
         // Initialize senderEmail if not present when smtpProfileId is set
         if (field === 'smtpProfileId' && value && !updatedAction.senderEmail) {
-            const selectedProfile = Alpine.store('sequence').smtpProfiles.find(p => p.objectId === value);
+            const selectedProfile = Alpine.store('sequence').smtpProfiles.profiles.find(p => p.objectId === value);
             if (selectedProfile) {
                 updatedAction.senderEmail = selectedProfile.email;
             }
@@ -65,12 +121,26 @@
 }" class="bg-white rounded-lg shadow-sm p-4">
     <div class="flex justify-between items-center mb-6">
         <h3 class="text-xl font-semibold text-gray-800">Éditeur d'emails</h3>
-        <button @click="addAction('email')" class="bg-marki-primary text-white px-4 py-2 rounded transition-all">
-            <i class="fas fa-plus mr-1"></i> Ajouter Email
-        </button>
+        <div class="flex space-x-2">
+            <button @click="addAction('email')" class="bg-marki-primary text-white px-4 py-2 rounded transition-all">
+                <i class="fas fa-plus mr-1"></i> Ajouter Email
+            </button>
+            <button 
+                @click="generateWithAI()"
+                :disabled="isGenerating"
+                class="bg-purple-600 text-white px-4 py-2 rounded transition-all disabled:opacity-50"
+            >
+                <template x-if="isGenerating">
+                    <i class="fas fa-spinner fa-spin mr-1"></i> Génération...
+                </template>
+                <template x-if="!isGenerating">
+                    <i class="fas fa-magic mr-1"></i> Générer avec IA
+                </template>
+            </button>
+        </div>
     </div>
     
-    <template x-for="(action, index) in $store.sequence.actions" :key="action.id">
+    <template x-for="(action, index) in $store.sequence.actions" :key="index">
         {% include 'components/email-action-editor.html' %}
     </template>
     
@@ -80,4 +150,6 @@
             <p class="text-sm">Cliquez sur "Ajouter Email" pour commencer</p>
         </div>
     </template>
+
+    {% include 'components/smtp/smtp-profile-panel.html' %}
 </div>

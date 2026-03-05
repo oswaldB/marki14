@@ -1,0 +1,22 @@
+<!-- components/impayes/impayes-acteur-view.html -->
+<!-- Liste des impayés groupés par acteur -->
+<div x-show="!$store.impayesStore.isLoading && !$store.impayesStore.error">
+    <template x-for="(group, groupKey) in $store.impayesStore.getGroupedData()" :key="groupKey">
+        {% include 'components/impayes/impayes-acteur-group-card.html' %}
+    </template>
+</div>
+
+<!-- Message si aucun résultat -->
+<div
+    x-show="!$store.impayesStore.isLoading && !$store.impayesStore.error && $store.impayesStore.getFilteredData().length === 0"
+    class="text-center py-6"
+>
+    <i
+        class="fa-regular fa-file-invoice-dollar text-4xl text-gray-300"
+    ></i>
+    <h3 class="text-xl font-bold mt-2">Aucun impayé trouvé</h3>
+    <p class="text-gray-600">
+        Aucune facture impayée ne correspond à vos critères de
+        recherche.
+    </p>
+</div>

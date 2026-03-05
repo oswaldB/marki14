@@ -1,0 +1,59 @@
+<!-- components/impayes/impayes-main-content.html -->
+
+<!-- Message d'erreur -->
+<div
+    x-show="$store.impayesStore.error"
+    class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6"
+>
+    <div class="flex items-center">
+        <div class="mr-3">
+            <i class="fa-regular fa-ban"></i>
+        </div>
+        <div>
+            <p class="text-sm" x-text="$store.impayesStore.error"></p>
+        </div>
+    </div>
+</div>
+
+<!-- Contenu principal basé sur la vue actuelle -->
+<div x-show="!$store.impayesStore.isLoading && !$store.impayesStore.error">
+    <!-- Vue par payeur -->
+    <div x-show="$store.impayesStore.currentView === 'payeur'">
+        {% include 'components/impayes/impayes-payeur-view.html' %}
+    </div>
+    
+    <!-- Vue par facture -->
+    <div x-show="$store.impayesStore.currentView === 'facture'">
+        {% include 'components/impayes/impayes-facture-view.html' %}
+    </div>
+    
+    <!-- Vue par acteur -->
+    <div x-show="$store.impayesStore.currentView === 'acteur'">
+        {% include 'components/impayes/impayes-acteur-view.html' %}
+    </div>
+    
+    <!-- Vue par apporteur -->
+    <div x-show="$store.impayesStore.currentView === 'apporteur'">
+        {% include 'components/impayes/impayes-payeur-view.html' %}
+    </div>
+    
+    <!-- Vue par payeur-details -->
+    <div x-show="$store.impayesStore.currentView === 'payeur-details'">
+        {% include 'components/impayes/impayes-payeur-view.html' %}
+    </div>
+</div>
+
+<!-- Message si aucun résultat (déplacé ici pour éviter la duplication) -->
+<div
+    x-show="!$store.impayesStore.isLoading && !$store.impayesStore.error && $store.impayesStore.getFilteredData().length === 0"
+    class="text-center py-6"
+>
+    <i
+        class="fa-regular fa-file-invoice-dollar text-4xl text-gray-300"
+    ></i>
+    <h3 class="text-xl font-bold mt-2">Aucun impayé trouvé</h3>
+    <p class="text-gray-600">
+        Aucune facture impayée ne correspond à vos critères de
+        recherche.
+    </p>
+</div>

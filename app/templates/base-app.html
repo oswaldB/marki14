@@ -28,13 +28,9 @@
             }
         </style>
 
-        <!-- Font Awesome local -->
+        <!-- Font Awesome Pro local - all.css contient tous les styles -->
         <link
-            href="{{ url_for('static', filename='assets/fontawesome/css/fontawesome.css') }}"
-            rel="stylesheet"
-        />
-        <link
-            href="{{ url_for('static', filename='assets/fontawesome/css/regular.css') }}"
+            href="{{ url_for('static', filename='assets/fontawesome/css/all.css') }}"
             rel="stylesheet"
         />
         <!-- Axios CDN -->
@@ -60,11 +56,6 @@
         <script
             type="module"
             src="https://cdn.jsdelivr.net/npm/lit@2.8.0/+esm"
-        ></script>
-        <!-- Symbiote.js CDN for web components -->
-        <script
-            type="module"
-            src="https://symbiotejs.github.io/symbiote.js/core/Symbiote.js"
         ></script>
 
         <!-- ToastUI Editor CDN -->

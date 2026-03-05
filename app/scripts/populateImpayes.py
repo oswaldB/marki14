@@ -133,11 +133,11 @@ class PostgreSQLConnector:
         """Établir la connexion à la base de données PostgreSQL"""
         try:
             self.connection = psycopg2.connect(
-                host=os.getenv("PG_HOST"),
-                database=os.getenv("PG_DATABASE"),
-                user=os.getenv("PG_USER"),
-                password=os.getenv("PG_PASSWORD"),
-                port=os.getenv("PG_PORT"),
+                host=os.getenv("DB_HOST"),
+                database=os.getenv("DB_NAME"),
+                user=os.getenv("DB_USER"),
+                password=os.getenv("DB_PASSWORD"),
+                port=os.getenv("DB_PORT"),
             )
             self.cursor = self.connection.cursor()
             logger.info("Connexion à PostgreSQL établie avec succès")
@@ -202,6 +202,71 @@ class ParseServerConnector:
         except Exception as e:
             logger.error(f"Erreur lors de la récupération des impayés existants: {e}")
             return []
+
+    def get_existing_contact(self, contact_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Récupérer un contact existant ou None"""
+        try:
+            # Construire la requête de recherche
+            search_criteria = {
+                "nom": contact_data.get("nom"),
+                "typePersonne": contact_data.get("typePersonne")
+            }
+            
+            # Si c'est une personne physique, ajouter le prénom
+            if contact_data.get("typePersonne") == 'P':
+                search_criteria["prenom"] = contact_data.get("prenom")
+            
+            # Si disponible, ajouter l'email pour une recherche plus précise
+            if contact_data.get("email"):
+                search_criteria["email"] = contact_data.get("email")
+            
+            url = f"{self.base_url}/classes/Contacts"
+            params = {
+                "where": json.dumps(search_criteria),
+                "limit": 1
+            }
+
+            response = requests.get(url, headers=self.headers, params=params)
+            response.raise_for_status()
+
+            data = response.json()
+            results = data.get("results", [])
+            return results[0] if results else None
+        except Exception as e:
+            logger.error(f"Erreur lors de la recherche du contact: {e}")
+            return None
+
+    def create_contact(self, contact_data: Dict[str, Any]) -> Optional[str]:
+        """Créer un nouveau contact et retourner son objectId"""
+        try:
+            url = f"{self.base_url}/classes/Contacts"
+            
+            # Préparer les données du contact
+            contact_to_create = {
+                "nom": contact_data.get("nom"),
+                "typePersonne": contact_data.get("typePersonne"),
+                "email": contact_data.get("email"),
+                "telephoneMobile": contact_data.get("telephoneMobile"),
+                "telephoneFixe": contact_data.get("telephoneFixe"),
+                "adresse": contact_data.get("adresse"),
+                "codePostal": contact_data.get("codePostal"),
+                "ville": contact_data.get("ville")
+            }
+            
+            # Ajouter le prénom si c'est une personne physique
+            if contact_data.get("typePersonne") == 'P':
+                contact_to_create["prenom"] = contact_data.get("prenom")
+            
+            logger.debug(f"Création du contact: {json.dumps(contact_to_create, indent=2)}")
+            
+            response = requests.post(url, headers=self.headers, json=contact_to_create)
+            response.raise_for_status()
+            
+            result = response.json()
+            return result.get("objectId")
+        except Exception as e:
+            logger.error(f"Erreur lors de la création du contact: {e}")
+            return None
 
     def create_impaye(self, data: Dict[str, Any]) -> bool:
         """Créer une nouvelle entrée dans la classe Impayes"""
@@ -470,6 +535,28 @@ class ImpayesWorkflow:
                         except (TypeError, ValueError) as e:
                             logger.warning(f"Impossible de sérialiser la valeur pour la clé {key}: {e}")
                             serialized_data[key] = str(value) if value is not None else None
+                    
+                    # Créer ou récupérer les contacts pour payeur et apporteur
+                    payeur_contact_id = self._create_or_get_contact(impaye_data, "payeur")
+                    apporteur_contact_id = self._create_or_get_contact(impaye_data, "apporteur")
+                    
+                    # Ajouter les pointeurs aux données sérialisées
+                    if payeur_contact_id:
+                        serialized_data['payeur_pointer'] = {
+                            "__type": "Pointer",
+                            "className": "Contacts",
+                            "objectId": payeur_contact_id
+                        }
+                        
+                        # Gérer les relations pour les contacts de type morale
+                        self._handle_morale_relations(impaye_data, payeur_contact_id)
+                    
+                    if apporteur_contact_id:
+                        serialized_data['apporteur_pointer'] = {
+                            "__type": "Pointer",
+                            "className": "Contacts",
+                            "objectId": apporteur_contact_id
+                        }
                     
                     if self.parse_server.create_impaye(serialized_data):
                         success_count += 1
@@ -752,6 +839,131 @@ class ImpayesWorkflow:
                 new_impayes.append(item)
 
         return new_impayes
+
+    def _create_or_get_contact(self, impaye_data: Dict[str, Any], contact_type: str) -> Optional[str]:
+        """Créer ou récupérer un contact et retourner son objectId"""
+        # Déterminer les champs à utiliser selon le type de contact
+        if contact_type == "payeur":
+            nom_field = "payeur_nom"
+            email_field = "payeur_email"
+            telephone_field = "payeur_telephone"
+            type_personne_field = "payeur_typePersonne"
+        elif contact_type == "apporteur":
+            nom_field = "apporteur_affaire_nom"
+            email_field = "apporteur_affaire_email"
+            telephone_field = "apporteur_affaire_telephone"
+            type_personne_field = "apporteur_affaire_typePersonne"
+        else:
+            return None
+        
+        # Extraire les données du contact
+        nom = impaye_data.get(nom_field)
+        if not nom:
+            return None
+        
+        # Déterminer le type de personne et extraire les informations
+        type_personne = impaye_data.get(type_personne_field, 'P')  # Par défaut: Particulier
+        
+        # Préparer les données du contact
+        contact_data = {
+            "nom": nom,
+            "typePersonne": type_personne,
+            "email": impaye_data.get(email_field),
+            "telephoneMobile": impaye_data.get(telephone_field),
+            # Ajouter d'autres champs si disponibles
+            "adresse": impaye_data.get("adresse"),
+            "codePostal": impaye_data.get("codePostal"),
+            "ville": impaye_data.get("ville")
+        }
+        
+        # Pour les personnes physiques, extraire le prénom si présent dans le nom
+        if type_personne == 'P' and ' ' in nom:
+            parts = nom.rsplit(' ', 1)
+            if len(parts) == 2:
+                contact_data["prenom"] = parts[0]
+                contact_data["nom"] = parts[1]
+        
+        # Vérifier si le contact existe déjà
+        existing_contact = self.parse_server.get_existing_contact(contact_data)
+        if existing_contact:
+            logger.info(f"Contact {contact_type} existant trouvé: {existing_contact.get('objectId')}")
+            return existing_contact.get('objectId')
+        
+        # Créer un nouveau contact
+        new_contact_id = self.parse_server.create_contact(contact_data)
+        if new_contact_id:
+            logger.info(f"Nouveau contact {contact_type} créé: {new_contact_id}")
+            return new_contact_id
+        else:
+            logger.warning(f"Échec de la création du contact {contact_type}")
+            return None
+
+    def _handle_morale_relations(self, impaye_data: Dict[str, Any], contact_id: str) -> None:
+        """Gérer les relations pour les contacts de type morale"""
+        # Vérifier si le contact est de type morale (M)
+        payeur_type = impaye_data.get("payeur_typePersonne")
+        if payeur_type != 'M':
+            return
+        
+        # Pour les contacts de type morale, nous devons gérer les relations
+        # avec les contacts associés (personnes physiques liées à cette morale)
+        
+        # Récupérer les informations des contacts associés
+        payeur_contact_nom = impaye_data.get("payeur_contact_nom")
+        payeur_contact_email = impaye_data.get("payeur_contact_email")
+        
+        if payeur_contact_nom:
+            # Créer ou récupérer le contact associé
+            contact_associe_data = {
+                "nom": payeur_contact_nom,
+                "typePersonne": "P",  # Personne physique
+                "email": payeur_contact_email,
+                "telephoneMobile": impaye_data.get("payeur_telephone"),
+                "adresse": impaye_data.get("adresse"),
+                "codePostal": impaye_data.get("codePostal"),
+                "ville": impaye_data.get("ville")
+            }
+            
+            # Extraire le prénom si présent
+            if ' ' in payeur_contact_nom:
+                parts = payeur_contact_nom.rsplit(' ', 1)
+                if len(parts) == 2:
+                    contact_associe_data["prenom"] = parts[0]
+                    contact_associe_data["nom"] = parts[1]
+            
+            # Vérifier si le contact associé existe déjà
+            existing_associe = self.parse_server.get_existing_contact(contact_associe_data)
+            if not existing_associe:
+                # Créer le contact associé
+                new_associe_id = self.parse_server.create_contact(contact_associe_data)
+                if new_associe_id:
+                    logger.info(f"Nouveau contact associé créé pour la morale: {new_associe_id}")
+                    
+                    # Mettre à jour le contact morale pour ajouter la relation
+                    self._update_contact_with_relation(contact_id, new_associe_id, "contact_associe")
+
+    def _update_contact_with_relation(self, contact_id: str, related_contact_id: str, relation_type: str) -> bool:
+        """Mettre à jour un contact pour ajouter une relation"""
+        try:
+            url = f"{self.parse_server.base_url}/classes/Contacts/{contact_id}"
+            
+            # Préparer les données de mise à jour
+            update_data = {
+                relation_type: {
+                    "__type": "Pointer",
+                    "className": "Contacts",
+                    "objectId": related_contact_id
+                }
+            }
+            
+            response = requests.put(url, headers=self.parse_server.headers, json=update_data)
+            response.raise_for_status()
+            
+            logger.info(f"Relation {relation_type} ajoutée au contact {contact_id}")
+            return True
+        except Exception as e:
+            logger.error(f"Erreur lors de l'ajout de la relation {relation_type}: {e}")
+            return False
 
 
 def execute(params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
