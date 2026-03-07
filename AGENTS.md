@@ -35,3 +35,5 @@ Il est important de commiter à chaque étape pour suivre les modifications et f
 6. **Appels à la base de données** : Utilisez `axiosParse` pour tous les appels à la base de données. Les scripts sont réservés aux opérations ad-hoc et spécifiques, pas pour le CRUD de base.
 
 7. **TU CODES ET COMMENTE LE CODE EN ANGLAIS** même si l'interface est en français.
+
+8. **Communication entre composants** : Toute la communication entre les composants doit se faire uniquement via les stores. Aucune utilisation d'événements navigateur (browser events) n'est autorisée.

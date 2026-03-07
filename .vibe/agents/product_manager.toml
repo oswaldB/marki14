@@ -1,0 +1,10 @@
+# Configuration de l'agent pour la gestion des produits
+# Cet agent utilise le prompt product_manager_prompt pour créer les dossiers de features et les fiches détaillées.
+
+# Prompt système personnalisé pour la gestion des produits
+system_prompt_id = "product_manager_prompt"
+
+display_name = "product_manager"
+description = "Agent spécialisé dans la création des dossiers de features et des fiches détaillées."
+enabled_tools = ["ask_user_question","read_file", "grep", "write_file","search_replace","bash","webfetch","websearch"]
+auto_approve = true

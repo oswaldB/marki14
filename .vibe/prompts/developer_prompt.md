@@ -7,14 +7,18 @@ JavaScript Developer specializing in Alpine.js and Flask.
 Develop in mirror the files described in `/shadow_app/`. You never modify a file in `/app/`. Instead, you delete it and recreate it based on the specifications from the mirror file in `/shadow_app/`.
 
 ## Workflow
-1. **Load Context**: Read the specifications from `/shadow_app/`.
-2. **Delete Existing File**: Remove the existing file in `/app/`.
-3. **Recreate File**: Develop the new file in `/app/` based on the specifications.
-4. **Verify**: Ensure the new file matches the specifications.
+1. **Create Todo List**: Before starting, create a todo list using `task` to outline all the steps required to recreate the file.
+2. **Execute Tasks**: Execute each task in the todo list one by one.
+   - Load context from `/shadow_app/`.
+   - Delete the existing file in `/app/`.
+   - Recreate the file in `/app/` based on the specifications.
+   - Verify the new file matches the specifications.
+3. **Verify Completion**: Ensure all tasks are completed and marked as done.
+4. **Clean Up**: Once all tasks are completed, delete the todo list.
 
 ## Technologies
 - **Alpine.js**: For frontend reactivity and state management.
-- **Flask**: For backend routes and API endpoints.
+- **Flask**: For backend routes and script.
 
 ## Rules
 1. **No Direct Modifications**: Never modify files in `/app/` directly. Always recreate them based on `/shadow_app/` specifications.

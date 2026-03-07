@@ -15,20 +15,20 @@ When given multiple file paths or a complex task: Do not start reading files imm
 
 ---
 
-## Specific Instructions for Feature Extraction Agent
+## Specific Instructions for Analyst Agent
 
 ### Workspace
-The working directory for this agent is `/specs/idees/`. All output files will be created in this directory.
+The working directory for this agent is `/specs/briefs/`. All output files will be created in this directory.
 
 ### Objective
-Transform a vague brief into a structured document containing features and use cases. The agent must also ask the user about additional features and whether to integrate them or not.
+Analyze the brief to identify and extract features, and ask questions to clarify any missing or ambiguous requirements.
 
 ### Input
 A vague brief provided by the user. Example:
 "I want a feature where you can upload invoices in PDF format and, using AI, extract the necessary information to create or update a follow-up campaign."
 
 ### Output
-A Markdown file in the `/specs/idees/` folder with the following naming convention: `ID - nom-de-l-idee.md`. The file must follow this structure:
+A list of identified features and questions about missing or ambiguous requirements.
 
 ```markdown
 # ID - Idea Name
@@ -40,13 +40,54 @@ A Markdown file in the `/specs/idees/` folder with the following naming conventi
 1. **F001 - Feature 1**: Description.
 2. **F002 - Feature 2**: Description.
 
-## Use Cases
-1. **F001-US001 - Use Case 1**:
-   - Description.
-   - Steps.
-2. **F002-US001 - Use Case 2**:
-   - Description.
-   - Steps.
+## Spec Format
+A spec contains requirements, and each requirement has scenarios. Each scenario corresponds to a user story, ensuring a one-to-one relationship between scenarios and user stories.
+
+# Feature Specification
+
+## Purpose
+High-level description of this spec's domain.
+
+## Requirements
+
+### Requirement: Feature Description
+The system SHALL/MUST/SHOULD [specific behavior].
+
+#### User Story: USXXX - Scenario Description
+- **Given**: [initial context or preconditions]
+- **When**: [action or event that triggers the scenario]
+- **Then**: [expected outcome or result]
+- **And**: [additional expected outcome or result]
+
+## Why Structure Specs This Way
+Requirements are the "what" — they state what the system should do without specifying implementation.
+
+Scenarios are the "when" — they provide concrete examples that can be verified. Good scenarios:
+
+- Are testable (you could write an automated test for them)
+- Cover both happy path and edge cases
+- Use Given/When/Then or similar structured format
+
+RFC 2119 keywords (SHALL, MUST, SHOULD, MAY) communicate intent:
+
+- MUST/SHALL — absolute requirement
+- SHOULD — recommended, but exceptions exist
+- MAY — optional
+
+## What a Spec Is (and Is Not)
+A spec is a behavior contract, not an implementation plan.
+
+### Good spec content:
+- Observable behavior users or downstream systems rely on
+- Inputs, outputs, and error conditions
+- External constraints (security, privacy, reliability, compatibility)
+- Scenarios that can be tested or explicitly validated
+
+### Avoid in specs:
+- Internal class/function names
+- Library or framework choices
+- Step-by-step implementation details
+- Detailed execution plans (those belong in design.md or tasks.md)
 
 ## Usage Scenarios
 1. **Scenario 1**: Detailed example.
@@ -58,17 +99,17 @@ A Markdown file in the `/specs/idees/` folder with the following naming conventi
 ```
 
 ### File Creation Rules
-1. The file must be created in `/specs/idees/`.
-2. The filename must follow the format: `ID - nom-de-l-idee.md` (e.g., `001 - upload-factures.md`).
-3. The `ID` is a unique identifier for the idea.
-4. The `nom-de-l-idee` is a short, descriptive name in lowercase with hyphens.
+1. The file must be created in `/specs/briefs/`.
+2. The filename must follow the format: `ID_nom_du_brief.md` (e.g., `001_upload_factures.md`).
+3. The `ID` is a unique identifier for the brief.
+4. The `nom_du_brief` is a short, descriptive name in lowercase with underscores.
 
 ### Feature and Use Case File Creation
 When features and use cases are finalized, they must be saved in their respective folders:
-- **Features**: `specs/features/ID - FXXX - nom-de-la-feature.md` (e.g., `specs/features/001 - F001 - upload-factures.md`).
-- **User Stories**: `specs/us/ID - USXXX - nom-de-l-user-story.md` (e.g., `specs/us/001 - US001 - extraire-informations-facture.md`).
+- **Features**: `specs/features/FXXX_nom_de_la_feature/description.md` (e.g., `specs/features/F001_upload_factures/description.md`).
+- **Use Cases**: `specs/features/FXXX_nom_de_la_feature/use_cases/USXXX_nom_du_use_case.md` (e.g., `specs/features/F001_upload_factures/use_cases/US001_extraire_informations_facture.md`).
 
-The `ID` must match the idea's ID, and the feature/user story codes (`FXXX`, `USXXX`) must be included in the filename.
+The `ID` must match the brief's ID, and the feature/user story codes (`FXXX`, `USXXX`) must be included in the filename.
 
 ### Feature and Use Case Coding
 1. Each feature must have a unique identifier starting with `F` followed by a sequential number (e.g., `F001`, `F002`).
@@ -80,11 +121,20 @@ The `ID` must match the idea's ID, and the feature/user story codes (`FXXX`, `US
 3. Ensure all features and use cases are clearly documented with their respective codes.
 
 ### Steps to Follow
-1. **Analyze the Brief**: Identify keywords and main intentions.
-2. **Decompose into Features**: List the necessary features to fulfill the brief.
-3. **Define Use Cases**: Describe user-system interactions for each feature.
-4. **Create Usage Scenarios**: Provide concrete examples of usage.
-5. **Identify Dependencies**: List required tools or resources.
+1. **Create Todo List**: Before starting, create a todo list using `task` to outline all the steps required to analyze the brief and extract features.
+2. **Execute Tasks**: Execute each task in the todo list one by one.
+   - Analyze the brief to identify keywords and main intentions.
+   - Extract features from the brief.
+   - Identify any missing or ambiguous requirements.
+   - Ask questions to clarify the requirements.
+3. **Create Brief Folder**: If key information such as scripts or other critical elements are discovered or obtained, create a folder named `brief` within the `/specs/briefs/` directory. Store important elements in this folder.
+4. **Verify Completion**: Ensure all tasks are completed and marked as done.
+5. **Clean Up**: Once all tasks are completed, delete the todo list.
+
+### Philosophy
+- **Small Steps**: Break down the work into small, manageable tasks.
+- **Incremental Progress**: Complete one task at a time and mark it as completed before moving to the next.
+- **Task Tracking**: Use `task` to track progress and ensure all steps are completed.
 
 ### Example
 For the brief: "I want a feature where you can upload invoices in PDF format and, using AI, extract the necessary information to create or update a follow-up campaign."
@@ -97,32 +147,80 @@ For the brief: "I want a feature where you can upload invoices in PDF format and
 I want a feature where you can upload invoices in PDF format and, using AI, extract the necessary information to create or update a follow-up campaign.
 
 ## Identified Features
-1. **Invoice Upload**: Allow users to upload PDF files.
-2. **Information Extraction**: Use AI to extract data from invoices.
-3. **Campaign Creation**: Generate follow-up campaigns based on extracted data.
-4. **Campaign Integration**: Update existing campaigns or create new ones.
+1. **F001 - Invoice Upload**: Allow users to upload PDF files.
+2. **F002 - Information Extraction**: Use AI to extract data from invoices.
+3. **F003 - Campaign Creation**: Generate follow-up campaigns based on extracted data.
+4. **F004 - Campaign Integration**: Update existing campaigns or create new ones.
 
-## Use Cases
-1. **Invoice Upload**:
-   - User uploads one or more PDF files.
-   - System validates files and extracts necessary information.
-2. **Information Extraction**:
-   - AI analyzes PDFs to extract invoice details (amount, date, client, etc.).
-   - Extracted data is stored in a database.
-3. **Campaign Creation**:
-   - If a campaign exists for the client, it is updated.
-   - Otherwise, a new campaign is created with the extracted information.
-4. **Error Handling**:
-   - If extraction fails, the user is notified and can manually correct.
+## Spec Format
+A spec contains requirements, and each requirement has scenarios:
 
-## Usage Scenarios
-1. **Scenario 1**: User uploads an invoice, AI extracts data, and a campaign is automatically created.
-2. **Scenario 2**: User uploads multiple invoices, and the system processes them in batch.
+# Invoice Upload and Campaign Creation Specification
 
-## Dependencies
-- PDF text extraction library.
-- AI model for invoice analysis.
-- Database to store extracted information.
+## Purpose
+Allow users to upload PDF invoices, extract data using AI, and create or update follow-up campaigns.
+
+## Requirements
+
+### Requirement: Invoice Upload
+The system SHALL allow users to upload PDF files.
+
+#### User Story: F001-US001 - Valid PDF files
+- **Given**: User is on the upload page
+- **When**: User selects and uploads valid PDF files
+- **Then**: System validates the files
+- **And**: Extracts necessary information
+
+#### User Story: F001-US002 - Invalid file format
+- **Given**: User is on the upload page
+- **When**: User selects non-PDF files
+- **Then**: System displays an error message
+- **And**: Does not process the files
+
+### Requirement: Information Extraction
+The system SHALL use AI to extract data from uploaded invoices.
+
+#### User Story: F002-US001 - Successful data extraction
+- **Given**: PDF files are uploaded
+- **When**: System sends files to AI service
+- **Then**: AI analyzes PDFs to extract invoice details
+- **And**: Stores the extracted data in the database
+
+#### User Story: F002-US002 - Data extraction failure
+- **Given**: PDF files are uploaded
+- **When**: AI service fails to extract data
+- **Then**: System notifies the user
+- **And**: Allows manual data correction
+
+### Requirement: Campaign Creation
+The system SHALL generate or update follow-up campaigns based on extracted data.
+
+#### User Story: F003-US001 - Update existing campaign
+- **Given**: Extracted data is available
+- **When**: System checks for existing campaigns
+- **And**: A campaign exists for the client
+- **Then**: System updates the existing campaign
+
+#### User Story: F003-US002 - Create new campaign
+- **Given**: Extracted data is available
+- **When**: System checks for existing campaigns
+- **And**: No campaign exists for the client
+- **Then**: System creates a new campaign with the extracted information
+
+### Requirement: Error Handling
+The system SHALL handle errors gracefully and provide feedback to the user.
+
+#### User Story: F004-US001 - Extraction failure
+- **Given**: Data extraction fails
+- **When**: System detects the failure
+- **Then**: User is notified
+- **And**: Can manually correct the data
+
+## Questions
+1. What specific information should be extracted from the invoices?
+2. Should the system support batch uploads of multiple invoices?
+3. Are there any specific formats or standards for the extracted data?
+4. How should the system handle errors during the extraction process?
 ```
 
 ### Verification

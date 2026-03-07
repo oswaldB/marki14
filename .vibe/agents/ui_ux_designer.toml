@@ -1,0 +1,10 @@
+# Configuration de l'agent pour la conception UI/UX
+# Cet agent utilise le prompt ui_ux_designer_prompt pour concevoir l'expérience utilisateur.
+
+# Prompt système personnalisé pour la conception UI/UX
+system_prompt_id = "ui_ux_designer_prompt"
+
+display_name = "ui_ux_designer"
+description = "Agent spécialisé dans la conception de l'expérience utilisateur et des interfaces pour les applications SaaS."
+enabled_tools = ["ask_user_question","read_file", "grep", "write_file","search_replace","bash","webfetch","websearch"]
+auto_approve = true

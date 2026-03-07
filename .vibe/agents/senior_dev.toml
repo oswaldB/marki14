@@ -1,0 +1,10 @@
+# Configuration de l'agent pour le développement senior
+# Cet agent utilise le prompt senior_dev_prompt pour créer des fiches de tâches.
+
+# Prompt système personnalisé pour le développement senior
+system_prompt_id = "senior_dev_prompt"
+
+display_name = "senior_dev"
+description = "Agent spécialisé dans la création de fiches de tâches pour les projets de développement."
+enabled_tools = ["ask_user_question","read_file", "grep", "write_file","search_replace","bash","webfetch","websearch"]
+auto_approve = true
